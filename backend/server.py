@@ -123,6 +123,10 @@ class ChatResponse(BaseModel):
     chart_type: Optional[str] = None
     summary_points: List[str] = []
 
+class LoginRequest(BaseModel):
+    email: str
+    password: str
+
 # Mock data initialization
 async def init_mock_data():
     # Check if data already exists
