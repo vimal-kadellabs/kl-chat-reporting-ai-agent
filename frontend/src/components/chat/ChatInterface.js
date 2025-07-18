@@ -93,9 +93,9 @@ const ChatInterface = () => {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
-      {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+    <div className="h-screen bg-gray-50 flex flex-col">
+      {/* Fixed Header */}
+      <header className="bg-white shadow-sm border-b flex-shrink-0">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center py-4">
             <div className="flex items-center space-x-4">
@@ -122,11 +122,11 @@ const ChatInterface = () => {
         </div>
       </header>
 
-      {/* Main Chat Area */}
-      <div className="flex-1 flex max-w-7xl mx-auto w-full relative">
-        {/* Chat Messages */}
+      {/* Main Content Area */}
+      <div className="flex-1 flex overflow-hidden">
+        {/* Scrollable Chat Messages Area */}
         <div className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4 pb-16">
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
             {messages.length === 0 ? (
               <div className="text-center py-12">
                 <div className="text-gray-500 text-lg mb-4">
@@ -159,46 +159,40 @@ const ChatInterface = () => {
             
             <div ref={messagesEndRef} />
           </div>
+
+          {/* Fixed Input Area */}
+          <div className="bg-white border-t shadow-lg flex-shrink-0">
+            <div className="p-3">
+              <div className="flex space-x-3">
+                <div className="flex-1">
+                  <textarea
+                    value={inputMessage}
+                    onChange={(e) => setInputMessage(e.target.value)}
+                    onKeyPress={handleKeyPress}
+                    placeholder="Ask anything about real estate auctions..."
+                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none shadow-sm"
+                    rows="2"
+                    disabled={loading}
+                  />
+                </div>
+                <button
+                  onClick={() => handleSendMessage()}
+                  disabled={loading || !inputMessage.trim()}
+                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                >
+                  {loading ? 'Sending...' : 'Send'}
+                </button>
+              </div>
+            </div>
+          </div>
         </div>
 
-        {/* Sample Questions Sidebar */}
-        <div className="w-80 border-l bg-white pb-20">
+        {/* Fixed Sample Questions Sidebar */}
+        <div className="w-80 border-l bg-white flex-shrink-0">
           <SampleQuestions 
             questions={sampleQuestions} 
             onQuestionClick={handleSendMessage}
           />
-        </div>
-
-        {/* Fixed Input Area */}
-        <div className="fixed bottom-0 left-0 right-0 bg-white border-t shadow-lg z-50">
-          <div className="max-w-7xl mx-auto">
-            <div className="flex">
-              <div className="flex-1 p-3 pr-80">
-                <div className="flex space-x-3">
-                  <div className="flex-1">
-                    <textarea
-                      value={inputMessage}
-                      onChange={(e) => setInputMessage(e.target.value)}
-                      onKeyPress={handleKeyPress}
-                      placeholder="Ask anything about real estate auctions..."
-                      className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none shadow-sm"
-                      rows="2"
-                      disabled={loading}
-                    />
-                  </div>
-                  <button
-                    onClick={() => handleSendMessage()}
-                    disabled={loading || !inputMessage.trim()}
-                    className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
-                  >
-                    {loading ? 'Sending...' : 'Send'}
-                  </button>
-                </div>
-              </div>
-              {/* Space for sidebar */}
-              <div className="w-80"></div>
-            </div>
-          </div>
         </div>
       </div>
     </div>
