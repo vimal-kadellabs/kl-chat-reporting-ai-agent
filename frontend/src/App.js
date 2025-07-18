@@ -1,53 +1,54 @@
-import { useEffect } from "react";
-import "./App.css";
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import axios from "axios";
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
+import axios from 'axios';
+import './App.css';
+
+// Components
+import LoginPage from './components/auth/LoginPage';
+import Dashboard from './components/dashboard/Dashboard';
+import ChatInterface from './components/chat/ChatInterface';
+import AuthProvider, { useAuth } from './contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
 const API = `${BACKEND_URL}/api`;
 
-const Home = () => {
-  const helloWorldApi = async () => {
-    try {
-      const response = await axios.get(`${API}/`);
-      console.log(response.data.message);
-    } catch (e) {
-      console.error(e, `errored out requesting / api`);
-    }
-  };
+// Configure axios defaults
+axios.defaults.baseURL = API;
 
-  useEffect(() => {
-    helloWorldApi();
-  }, []);
+function AppContent() {
+  const { isAuthenticated, user } = useAuth();
 
   return (
-    <div>
-      <header className="App-header">
-        <a
-          className="App-link"
-          href="https://emergent.sh"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <img src="https://avatars.githubusercontent.com/in/1201222?s=120&u=2686cf91179bbafbc7a71bfbc43004cf9ae1acea&v=4" />
-        </a>
-        <p className="mt-5">Building something incredible ~!</p>
-      </header>
+    <div className="min-h-screen bg-gray-50">
+      <Routes>
+        <Route 
+          path="/login" 
+          element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} 
+        />
+        <Route 
+          path="/dashboard" 
+          element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/chat" 
+          element={isAuthenticated ? <ChatInterface /> : <Navigate to="/login" />} 
+        />
+        <Route 
+          path="/" 
+          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} 
+        />
+      </Routes>
     </div>
   );
-};
+}
 
 function App() {
   return (
-    <div className="App">
-      <BrowserRouter>
-        <Routes>
-          <Route path="/" element={<Home />}>
-            <Route index element={<Home />} />
-          </Route>
-        </Routes>
-      </BrowserRouter>
-    </div>
+    <AuthProvider>
+      <Router>
+        <AppContent />
+      </Router>
+    </AuthProvider>
   );
 }
 
