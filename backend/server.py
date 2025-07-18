@@ -191,9 +191,9 @@ async def root():
     return {"message": "Real Estate Auction Analytics API"}
 
 @api_router.post("/auth/login")
-async def login(email: str, password: str):
+async def login(request: LoginRequest):
     # Dummy authentication
-    return {"token": "dummy_token", "user": {"id": "demo_user", "email": email, "name": "Demo User"}}
+    return {"token": "dummy_token", "user": {"id": "demo_user", "email": request.email, "name": "Demo User"}}
 
 @api_router.get("/users", response_model=List[User])
 async def get_users():
