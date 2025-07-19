@@ -462,47 +462,50 @@ class AnalyticsService:
         }
 
     async def analyze_query_with_data(self, user_query: str, structured_data: dict) -> ChatResponse:
-        """Enhanced OpenAI analysis with structured data"""
+        """Enhanced OpenAI analysis with multiple charts and tables"""
         try:
-            system_prompt = f"""You are a real estate auction analytics expert. You must respond ONLY with valid JSON in the exact format specified.
+            system_prompt = f"""You are a real estate auction analytics expert. Analyze the query and create comprehensive insights with multiple visualizations.
 
 AVAILABLE DATA:
 {json.dumps(structured_data.get('data', {}), indent=2, default=str)}
 
 INSTRUCTIONS:
-1. Analyze the user query using the provided data
-2. Create professional insights with specific references to actual data
-3. Format response as markdown with ## headers and **bold** text
-4. Generate chart data using real numbers from the provided data
-5. Provide 2-4 actionable summary points
+1. Create professional markdown analysis with ## headers and **bold** text
+2. Generate 2-3 different charts (bar, donut/pie, line) relevant to the query
+3. Create structured table data for detailed analysis
+4. Provide 3-4 actionable summary points
 
-You MUST respond with ONLY this JSON structure (no other text):
+You MUST respond with ONLY this JSON structure:
 {{
-  "response": "## Professional Analysis\\n\\n**Key Findings:**\\n- Specific insight with actual data\\n- Another insight with real numbers",
-  "chart_type": "bar",
-  "chart_data": {{"data": [actual data from provided dataset]}},
-  "summary_points": ["Specific insight with real data", "Actionable recommendation", "Next steps"]
+  "response": "## Analysis Title\\n\\n**Key Findings:**\\n- Specific insight\\n- Another insight",
+  "charts": [
+    {{"data": [chart data], "type": "bar", "title": "Chart Title", "description": "Brief description"}},
+    {{"data": [chart data], "type": "donut", "title": "Distribution Chart", "description": "Brief description"}},
+    {{"data": [chart data], "type": "line", "title": "Trend Chart", "description": "Brief description"}}
+  ],
+  "tables": [
+    {{"headers": ["Column1", "Column2", "Column3"], "rows": [["data1", "data2", "data3"]], "title": "Detailed Analysis", "description": "Table description"}}
+  ],
+  "summary_points": ["Insight 1", "Insight 2", "Insight 3", "Recommendation"]
 }}"""
 
-            # Add explicit JSON mode instruction
             messages = [
                 {"role": "system", "content": system_prompt},
-                {"role": "user", "content": f"Analyze this query using the provided data and respond ONLY with valid JSON: {user_query}"}
+                {"role": "user", "content": f"Analyze: {user_query}"}
             ]
 
             response = self.client.chat.completions.create(
                 model="gpt-4",
                 messages=messages,
-                temperature=0.3,  # Lower temperature for more consistent JSON output
-                max_tokens=2000
+                temperature=0.3,
+                max_tokens=3000  # Increased for multiple charts
             )
 
             response_text = response.choices[0].message.content.strip()
             logger.info(f"Raw OpenAI response: {response_text[:200]}...")
 
-            # Clean and extract JSON
+            # Clean and parse JSON
             try:
-                # Remove any markdown formatting
                 if "```json" in response_text:
                     start = response_text.find("```json") + 7
                     end = response_text.find("```", start)
@@ -512,31 +515,37 @@ You MUST respond with ONLY this JSON structure (no other text):
                     end = response_text.find("```", start)
                     response_text = response_text[start:end].strip()
                 
-                # Try to find JSON in the response
                 import re
                 json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
                 if json_match:
                     response_text = json_match.group()
                 
                 result = json.loads(response_text)
-                logger.info("Successfully parsed JSON response")
+                logger.info("Successfully parsed enhanced JSON response")
+                
+                # Convert to new format
+                charts = []
+                for chart in result.get("charts", []):
+                    charts.append(ChartData(**chart))
+                
+                tables = []
+                for table in result.get("tables", []):
+                    tables.append(TableData(**table))
                 
                 return ChatResponse(
-                    response=result.get("response", "Analysis complete with structured data."),
-                    chart_type=result.get("chart_type", "bar"),
-                    chart_data=result.get("chart_data", {"data": []}),
-                    summary_points=result.get("summary_points", ["Analysis complete with real market data"])
+                    response=result.get("response", "Enhanced analysis complete."),
+                    charts=charts,
+                    tables=tables,
+                    summary_points=result.get("summary_points", [])
                 )
                 
-            except (json.JSONDecodeError, AttributeError) as e:
-                logger.error(f"JSON parsing failed: {e}. Raw response: {response_text[:500]}")
-                
-                # Create structured response manually using the data
-                return await self.create_manual_response(user_query, structured_data)
+            except (json.JSONDecodeError, AttributeError, Exception) as e:
+                logger.error(f"Enhanced JSON parsing failed: {e}")
+                return await self.create_enhanced_manual_response(user_query, structured_data)
                 
         except Exception as e:
-            logger.error(f"Error in enhanced OpenAI analysis: {e}")
-            return await self.create_manual_response(user_query, structured_data)
+            logger.error(f"Error in enhanced analysis: {e}")
+            return await self.create_enhanced_manual_response(user_query, structured_data)
 
     async def create_manual_response(self, user_query: str, structured_data: dict) -> ChatResponse:
         """Create a structured response manually when OpenAI parsing fails"""
