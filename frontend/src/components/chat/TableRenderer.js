@@ -1,11 +1,26 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 
 const TableRenderer = ({ data, title, description }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
   
   const itemsPerPage = 10;
+
+  // Simulate loading effect
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1200); // 1.2 second loading effect
+
+    return () => clearTimeout(loadingTimer);
+  }, [data]);
+
+  // Reset loading when data changes
+  useEffect(() => {
+    setIsLoading(true);
+  }, [data]);
 
   if (!data || !data.headers || !data.rows) {
     return (
@@ -16,6 +31,39 @@ const TableRenderer = ({ data, title, description }) => {
   }
 
   const { headers, rows } = data;
+
+  // Loading component
+  const LoadingTable = () => (
+    <div className="w-full">
+      <div className="animate-pulse space-y-4">
+        <div className="h-4 bg-slate-200 rounded w-3/4"></div>
+        <div className="border border-slate-200 rounded-lg overflow-hidden">
+          <div className="bg-slate-50 p-4 border-b">
+            <div className="grid grid-cols-4 gap-4">
+              {[1, 2, 3, 4].map(i => (
+                <div key={i} className="h-3 bg-slate-200 rounded"></div>
+              ))}
+            </div>
+          </div>
+          {[1, 2, 3, 4, 5].map(row => (
+            <div key={row} className="p-4 border-b border-slate-100">
+              <div className="grid grid-cols-4 gap-4">
+                {[1, 2, 3, 4].map(col => (
+                  <div key={col} className="h-3 bg-slate-100 rounded"></div>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="text-center mt-4">
+        <div className="inline-flex items-center text-slate-600 text-sm">
+          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-600 mr-2"></div>
+          Loading table data...
+        </div>
+      </div>
+    </div>
+  );
 
   // Sorting logic
   const sortedRows = useMemo(() => {
@@ -109,6 +157,10 @@ const TableRenderer = ({ data, title, description }) => {
       </svg>
     );
   };
+
+  if (isLoading) {
+    return <LoadingTable />;
+  }
 
   return (
     <div className="w-full">
