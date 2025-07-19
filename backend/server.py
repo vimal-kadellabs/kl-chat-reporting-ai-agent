@@ -824,6 +824,126 @@ You MUST respond with ONLY this JSON structure:
             summary_points=["Partial data analysis available", "System encountered processing limitations"]
         )
 
+    def is_domain_relevant(self, user_query: str) -> bool:
+        """Check if the query is relevant to real estate auction analytics domain"""
+        query_lower = user_query.lower()
+        
+        # Real estate and auction related keywords
+        domain_keywords = [
+            # Real Estate terms
+            'property', 'properties', 'real estate', 'auction', 'auctions', 'bid', 'bids', 'bidding',
+            'investor', 'investors', 'investment', 'market', 'price', 'pricing', 'value', 'valuation',
+            'residential', 'commercial', 'industrial', 'land', 'building', 'house', 'condo', 'apartment',
+            'sale', 'sales', 'sold', 'listing', 'listings', 'reserve', 'winning', 'won', 'lost',
+            
+            # Location terms (when used in real estate context)
+            'region', 'regional', 'city', 'cities', 'county', 'counties', 'state', 'area', 'location',
+            'market', 'markets', 'local', 'metropolitan', 'urban', 'suburban',
+            
+            # Analysis terms (when used with real estate)
+            'analysis', 'analytics', 'report', 'summary', 'overview', 'insight', 'insights', 'trend', 'trends',
+            'performance', 'activity', 'volume', 'statistics', 'data', 'metrics',
+            
+            # Auction specific terms
+            'hammer', 'gavel', 'reserve price', 'starting bid', 'increment', 'lot', 'lots',
+            'foreclosure', 'distressed', 'liquidation', 'estate sale',
+            
+            # Financial terms in real estate context
+            'portfolio', 'roi', 'return', 'profit', 'loss', 'revenue', 'income', 'cash flow',
+            'mortgage', 'financing', 'loan', 'appraisal', 'assessment',
+            
+            # Time-related terms for analysis
+            'monthly', 'quarterly', 'yearly', 'last month', 'this month', 'recent', 'historical'
+        ]
+        
+        # Non-domain keywords that clearly indicate irrelevant topics
+        irrelevant_keywords = [
+            # Weather
+            'weather', 'temperature', 'rain', 'sunny', 'cloudy', 'storm', 'forecast', 'climate',
+            
+            # Food & Cooking
+            'food', 'recipe', 'cooking', 'restaurant', 'eat', 'meal', 'lunch', 'dinner', 'breakfast',
+            'pizza', 'burger', 'pasta', 'cuisine', 'chef', 'kitchen',
+            
+            # Sports
+            'football', 'basketball', 'baseball', 'soccer', 'tennis', 'golf', 'hockey', 'sport', 'sports',
+            'game', 'team', 'player', 'score', 'championship', 'league', 'tournament',
+            
+            # Entertainment
+            'movie', 'film', 'actor', 'actress', 'music', 'song', 'album', 'concert', 'tv', 'television',
+            'netflix', 'youtube', 'streaming', 'video', 'game', 'gaming',
+            
+            # Health & Medicine
+            'doctor', 'hospital', 'medicine', 'health', 'disease', 'symptom', 'treatment', 'therapy',
+            'medication', 'surgery', 'illness', 'pain',
+            
+            # Technology (unless related to real estate)
+            'programming', 'coding', 'software', 'hardware', 'computer', 'laptop', 'phone', 'smartphone',
+            'app', 'website', 'internet', 'wifi', 'bluetooth',
+            
+            # Travel
+            'travel', 'vacation', 'hotel', 'flight', 'airport', 'passport', 'tourism', 'holiday',
+            
+            # General non-domain topics
+            'love', 'relationship', 'dating', 'marriage', 'family', 'friendship', 'hobby', 'book', 'reading',
+            'art', 'painting', 'music', 'dance', 'fashion', 'clothing', 'car', 'automobile', 'driving'
+        ]
+        
+        # Check for irrelevant keywords first
+        for keyword in irrelevant_keywords:
+            if keyword in query_lower:
+                return False
+        
+        # Check for domain relevant keywords
+        for keyword in domain_keywords:
+            if keyword in query_lower:
+                return True
+                
+        # Additional context checks
+        # Common real estate phrases
+        real_estate_phrases = [
+            'top investor', 'best bidder', 'highest bid', 'winning bid', 'property type',
+            'auction result', 'market trend', 'price analysis', 'regional market',
+            'investment performance', 'bidding strategy', 'property value',
+            'auction activity', 'market analysis', 'sales data'
+        ]
+        
+        for phrase in real_estate_phrases:
+            if phrase in query_lower:
+                return True
+        
+        # If query contains numbers and auction/property context, likely relevant
+        import re
+        if re.search(r'\d+', query_lower) and any(word in query_lower for word in ['top', 'list', 'show', 'find']):
+            return True
+            
+        # Default to False for unclear queries
+        return False
+
+    async def create_domain_irrelevant_response(self, user_query: str) -> ChatResponse:
+        """Create response for domain-irrelevant queries"""
+        response_text = "## Not My Area of Expertise\n\n"
+        response_text += "Sorry, I can only assist with **real estate auctions, properties, bids, and investor analytics**.\n\n"
+        response_text += "**I can help you with:**\n"
+        response_text += "- Investor performance and bidding analysis\n"
+        response_text += "- Property market trends and pricing\n"
+        response_text += "- Regional auction activity\n"
+        response_text += "- Bidding strategies and success rates\n"
+        response_text += "- Market insights and forecasts\n\n"
+        response_text += "Please ask me something related to real estate auctions or check the sample questions in the sidebar."
+        
+        return ChatResponse(
+            response=response_text,
+            charts=[],
+            tables=[],
+            summary_points=[
+                "I specialize only in real estate auction analytics",
+                "Try asking about investors, properties, bids, or market trends", 
+                "Check the sample questions for examples",
+                "I cannot help with topics outside real estate and auctions"
+            ]
+        )
+
     async def analyze_query(self, user_query: str) -> ChatResponse:
         """Main analysis method with enhanced data integration"""
         try:
