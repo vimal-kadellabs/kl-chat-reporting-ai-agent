@@ -222,7 +222,7 @@ const ChartRenderer = ({ data, type, title, description }) => {
         }));
 
         return (
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={320}>
             <PieChart>
               <Pie
                 data={pieData}
