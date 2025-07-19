@@ -283,6 +283,101 @@ class AnalyticsService:
             logger.error(f"Error fetching structured data: {e}")
             return {'error': str(e), 'data': {}}
 
+    async def get_last_month_winners_data(self, users: list, auctions: list, bids: list, entities: dict) -> dict:
+        """Get investors who won more than 2 properties in the last month"""
+        try:
+            from datetime import datetime, timedelta
+            
+            # Calculate last month date range
+            now = datetime.utcnow()
+            last_month_start = now - timedelta(days=60)
+            last_month_end = now - timedelta(days=30)
+            
+            logger.info(f"Analyzing winners from {last_month_start} to {last_month_end}")
+            
+            # Find ended auctions from last month
+            ended_auctions_last_month = []
+            for auction in auctions:
+                auction_end = auction['end_time']
+                if isinstance(auction_end, str):
+                    auction_end = datetime.fromisoformat(auction_end.replace('Z', '+00:00'))
+                
+                if (auction['status'] == 'ended' and 
+                    last_month_start <= auction_end <= last_month_end and
+                    auction.get('winner_id')):
+                    ended_auctions_last_month.append(auction)
+            
+            logger.info(f"Found {len(ended_auctions_last_month)} ended auctions with winners in last month")
+            
+            # Count wins per investor
+            investor_wins = {}
+            for auction in ended_auctions_last_month:
+                winner_id = auction['winner_id']
+                if winner_id not in investor_wins:
+                    investor_wins[winner_id] = {
+                        'investor_id': winner_id,
+                        'won_properties': [],
+                        'total_won': 0,
+                        'total_spent': 0
+                    }
+                
+                investor_wins[winner_id]['won_properties'].append({
+                    'auction_id': auction['id'],
+                    'property_id': auction['property_id'],
+                    'auction_title': auction['title'],
+                    'winning_bid': auction['current_highest_bid'],
+                    'auction_end_date': auction['end_time']
+                })
+                investor_wins[winner_id]['total_won'] += 1
+                investor_wins[winner_id]['total_spent'] += auction['current_highest_bid']
+            
+            # Filter investors who won more than 2 properties
+            qualified_investors = {k: v for k, v in investor_wins.items() if v['total_won'] > 2}
+            
+            logger.info(f"Found {len(qualified_investors)} investors who won more than 2 properties")
+            
+            # Enrich with user data
+            qualified_investors_enriched = []
+            for investor_id, win_data in qualified_investors.items():
+                user = next((u for u in users if u['id'] == investor_id), None)
+                if user:
+                    enriched_investor = {
+                        'investor_id': investor_id,
+                        'name': user['name'],
+                        'location': user['location'],
+                        'email': user['email'],
+                        'profile_verified': user['profile_verified'],
+                        'properties_won_last_month': win_data['total_won'],
+                        'total_spent_last_month': win_data['total_spent'],
+                        'average_winning_bid': win_data['total_spent'] / win_data['total_won'],
+                        'won_properties': win_data['won_properties'],
+                        'overall_success_rate': user['success_rate'],
+                        'total_career_wins': user['won_auctions']
+                    }
+                    qualified_investors_enriched.append(enriched_investor)
+            
+            # Sort by properties won (desc), then by total spent (desc)
+            qualified_investors_enriched.sort(key=lambda x: (-x['properties_won_last_month'], -x['total_spent_last_month']))
+            
+            return {
+                'qualified_winners': qualified_investors_enriched,
+                'query_period': {
+                    'start_date': last_month_start.isoformat(),
+                    'end_date': last_month_end.isoformat()
+                },
+                'summary_stats': {
+                    'total_ended_auctions_last_month': len(ended_auctions_last_month),
+                    'investors_with_wins': len(investor_wins),
+                    'investors_with_2plus_wins': len(qualified_investors),
+                    'total_properties_won': sum(v['total_won'] for v in qualified_investors.values()),
+                    'total_value_transacted': sum(v['total_spent'] for v in qualified_investors.values())
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in get_last_month_winners_data: {e}")
+            return {'error': str(e)}
+
     async def get_top_investors_data(self, users, bids, entities):
         """Get top investors with real bid data"""
         limit = entities['numbers'][0] if entities['numbers'] else 5
