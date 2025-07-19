@@ -113,9 +113,12 @@ class ChatMessage(BaseModel):
     user_id: str
     message: str
     response: Optional[str] = None
+    charts: Optional[List[Dict[str, Any]]] = None
+    tables: Optional[List[Dict[str, Any]]] = None
+    summary_points: Optional[List[str]] = None
+    # Keep backward compatibility
     chart_data: Optional[Dict[str, Any]] = None
     chart_type: Optional[str] = None
-    summary_points: Optional[List[str]] = None
     created_at: datetime = Field(default_factory=datetime.utcnow)
 
 class ChatQuery(BaseModel):
