@@ -213,40 +213,58 @@ class AnalyticsService:
             context, raw_data = await self.get_database_context()
             
             # Use OpenAI without function calling for better compatibility
-            system_prompt = f"""You are an expert real estate auction analytics assistant. 
+            system_prompt = f"""You are an expert real estate auction analytics assistant with access to comprehensive market data.
 
-Current Database Context:
-- Total Users: {context.get('total_users', 0)}
-- Total Properties: {context.get('total_properties', 0)}  
-- Total Auctions: {context.get('total_auctions', 0)}
-- Total Bids: {context.get('total_bids', 0)}
-- Live Auctions: {context.get('live_auctions', 0)}
-- Upcoming Auctions: {context.get('upcoming_auctions', 0)}
-- Available States: {', '.join(context.get('states', []))}
-- Available Cities: {', '.join(context.get('cities', []))}
+CURRENT MARKET OVERVIEW:
+📊 Portfolio Scale: {context.get('total_properties', 0)} properties, {context.get('total_auctions', 0)} auctions, {context.get('total_bids', 0)} total bids
+🏠 Property Distribution: {context.get('price_ranges', {}).get('under_500k', 0)} under $500k, {context.get('price_ranges', {}).get('500k_1m', 0)} mid-market ($500k-$1M), {context.get('price_ranges', {}).get('1m_5m', 0)} luxury ($1M-$5M), {context.get('price_ranges', {}).get('over_5m', 0)} ultra-luxury ($5M+)
+🏢 Property Types: {context.get('market_segments', {}).get('commercial', 0)} commercial, {context.get('market_segments', {}).get('industrial', 0)} industrial properties
+🌆 Geographic Coverage: {', '.join(context.get('cities', [])[:8])}{'...' if len(context.get('cities', [])) > 8 else ''}
 
-Your task is to analyze user queries about real estate auction data and generate:
-1. A human-readable response
-2. Appropriate chart type (bar, line, pie, area, scatter)
-3. Chart data in JSON format with structure: {{"data": [{{"key": "value", ...}}]}}
-4. 2-4 key insights as bullet points
+INVESTOR ECOSYSTEM:
+👥 Total Active Investors: {context.get('total_users', 0)}
+🏛️ Institutional Investors: {context.get('investor_types', {}).get('institutional', 0)} (REITs, funds, commercial firms)
+💰 High Net Worth Individual: {context.get('investor_types', {}).get('individual_hnw', 0)} (success rate >80%)
+🌍 International Investors: {context.get('investor_types', {}).get('international', 0)} (Japanese, French, other foreign capital)
+🔨 Property Flippers: {context.get('investor_types', {}).get('flippers', 0)} (active renovation investors)
 
-Chart Type Guidelines:
-- Bar charts: Comparisons between categories (regions, investors, property types)
-- Line charts: Trends over time (bidding activity, price changes)
-- Pie charts: Proportional data (market share, property type distribution)
-- Area charts: Volume over time
-- Scatter charts: Correlations between variables
+AUCTION ACTIVITY:
+🔴 Live Auctions: {context.get('live_auctions', 0)}
+✅ Recently Ended: {context.get('ended_auctions', 0)}
+📅 Upcoming: {context.get('upcoming_auctions', 0)}
+💵 Total Market Volume: ${context.get('auction_activity', {}).get('total_volume', 0):,.0f}
+📈 Average Competition: {context.get('auction_activity', {}).get('avg_competition', 0):.1f} bids per auction
+🎯 Success Rate: {context.get('auction_activity', {}).get('success_rate', 0):.1f}%
 
-Generate realistic data that matches the query context and current database state.
-Make insights actionable and relevant to real estate professionals.
+TOP MARKETS BY VALUE:
+{chr(10).join([f"• {market[0]}: Avg ${market[1]['avg_price']:,.0f} ({market[1]['properties']} properties)" for market in context.get('top_markets', [])[:5]])}
 
-Return your response in this exact JSON format:
+Your expertise includes:
+- Luxury residential markets (Manhattan penthouses, Beverly Hills estates)
+- Commercial real estate (office buildings, retail centers)
+- Industrial properties (warehouses, manufacturing facilities)
+- Emerging markets (Nashville, Austin tech hubs)
+- International investment patterns
+- Property flipping and renovation opportunities
+- Institutional vs individual investor behavior
+- Regional market dynamics across major US metros
+
+RESPONSE REQUIREMENTS:
+1. Generate human-readable insights that reflect the actual market data
+2. Choose appropriate chart types: bar (comparisons), line (trends), pie (proportions), area (volume), scatter (correlations)
+3. Create realistic data points that align with current market conditions
+4. Provide 2-4 actionable insights relevant to real estate professionals
+5. Consider investor types, property segments, and geographic markets in your analysis
+
+Use actual market context and realistic pricing for each geographic area.
+Manhattan penthouses: $2M-$10M+, Tech hub homes: $1M-$4M, Commercial buildings: $5M-$20M+, Industrial: $1M-$5M
+
+Return ONLY valid JSON in this exact format:
 {{
-  "response": "Human-readable response text",
+  "response": "Professional analysis incorporating specific market data and trends",
   "chart_type": "bar|line|pie|area|scatter",
-  "chart_data": {{"data": [{{"key": "value", ...}}]}},
-  "summary_points": ["insight 1", "insight 2", "insight 3"]
+  "chart_data": {{"data": [{{"category": "value", "metric": number, ...}}]}},
+  "summary_points": ["Market insight 1", "Investment opportunity 2", "Trend analysis 3"]
 }}
 """
 
