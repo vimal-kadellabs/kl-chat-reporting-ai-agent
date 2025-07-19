@@ -143,12 +143,12 @@ class AnalyticsService:
         
         intent_patterns = {
             'top_bidders': ['top bidder', 'highest bidder', 'most active investor', 'biggest investor', 'leading bidder'],
-            'top_investors': ['top investor', 'best investor', 'successful investor', 'winning investor', 'investor ranking'],
+            'top_investors': ['top investor', 'best investor', 'successful investor', 'winning investor', 'investor ranking', 'top 5 investor', 'top 3 investor', 'top 10 investor', 'investors by bid amount', 'investors by total bid'],
             'auction_summary': ['auction summary', 'auction overview', 'auction status', 'auction report'],
             'property_analysis': ['property performance', 'property trend', 'property comparison', 'property market'],
             'bidding_trends': ['bidding trend', 'bid pattern', 'bidding activity', 'bid volume', 'bidding behavior'],
-            'regional_analysis': ['region', 'city', 'location', 'geographic', 'area', 'market'],
-            'price_analysis': ['price', 'value', 'amount', 'cost', 'reserve price', 'winning bid'],
+            'regional_analysis': ['region', 'city', 'location', 'geographic', 'area', 'market', 'regional analysis'],
+            'price_analysis': ['reserve price', 'winning bid', 'price trend', 'price comparison', 'price vs'],
             'time_analysis': ['trend over time', 'monthly', 'daily', 'weekly', 'time series', 'period'],
             'comparison': ['compare', 'vs', 'versus', 'difference between', 'contrast'],
             'live_auctions': ['live auction', 'active auction', 'current auction', 'ongoing auction'],
