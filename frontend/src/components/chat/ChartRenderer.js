@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import {
   BarChart,
   Bar,
@@ -15,45 +15,90 @@ import {
   Cell
 } from 'recharts';
 
-const COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
+// Professional color palette
+const COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#84cc16'];
 
-const ChartRenderer = ({ data, type }) => {
+const ChartRenderer = ({ data, type, title, description }) => {
+  const [isDownloading, setIsDownloading] = useState(false);
+
   // Enhanced error handling
   if (!data) {
     return <div className="text-center py-8 text-gray-500">No chart data provided</div>;
   }
   
-  if (!data.data) {
+  if (!data.data && !Array.isArray(data)) {
     return <div className="text-center py-8 text-gray-500">No data available</div>;
   }
   
-  if (!Array.isArray(data.data)) {
+  // Support both old format (data.data) and new format (direct array)
+  const chartData = Array.isArray(data) ? data : data.data;
+  
+  if (!Array.isArray(chartData)) {
     return <div className="text-center py-8 text-gray-500">Invalid data format</div>;
   }
   
-  if (data.data.length === 0) {
+  if (chartData.length === 0) {
     return <div className="text-center py-8 text-gray-500">No data points available</div>;
   }
 
-  const chartData = data.data;
+  const downloadChart = async () => {
+    setIsDownloading(true);
+    try {
+      // Create a downloadable JSON file
+      const jsonData = {
+        title: title || 'Chart Data',
+        type: type,
+        data: chartData,
+        generated: new Date().toISOString()
+      };
+      
+      const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
+        type: 'application/json'
+      });
+      
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${(title || 'chart-data').replace(/\s+/g, '-').toLowerCase()}.json`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Download failed:', error);
+    } finally {
+      setIsDownloading(false);
+    }
+  };
 
   const renderChart = () => {
     switch (type) {
       case 'bar':
         return (
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis 
                 dataKey={Object.keys(chartData[0] || {})[0] || 'name'} 
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: '#64748b' }}
+                tickLine={{ stroke: '#cbd5e1' }}
               />
-              <YAxis tick={{ fontSize: 12 }} />
+              <YAxis 
+                tick={{ fontSize: 12, fill: '#64748b' }}
+                tickLine={{ stroke: '#cbd5e1' }}
+                axisLine={{ stroke: '#cbd5e1' }}
+              />
               <Tooltip 
                 formatter={(value, name) => [
                   typeof value === 'number' ? value.toLocaleString() : value,
                   name
                 ]}
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
               />
               <Legend />
               {Object.keys(chartData[0] || {}).slice(1).map((key, index) => (
@@ -61,7 +106,8 @@ const ChartRenderer = ({ data, type }) => {
                   key={key} 
                   dataKey={key} 
                   fill={COLORS[index % COLORS.length]}
-                  name={key.charAt(0).toUpperCase() + key.slice(1)}
+                  name={key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}
+                  radius={[2, 2, 0, 0]}
                 />
               ))}
             </BarChart>
@@ -71,18 +117,29 @@ const ChartRenderer = ({ data, type }) => {
       case 'line':
         return (
           <ResponsiveContainer width="100%" height={400}>
-            <LineChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <LineChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis 
                 dataKey={Object.keys(chartData[0] || {})[0] || 'name'} 
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: '#64748b' }}
+                tickLine={{ stroke: '#cbd5e1' }}
               />
-              <YAxis tick={{ fontSize: 12 }} />
+              <YAxis 
+                tick={{ fontSize: 12, fill: '#64748b' }}
+                tickLine={{ stroke: '#cbd5e1' }}
+                axisLine={{ stroke: '#cbd5e1' }}
+              />
               <Tooltip 
                 formatter={(value, name) => [
                   typeof value === 'number' ? value.toLocaleString() : value,
                   name
                 ]}
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
               />
               <Legend />
               {Object.keys(chartData[0] || {}).slice(1).map((key, index) => (
@@ -91,8 +148,9 @@ const ChartRenderer = ({ data, type }) => {
                   type="monotone" 
                   dataKey={key} 
                   stroke={COLORS[index % COLORS.length]}
-                  strokeWidth={2}
-                  name={key.charAt(0).toUpperCase() + key.slice(1)}
+                  strokeWidth={3}
+                  dot={{ fill: COLORS[index % COLORS.length], strokeWidth: 2, r: 4 }}
+                  name={key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}
                 />
               ))}
             </LineChart>
@@ -100,9 +158,10 @@ const ChartRenderer = ({ data, type }) => {
         );
 
       case 'pie':
+      case 'donut':
         const pieData = chartData.map((item, index) => ({
-          name: item[Object.keys(item || {})[0]] || 'Unknown',
-          value: item[Object.keys(item || {})[1]] || 0,
+          name: item[Object.keys(item || {})[0]] || item.name || 'Unknown',
+          value: item[Object.keys(item || {})[1]] || item.value || 0,
           color: COLORS[index % COLORS.length]
         }));
 
@@ -115,7 +174,8 @@ const ChartRenderer = ({ data, type }) => {
                 cy="50%"
                 labelLine={false}
                 label={({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`}
-                outerRadius={120}
+                outerRadius={type === 'donut' ? 120 : 120}
+                innerRadius={type === 'donut' ? 60 : 0}
                 fill="#8884d8"
                 dataKey="value"
               >
@@ -123,7 +183,15 @@ const ChartRenderer = ({ data, type }) => {
                   <Cell key={`cell-${index}`} fill={entry.color} />
                 ))}
               </Pie>
-              <Tooltip formatter={(value) => value.toLocaleString()} />
+              <Tooltip 
+                formatter={(value) => [value.toLocaleString(), 'Value']}
+                contentStyle={{
+                  backgroundColor: '#ffffff',
+                  border: '1px solid #e2e8f0',
+                  borderRadius: '8px',
+                  boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)'
+                }}
+              />
             </PieChart>
           </ResponsiveContainer>
         );
@@ -134,13 +202,13 @@ const ChartRenderer = ({ data, type }) => {
       default:
         return (
           <ResponsiveContainer width="100%" height={400}>
-            <BarChart data={chartData}>
-              <CartesianGrid strokeDasharray="3 3" />
+            <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
+              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis 
                 dataKey={Object.keys(chartData[0] || {})[0] || 'name'} 
-                tick={{ fontSize: 12 }}
+                tick={{ fontSize: 12, fill: '#64748b' }}
               />
-              <YAxis tick={{ fontSize: 12 }} />
+              <YAxis tick={{ fontSize: 12, fill: '#64748b' }} />
               <Tooltip 
                 formatter={(value, name) => [
                   typeof value === 'number' ? value.toLocaleString() : value,
@@ -153,7 +221,8 @@ const ChartRenderer = ({ data, type }) => {
                   key={key} 
                   dataKey={key} 
                   fill={COLORS[index % COLORS.length]}
-                  name={key.charAt(0).toUpperCase() + key.slice(1)}
+                  name={key.charAt(0).toUpperCase() + key.slice(1).replace(/_/g, ' ')}
+                  radius={[2, 2, 0, 0]}
                 />
               ))}
             </BarChart>
@@ -164,6 +233,30 @@ const ChartRenderer = ({ data, type }) => {
 
   return (
     <div className="w-full">
+      {/* Header with title and download button */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="flex-1">
+          {title && (
+            <h4 className="font-semibold text-slate-800 text-base mb-1">{title}</h4>
+          )}
+          {description && (
+            <p className="text-sm text-slate-600">{description}</p>
+          )}
+        </div>
+        <button
+          onClick={downloadChart}
+          disabled={isDownloading}
+          className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-lg transition-colors duration-200 disabled:opacity-50"
+          title="Download chart data"
+        >
+          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+          </svg>
+          <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
+        </button>
+      </div>
+      
+      {/* Chart */}
       {renderChart()}
     </div>
   );
