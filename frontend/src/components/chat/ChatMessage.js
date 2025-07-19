@@ -3,31 +3,24 @@ import ChartRenderer from './ChartRenderer';
 
 const ChatMessage = ({ message }) => {
   const isUser = message.type === 'user';
-  
+
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} fade-in`}>
       <div className={`max-w-4xl w-full ${isUser ? 'text-right' : 'text-left'}`}>
         {/* Message Bubble */}
-        <div className="flex items-start space-x-3 mb-3">
-          {!isUser && (
-            <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-              <span className="text-white text-sm">🤖</span>
+        {isUser && (
+          <div className="flex items-start space-x-3 mb-3">
+            <div className="flex-1 flex justify-end">
+              <div className="chat-bubble-user">
+                <p className="leading-relaxed">{message.content}</p>
+              </div>
             </div>
-          )}
-          <div className={`flex-1 ${isUser ? 'flex justify-end' : ''}`}>
-            <div className={isUser ? 'chat-bubble-user' : 'chat-bubble-bot'}>
-              <p className="leading-relaxed">{message.content}</p>
+            <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+              <span className="text-slate-600 text-sm font-medium">U</span>
             </div>
           </div>
-          {isUser && (
-            <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-              <span className="text-slate-600 text-sm font-medium">
-                U
-              </span>
-            </div>
-          )}
-        </div>
-        
+        )}
+
         {/* Summary Points for Bot Messages */}
         {!isUser && message.summaryPoints && message.summaryPoints.length > 0 && (
           <div className="ml-11 mb-4">
@@ -51,7 +44,7 @@ const ChatMessage = ({ message }) => {
             </div>
           </div>
         )}
-        
+
         {/* Chart for Bot Messages */}
         {!isUser && message.chartData && message.chartType && (
           <div className="ml-11 mb-4">
@@ -71,22 +64,21 @@ const ChatMessage = ({ message }) => {
                 </div>
               </div>
               <div className="p-4">
-                <ChartRenderer 
-                  data={message.chartData} 
+                <ChartRenderer
+                  data={message.chartData}
                   type={message.chartType}
                 />
               </div>
             </div>
           </div>
         )}
-        
+
         {/* Timestamp */}
-        <div className={`text-xs text-slate-400 mt-1 ${
-          isUser ? 'text-right mr-11' : 'text-left ml-11'
-        }`}>
-          {message.timestamp.toLocaleTimeString([], { 
-            hour: '2-digit', 
-            minute: '2-digit' 
+        <div className={`text-xs text-slate-400 mt-1 ${isUser ? 'text-right mr-11' : 'text-left ml-11'
+          }`}>
+          {message.timestamp.toLocaleTimeString([], {
+            hour: '2-digit',
+            minute: '2-digit'
           })}
         </div>
       </div>

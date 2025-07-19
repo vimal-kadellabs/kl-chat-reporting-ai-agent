@@ -116,14 +116,14 @@ const ChatInterface = () => {
             {/* Center: Title */}
             <div className="flex-1 text-center">
               <div className="flex items-center justify-center space-x-3">
-                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                {/* <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
                   <span className="text-white text-lg">🤖</span>
-                </div>
+                </div> */}
                 <div>
                   <h1 className="text-xl font-bold text-gradient">
-                    AI Analytics Agent
+                    Chat Reporting and Analytics Agent
                   </h1>
-                  <p className="text-xs text-slate-500">Ask anything about real estate auctions</p>
+                  <p className="text-xs text-slate-500">Ask anything about real estate & auctions</p>
                 </div>
               </div>
             </div>
@@ -170,7 +170,7 @@ const ChatInterface = () => {
           <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {messages.length === 0 ? (
               <div className="text-center py-16 fade-in">
-                <div className="w-20 h-20 bg-gradient-cool rounded-full flex items-center justify-center mx-auto mb-6">
+                {/* <div className="w-20 h-20 bg-gradient-cool rounded-full flex items-center justify-center mx-auto mb-6">
                   <span className="text-3xl">👋</span>
                 </div>
                 <h2 className="text-2xl font-bold text-slate-800 mb-3">
@@ -178,7 +178,7 @@ const ChatInterface = () => {
                 </h2>
                 <p className="text-lg text-slate-600 mb-6 max-w-md mx-auto">
                   Ask me anything about real estate auctions, bidding trends, or investor insights.
-                </p>
+                </p> */}
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
                   <div className="modern-card p-4">
                     <div className="text-2xl mb-2">📊</div>
