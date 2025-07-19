@@ -761,68 +761,24 @@ You MUST respond with ONLY this JSON structure:
             ]
         )
     
-    async def create_fallback_response(self, user_query: str) -> ChatResponse:
-        """Create a comprehensive fallback response when no specific data is available"""
-        response_text = "## 📈 Real Estate Market Analysis\n\n"
-        response_text += "**I don't have specific data for this query, but here's what I can provide:**\n\n"
-        response_text += "Based on general market trends and available platform data, "
-        response_text += "the real estate auction market shows consistent activity across different sectors.\n\n"
-        response_text += "**Market Insights:**\n"
-        response_text += "- Residential properties continue to dominate auction volume\n"
-        response_text += "- Commercial real estate shows steady institutional interest\n"
-        response_text += "- Regional variations reflect local economic conditions\n"
-        
-        # Fallback Chart 1: Sample market trends
-        chart1 = ChartData(
-            data=[
-                {"month": "Jan", "volume": 45, "value": 2100000},
-                {"month": "Feb", "volume": 52, "value": 2450000},
-                {"month": "Mar", "volume": 48, "value": 2280000},
-                {"month": "Apr", "volume": 61, "value": 2890000},
-                {"month": "May", "volume": 58, "value": 2750000},
-                {"month": "Jun", "volume": 67, "value": 3200000}
-            ],
-            type="line",
-            title="Sample Market Trend Analysis",
-            description="Illustrative auction volume and value trends (sample data)"
-        )
-        
-        # Fallback Chart 2: Property type distribution
-        chart2 = ChartData(
-            data=[
-                {"type": "Residential", "percentage": 65},
-                {"type": "Commercial", "percentage": 22},
-                {"type": "Industrial", "percentage": 8},
-                {"type": "Land", "percentage": 5}
-            ],
-            type="donut",
-            title="Typical Property Distribution",
-            description="Standard market share by property type (industry average)"
-        )
-        
-        # Fallback Table: Sample market data
-        table = TableData(
-            headers=["Region", "Avg Price", "Volume", "Growth", "Market Health"],
-            rows=[
-                ["West Coast", "$2,250,000", "High", "+15%", "Strong"],
-                ["East Coast", "$1,890,000", "High", "+12%", "Strong"], 
-                ["Southwest", "$1,650,000", "Medium", "+8%", "Stable"],
-                ["Midwest", "$1,200,000", "Medium", "+5%", "Stable"],
-                ["Southeast", "$1,450,000", "Medium", "+10%", "Growing"]
-            ],
-            title="Regional Market Overview (Sample Data)",
-            description="Representative regional performance metrics"
-        )
+    async def create_no_data_response(self, user_query: str) -> ChatResponse:
+        """Create a response when no relevant data is available"""
+        response_text = "## No Relevant Data Found\n\n"
+        response_text += "Sorry, we couldn't find any relevant records for this query. Try rephrasing your query or using different search terms.\n\n"
+        response_text += "**Suggestions:**\n"
+        response_text += "- Try asking about general topics like 'top investors' or 'regional analysis'\n"
+        response_text += "- Use broader time periods or geographic regions\n"
+        response_text += "- Check the sample questions in the sidebar for examples\n"
         
         return ChatResponse(
             response=response_text,
-            charts=[chart1, chart2],
-            tables=[table],
+            charts=[],
+            tables=[],
             summary_points=[
-                "This response uses sample data as specific information wasn't available",
-                "Try asking about specific investors, regions, or time periods",
-                "Our platform contains comprehensive data for detailed analysis",
-                "Refine your query for more targeted insights"
+                "No matching data found in our database",
+                "Try using different search terms or time periods", 
+                "Check if the requested information exists in our current dataset",
+                "Browse sample questions for inspiration"
             ]
         )
 
