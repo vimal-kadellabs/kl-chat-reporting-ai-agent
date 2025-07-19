@@ -132,139 +132,348 @@ class LoginRequest(BaseModel):
     email: str
     password: str
 
-# OpenAI-powered analytics service
+# OpenAI-powered analytics service with enhanced data integration
 class AnalyticsService:
     def __init__(self):
         self.client = openai_client
         
-    async def get_database_context(self):
-        """Get current database statistics for context"""
+    async def parse_intent(self, user_query: str) -> dict:
+        """Parse user intent to determine what data to fetch"""
+        query_lower = user_query.lower()
+        
+        intent_patterns = {
+            'top_bidders': ['top bidder', 'highest bidder', 'most active investor', 'biggest investor', 'leading bidder'],
+            'top_investors': ['top investor', 'best investor', 'successful investor', 'winning investor', 'investor ranking'],
+            'auction_summary': ['auction summary', 'auction overview', 'auction status', 'auction report'],
+            'property_analysis': ['property performance', 'property trend', 'property comparison', 'property market'],
+            'bidding_trends': ['bidding trend', 'bid pattern', 'bidding activity', 'bid volume', 'bidding behavior'],
+            'regional_analysis': ['region', 'city', 'location', 'geographic', 'area', 'market'],
+            'price_analysis': ['price', 'value', 'amount', 'cost', 'reserve price', 'winning bid'],
+            'time_analysis': ['trend over time', 'monthly', 'daily', 'weekly', 'time series', 'period'],
+            'comparison': ['compare', 'vs', 'versus', 'difference between', 'contrast'],
+            'live_auctions': ['live auction', 'active auction', 'current auction', 'ongoing auction'],
+            'upcoming_auctions': ['upcoming auction', 'scheduled auction', 'future auction', 'next auction'],
+            'completed_auctions': ['completed auction', 'finished auction', 'ended auction', 'past auction']
+        }
+        
+        detected_intents = []
+        for intent, patterns in intent_patterns.items():
+            if any(pattern in query_lower for pattern in patterns):
+                detected_intents.append(intent)
+        
+        # Default to general analysis if no specific intent detected
+        if not detected_intents:
+            detected_intents = ['general_analysis']
+            
+        return {
+            'primary_intent': detected_intents[0] if detected_intents else 'general_analysis',
+            'all_intents': detected_intents,
+            'entities': self.extract_entities(user_query)
+        }
+    
+    def extract_entities(self, user_query: str) -> dict:
+        """Extract specific entities like time periods, locations, property types"""
+        query_lower = user_query.lower()
+        entities = {
+            'time_period': [],
+            'locations': [],
+            'property_types': [],
+            'numbers': []
+        }
+        
+        # Time periods
+        time_patterns = ['last month', 'this month', 'last week', 'this week', 'last year', 'past 30 days', 'past week']
+        for pattern in time_patterns:
+            if pattern in query_lower:
+                entities['time_period'].append(pattern)
+        
+        # Locations
+        location_patterns = ['california', 'new york', 'texas', 'florida', 'chicago', 'los angeles', 'san francisco', 'miami', 'boston', 'seattle']
+        for pattern in location_patterns:
+            if pattern in query_lower:
+                entities['locations'].append(pattern.title())
+        
+        # Property types
+        property_patterns = ['residential', 'commercial', 'industrial', 'land', 'condo', 'house', 'building']
+        for pattern in property_patterns:
+            if pattern in query_lower:
+                entities['property_types'].append(pattern)
+        
+        # Numbers (top N queries)
+        import re
+        numbers = re.findall(r'\b(?:top|first|best)\s+(\d+)\b', query_lower)
+        if numbers:
+            entities['numbers'] = [int(num) for num in numbers]
+        
+        return entities
+
+    async def fetch_structured_data(self, intent_info: dict) -> dict:
+        """Fetch relevant structured data based on parsed intent"""
         try:
+            primary_intent = intent_info['primary_intent']
+            entities = intent_info['entities']
+            
+            structured_data = {
+                'intent': primary_intent,
+                'data': {},
+                'summary': {},
+                'raw_counts': {}
+            }
+            
+            # Get base collections
             users = await db.users.find().to_list(100)
             properties = await db.properties.find().to_list(100)
             auctions = await db.auctions.find().to_list(100)
             bids = await db.bids.find().to_list(100)
             
-            # Rich contextual analysis
-            investor_types = {
-                "individual_hnw": len([u for u in users if "@email.com" in u['email'] and u['success_rate'] > 80]),
-                "institutional": len([u for u in users if any(domain in u['email'] for domain in ['@blackrock.com', '@vanguard.com', '@cbre.com', '@cushman.com'])]),
-                "reits_funds": len([u for u in users if any(keyword in u['name'].lower() for keyword in ['reit', 'fund', 'equity'])]),
-                "international": len([u for u in users if any(domain in u['email'] for domain in ['.jp', '.fr', '@invest'])]),
-                "flippers": len([u for u in users if 50 < u['success_rate'] < 80 and u['total_bids'] > 20])
+            structured_data['raw_counts'] = {
+                'total_users': len(users),
+                'total_properties': len(properties),
+                'total_auctions': len(auctions),
+                'total_bids': len(bids)
             }
             
-            market_segments = {
-                "luxury": len([p for p in properties if p['reserve_price'] > 2000000]),
-                "mid_market": len([p for p in properties if 500000 <= p['reserve_price'] <= 2000000]),
-                "affordable": len([p for p in properties if p['reserve_price'] < 500000]),
-                "commercial": len([p for p in properties if p['property_type'] == 'commercial']),
-                "industrial": len([p for p in properties if p['property_type'] == 'industrial'])
-            }
+            # Process based on intent
+            if primary_intent in ['top_bidders', 'top_investors']:
+                structured_data['data'] = await self.get_top_investors_data(users, bids, entities)
+                
+            elif primary_intent == 'auction_summary':
+                structured_data['data'] = await self.get_auction_summary_data(auctions, properties, bids, entities)
+                
+            elif primary_intent == 'property_analysis':
+                structured_data['data'] = await self.get_property_analysis_data(properties, auctions, bids, entities)
+                
+            elif primary_intent == 'bidding_trends':
+                structured_data['data'] = await self.get_bidding_trends_data(bids, auctions, entities)
+                
+            elif primary_intent == 'regional_analysis':
+                structured_data['data'] = await self.get_regional_analysis_data(properties, auctions, bids, entities)
+                
+            elif primary_intent == 'price_analysis':
+                structured_data['data'] = await self.get_price_analysis_data(properties, auctions, bids, entities)
+                
+            elif primary_intent in ['live_auctions', 'upcoming_auctions', 'completed_auctions']:
+                structured_data['data'] = await self.get_auction_status_data(auctions, properties, bids, primary_intent)
+                
+            else:  # general_analysis
+                structured_data['data'] = await self.get_general_analysis_data(users, properties, auctions, bids)
             
-            geographic_markets = {}
-            for prop in properties:
-                city = prop['city']
-                if city not in geographic_markets:
-                    geographic_markets[city] = {'properties': 0, 'avg_price': 0, 'total_value': 0}
-                geographic_markets[city]['properties'] += 1
-                geographic_markets[city]['total_value'] += prop['reserve_price']
+            return structured_data
             
-            for city in geographic_markets:
-                geographic_markets[city]['avg_price'] = geographic_markets[city]['total_value'] / geographic_markets[city]['properties']
-            
-            auction_activity = {
-                "total_volume": sum([a['current_highest_bid'] for a in auctions if a['current_highest_bid'] > 0]),
-                "avg_competition": sum([a['total_bids'] for a in auctions]) / len(auctions) if auctions else 0,
-                "success_rate": len([a for a in auctions if a['status'] == 'ended' and a.get('winner_id')]) / len([a for a in auctions if a['status'] == 'ended']) * 100 if auctions else 0
-            }
-            
-            context = {
-                "total_users": len(users),
-                "total_properties": len(properties),
-                "total_auctions": len(auctions),
-                "total_bids": len(bids),
-                "live_auctions": len([a for a in auctions if a['status'] == 'live']),
-                "ended_auctions": len([a for a in auctions if a['status'] == 'ended']),
-                "upcoming_auctions": len([a for a in auctions if a['status'] == 'upcoming']),
-                "property_types": list(set([p['property_type'] for p in properties])),
-                "states": list(set([p['state'] for p in properties])),
-                "cities": list(set([p['city'] for p in properties])),
-                "investor_types": investor_types,
-                "market_segments": market_segments,
-                "geographic_markets": geographic_markets,
-                "auction_activity": auction_activity,
-                "top_markets": sorted(geographic_markets.items(), key=lambda x: x[1]['avg_price'], reverse=True)[:5],
-                "price_ranges": {
-                    "under_500k": len([p for p in properties if p['reserve_price'] < 500000]),
-                    "500k_1m": len([p for p in properties if 500000 <= p['reserve_price'] < 1000000]),
-                    "1m_5m": len([p for p in properties if 1000000 <= p['reserve_price'] < 5000000]),
-                    "over_5m": len([p for p in properties if p['reserve_price'] >= 5000000])
-                }
-            }
-            return context, {"users": users, "properties": properties, "auctions": auctions, "bids": bids}
         except Exception as e:
-            logger.error(f"Error getting database context: {e}")
-            return {}, {"users": [], "properties": [], "auctions": [], "bids": []}
+            logger.error(f"Error fetching structured data: {e}")
+            return {'error': str(e), 'data': {}}
 
-    async def analyze_query(self, user_query: str) -> ChatResponse:
-        """Use OpenAI to analyze the query and generate appropriate response"""
-        try:
-            context, raw_data = await self.get_database_context()
+    async def get_top_investors_data(self, users, bids, entities):
+        """Get top investors with real bid data"""
+        limit = entities['numbers'][0] if entities['numbers'] else 5
+        
+        # Calculate investor performance
+        investor_stats = {}
+        for bid in bids:
+            investor_id = bid['investor_id']
+            if investor_id not in investor_stats:
+                investor_stats[investor_id] = {
+                    'total_bids': 0,
+                    'total_amount': 0,
+                    'winning_bids': 0,
+                    'bid_amounts': []
+                }
             
-            # Use OpenAI without function calling for better compatibility
-            system_prompt = f"""You are an expert real estate auction analytics assistant with access to comprehensive market data.
+            investor_stats[investor_id]['total_bids'] += 1
+            investor_stats[investor_id]['total_amount'] += bid['bid_amount']
+            investor_stats[investor_id]['bid_amounts'].append(bid['bid_amount'])
+            
+            if bid['status'] == 'winning':
+                investor_stats[investor_id]['winning_bids'] += 1
+        
+        # Enrich with user data and calculate metrics
+        enriched_investors = []
+        user_lookup = {user['id']: user for user in users}
+        
+        for investor_id, stats in investor_stats.items():
+            if investor_id in user_lookup:
+                user_info = user_lookup[investor_id]
+                enriched_investors.append({
+                    'investor_id': investor_id,
+                    'name': user_info['name'],
+                    'location': user_info['location'],
+                    'email': user_info['email'],
+                    'profile_verified': user_info['profile_verified'],
+                    'total_bids': stats['total_bids'],
+                    'total_amount': stats['total_amount'],
+                    'average_bid': stats['total_amount'] / stats['total_bids'],
+                    'winning_bids': stats['winning_bids'],
+                    'success_rate': (stats['winning_bids'] / stats['total_bids']) * 100,
+                    'max_bid': max(stats['bid_amounts']),
+                    'min_bid': min(stats['bid_amounts'])
+                })
+        
+        # Sort by total amount and take top N
+        top_investors = sorted(enriched_investors, key=lambda x: x['total_amount'], reverse=True)[:limit]
+        
+        return {
+            'top_investors': top_investors,
+            'total_investors': len(enriched_investors),
+            'requested_count': limit
+        }
 
-CURRENT MARKET OVERVIEW:
-📊 Portfolio Scale: {context.get('total_properties', 0)} properties, {context.get('total_auctions', 0)} auctions, {context.get('total_bids', 0)} total bids
-🏠 Property Distribution: {context.get('price_ranges', {}).get('under_500k', 0)} under $500k, {context.get('price_ranges', {}).get('500k_1m', 0)} mid-market ($500k-$1M), {context.get('price_ranges', {}).get('1m_5m', 0)} luxury ($1M-$5M), {context.get('price_ranges', {}).get('over_5m', 0)} ultra-luxury ($5M+)
-🏢 Property Types: {context.get('market_segments', {}).get('commercial', 0)} commercial, {context.get('market_segments', {}).get('industrial', 0)} industrial properties
-🌆 Geographic Coverage: {', '.join(context.get('cities', [])[:8])}{'...' if len(context.get('cities', [])) > 8 else ''}
+    async def get_auction_summary_data(self, auctions, properties, bids, entities):
+        """Get comprehensive auction summary"""
+        auction_summary = {
+            'by_status': {},
+            'by_location': {},
+            'by_property_type': {},
+            'recent_activity': []
+        }
+        
+        # Create property lookup
+        property_lookup = {prop['id']: prop for prop in properties}
+        
+        # Status distribution
+        for auction in auctions:
+            status = auction['status']
+            if status not in auction_summary['by_status']:
+                auction_summary['by_status'][status] = 0
+            auction_summary['by_status'][status] += 1
+        
+        # Location and property type analysis
+        for auction in auctions:
+            prop_id = auction['property_id']
+            if prop_id in property_lookup:
+                prop = property_lookup[prop_id]
+                
+                # By location
+                location = prop['city']
+                if location not in auction_summary['by_location']:
+                    auction_summary['by_location'][location] = 0
+                auction_summary['by_location'][location] += 1
+                
+                # By property type
+                prop_type = prop['property_type']
+                if prop_type not in auction_summary['by_property_type']:
+                    auction_summary['by_property_type'][prop_type] = 0
+                auction_summary['by_property_type'][prop_type] += 1
+        
+        # Recent activity (last 5 auctions with details)
+        recent_auctions = sorted(auctions, key=lambda x: x['created_at'], reverse=True)[:5]
+        for auction in recent_auctions:
+            if auction['property_id'] in property_lookup:
+                prop = property_lookup[auction['property_id']]
+                auction_summary['recent_activity'].append({
+                    'auction_id': auction['id'],
+                    'title': auction['title'],
+                    'property_title': prop['title'],
+                    'location': prop['city'],
+                    'status': auction['status'],
+                    'starting_bid': auction['starting_bid'],
+                    'current_highest_bid': auction['current_highest_bid'],
+                    'total_bids': auction['total_bids']
+                })
+        
+        return auction_summary
 
-INVESTOR ECOSYSTEM:
-👥 Total Active Investors: {context.get('total_users', 0)}
-🏛️ Institutional Investors: {context.get('investor_types', {}).get('institutional', 0)} (REITs, funds, commercial firms)
-💰 High Net Worth Individual: {context.get('investor_types', {}).get('individual_hnw', 0)} (success rate >80%)
-🌍 International Investors: {context.get('investor_types', {}).get('international', 0)} (Japanese, French, other foreign capital)
-🔨 Property Flippers: {context.get('investor_types', {}).get('flippers', 0)} (active renovation investors)
+    async def get_regional_analysis_data(self, properties, auctions, bids, entities):
+        """Get regional market analysis"""
+        regional_data = {}
+        
+        # Create lookups
+        property_lookup = {prop['id']: prop for prop in properties}
+        auction_lookup = {auction['property_id']: auction for auction in auctions}
+        
+        # Aggregate by region
+        for prop in properties:
+            city = prop['city']
+            if city not in regional_data:
+                regional_data[city] = {
+                    'city': city,
+                    'state': prop['state'],
+                    'properties': 0,
+                    'auctions': 0,
+                    'total_bids': 0,
+                    'total_value': 0,
+                    'avg_reserve_price': 0,
+                    'property_types': set()
+                }
+            
+            regional_data[city]['properties'] += 1
+            regional_data[city]['total_value'] += prop['reserve_price']
+            regional_data[city]['property_types'].add(prop['property_type'])
+            
+            # Check if property has auction
+            if prop['id'] in auction_lookup:
+                auction = auction_lookup[prop['id']]
+                regional_data[city]['auctions'] += 1
+                regional_data[city]['total_bids'] += auction['total_bids']
+        
+        # Convert to list and calculate averages
+        regional_list = []
+        for city, data in regional_data.items():
+            data['avg_reserve_price'] = data['total_value'] / data['properties']
+            data['property_types'] = list(data['property_types'])
+            data['avg_bids_per_auction'] = data['total_bids'] / data['auctions'] if data['auctions'] > 0 else 0
+            regional_list.append(data)
+        
+        # Sort by total value
+        regional_list.sort(key=lambda x: x['total_value'], reverse=True)
+        
+        return {
+            'regional_analysis': regional_list,
+            'total_markets': len(regional_list)
+        }
 
-AUCTION ACTIVITY:
-🔴 Live Auctions: {context.get('live_auctions', 0)}
-✅ Recently Ended: {context.get('ended_auctions', 0)}
-📅 Upcoming: {context.get('upcoming_auctions', 0)}
-💵 Total Market Volume: ${context.get('auction_activity', {}).get('total_volume', 0):,.0f}
-📈 Average Competition: {context.get('auction_activity', {}).get('avg_competition', 0):.1f} bids per auction
-🎯 Success Rate: {context.get('auction_activity', {}).get('success_rate', 0):.1f}%
+    async def get_general_analysis_data(self, users, properties, auctions, bids):
+        """Get general market overview data"""
+        return {
+            'market_overview': {
+                'total_investors': len(users),
+                'verified_investors': len([u for u in users if u['profile_verified']]),
+                'total_properties': len(properties),
+                'total_auctions': len(auctions),
+                'live_auctions': len([a for a in auctions if a['status'] == 'live']),
+                'upcoming_auctions': len([a for a in auctions if a['status'] == 'upcoming']),
+                'completed_auctions': len([a for a in auctions if a['status'] == 'ended']),
+                'total_bids': len(bids),
+                'total_bid_value': sum([b['bid_amount'] for b in bids])
+            },
+            'property_distribution': {
+                'residential': len([p for p in properties if p['property_type'] == 'residential']),
+                'commercial': len([p for p in properties if p['property_type'] == 'commercial']),
+                'industrial': len([p for p in properties if p['property_type'] == 'industrial'])
+            }
+        }
 
-TOP MARKETS BY VALUE:
-{chr(10).join([f"• {market[0]}: Avg ${market[1]['avg_price']:,.0f} ({market[1]['properties']} properties)" for market in context.get('top_markets', [])[:5]])}
+    async def analyze_query_with_data(self, user_query: str, structured_data: dict) -> ChatResponse:
+        """Enhanced OpenAI analysis with structured data"""
+        try:
+            system_prompt = f"""You are an expert real estate auction analytics assistant with access to comprehensive, real-time market data.
 
-Your expertise includes:
-- Luxury residential markets (Manhattan penthouses, Beverly Hills estates)
-- Commercial real estate (office buildings, retail centers)
-- Industrial properties (warehouses, manufacturing facilities)
-- Emerging markets (Nashville, Austin tech hubs)
-- International investment patterns
-- Property flipping and renovation opportunities
-- Institutional vs individual investor behavior
-- Regional market dynamics across major US metros
+STRUCTURED DATA CONTEXT:
+Intent: {structured_data.get('intent', 'general_analysis')}
+Raw Data Counts: {structured_data.get('raw_counts', {})}
+
+REAL DATA PROVIDED:
+{json.dumps(structured_data.get('data', {}), indent=2, default=str)}
+
+Your task is to provide:
+1. A comprehensive, markdown-formatted response explaining the data and insights
+2. Specific references to actual names, amounts, and details from the provided data
+3. Professional analysis with actionable recommendations
+4. Appropriate chart data using the REAL numbers from the structured data
 
 RESPONSE REQUIREMENTS:
-1. Generate human-readable insights that reflect the actual market data
-2. Choose appropriate chart types: bar (comparisons), line (trends), pie (proportions), area (volume), scatter (correlations)
-3. Create realistic data points that align with current market conditions
-4. Provide 2-4 actionable insights relevant to real estate professionals
-5. Consider investor types, property segments, and geographic markets in your analysis
-
-Use actual market context and realistic pricing for each geographic area.
-Manhattan penthouses: $2M-$10M+, Tech hub homes: $1M-$4M, Commercial buildings: $5M-$20M+, Industrial: $1M-$5M
+- Use markdown formatting for clear structure (## headings, **bold**, bullet points)
+- Reference specific investor names, property titles, and exact amounts from the data
+- Create chart visualizations using the actual data provided
+- Provide 2-4 actionable insights based on real patterns in the data
+- If the data is limited, acknowledge this and suggest ways to get more insights
 
 Return ONLY valid JSON in this exact format:
 {{
-  "response": "Professional analysis incorporating specific market data and trends",
+  "response": "## Comprehensive markdown-formatted analysis with real data references\\n\\n**Key Findings:**\\n- Actual insight with specific names and numbers\\n- Another insight with real data...",
   "chart_type": "bar|line|pie|area|scatter",
-  "chart_data": {{"data": [{{"category": "value", "metric": number, ...}}]}},
-  "summary_points": ["Market insight 1", "Investment opportunity 2", "Trend analysis 3"]
+  "chart_data": {{"data": [actual data from structured_data formatted for charts]}},
+  "summary_points": ["Real insight with specific data", "Another actionable recommendation", "Specific next steps"]
 }}
 """
 
@@ -277,10 +486,9 @@ Return ONLY valid JSON in this exact format:
                 temperature=0.7
             )
 
-            # Parse the JSON response
             response_text = response.choices[0].message.content.strip()
             
-            # Extract JSON from response (in case it's wrapped in markdown)
+            # Extract JSON from response
             if "```json" in response_text:
                 start = response_text.find("```json") + 7
                 end = response_text.find("```", start)
@@ -294,18 +502,95 @@ Return ONLY valid JSON in this exact format:
                 result = json.loads(response_text)
                 
                 return ChatResponse(
-                    response=result.get("response", "I've analyzed your query."),
+                    response=result.get("response", "Analysis complete with structured data."),
                     chart_type=result.get("chart_type", "bar"),
                     chart_data=result.get("chart_data", {"data": []}),
-                    summary_points=result.get("summary_points", ["Analysis complete"])
+                    summary_points=result.get("summary_points", ["Analysis complete with real market data"])
                 )
             except json.JSONDecodeError:
                 logger.error(f"Failed to parse JSON response: {response_text}")
-                return await self.generate_fallback_response(user_query, context, raw_data)
+                return await self.generate_fallback_with_data(user_query, structured_data)
                 
         except Exception as e:
-            logger.error(f"Error in OpenAI analysis: {e}")
-            return await self.generate_fallback_response(user_query, context if 'context' in locals() else {}, raw_data if 'raw_data' in locals() else {})
+            logger.error(f"Error in enhanced OpenAI analysis: {e}")
+            return await self.generate_fallback_with_data(user_query, structured_data)
+
+    async def generate_fallback_with_data(self, query: str, structured_data: dict) -> ChatResponse:
+        """Generate fallback response using structured data"""
+        if not structured_data.get('data'):
+            return ChatResponse(
+                response="Sorry, we couldn't find any relevant records for this query. Try rephrasing or checking auction filters.",
+                summary_points=[
+                    "No matching data found in our database",
+                    "Try using different search terms or time periods",
+                    "Check if the requested information exists in our current dataset"
+                ]
+            )
+        
+        # Create basic response with available data
+        intent = structured_data.get('intent', 'analysis')
+        data = structured_data['data']
+        
+        if intent == 'top_investors' and 'top_investors' in data:
+            investors = data['top_investors'][:3]  # Show top 3
+            chart_data = {
+                "data": [
+                    {"name": inv['name'], "total_amount": inv['total_amount'], "success_rate": inv['success_rate']}
+                    for inv in investors
+                ]
+            }
+            return ChatResponse(
+                response=f"## Top Investor Analysis\\n\\nBased on our current data, here are the leading investors:\\n\\n" + 
+                        "\\n".join([f"**{inv['name']}**: ${inv['total_amount']:,.0f} total bids ({inv['success_rate']:.1f}% success rate)" 
+                                   for inv in investors]),
+                chart_data=chart_data,
+                chart_type="bar",
+                summary_points=[
+                    f"Top investor: {investors[0]['name']} with ${investors[0]['total_amount']:,.0f}",
+                    f"Analyzed {len(data['top_investors'])} active investors",
+                    "Success rates vary significantly across investor profiles"
+                ]
+            )
+        
+        return ChatResponse(
+            response="I found some relevant data but encountered an issue processing the complete analysis. Here's what I can tell you based on our records.",
+            summary_points=["Partial data analysis available", "System encountered processing limitations"]
+        )
+
+    async def analyze_query(self, user_query: str) -> ChatResponse:
+        """Main analysis method with enhanced data integration"""
+        try:
+            logger.info(f"Processing enhanced query: {user_query}")
+            
+            # Step 1: Parse intent and entities
+            intent_info = await self.parse_intent(user_query)
+            logger.info(f"Detected intent: {intent_info['primary_intent']}")
+            
+            # Step 2: Fetch structured data based on intent
+            structured_data = await self.fetch_structured_data(intent_info)
+            
+            if 'error' in structured_data:
+                return ChatResponse(
+                    response="Sorry, we encountered an error while fetching the data. Please try again.",
+                    summary_points=["Database query failed", "Please retry your request"]
+                )
+            
+            # Step 3: Enhanced OpenAI analysis with real data
+            response = await self.analyze_query_with_data(user_query, structured_data)
+            
+            logger.info(f"Generated enhanced response with intent: {intent_info['primary_intent']}")
+            return response
+            
+        except Exception as e:
+            logger.error(f"Error in enhanced query analysis: {e}")
+            return ChatResponse(
+                response="Sorry, we couldn't find any relevant records for this query. Try rephrasing or checking auction filters.",
+                summary_points=[
+                    "Query processing encountered an error",
+                    "Try rephrasing your question or using simpler terms",
+                    "Check if the requested data exists in our current dataset"
+                ]
+            )
 
     async def generate_fallback_response(self, query: str, context: dict, raw_data: dict) -> ChatResponse:
         """Generate fallback response if OpenAI fails"""
