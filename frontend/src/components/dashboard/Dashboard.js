@@ -126,7 +126,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  Auction Analytics
+                  Chatbot Reporting & Analytics
                 </h1>
                 <p className="text-slate-500 text-sm">Real Estate Intelligence Platform</p>
               </div>
@@ -170,9 +170,9 @@ const Dashboard = () => {
                   <div className="max-w-lg mx-auto text-center">
                     {/* Clean section without title and icon */}
                     <div className="mb-8">
-                      <div className="w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg animate-pulse">
+                      {/* <div className="w-16 h-16 bg-gradient-to-r from-indigo-600 to-purple-600 rounded-2xl flex items-center justify-center mx-auto mb-6 shadow-lg animate-pulse">
                         <span className="text-white text-2xl">🤖</span>
-                      </div>
+                      </div> */}
                       <p className="text-xl text-slate-700 mb-6 leading-relaxed font-medium">
                         Transform your auction data into actionable insights with natural language queries
                       </p>
@@ -193,10 +193,10 @@ const Dashboard = () => {
                           </div>
                           <div className="text-left">
                             <div className="text-lg font-semibold text-slate-900 group-hover:text-indigo-600 transition-colors duration-300">
-                              Start AI Analysis
+                              Start Chat
                             </div>
                             <div className="text-sm text-slate-600">
-                              Ask questions in natural language
+                              Ask questions in your language
                             </div>
                           </div>
                         </div>
