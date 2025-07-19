@@ -101,3 +101,49 @@
 #====================================================================================================
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
+
+user_problem_statement: "Sample questions are missing from the sidebar. User provided curated sample questions that need to be implemented."
+
+backend:
+  - task: "Create /api/sample-questions endpoint"
+    implemented: false
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Sample questions endpoint missing - frontend tries to fetch from /api/sample-questions but endpoint doesn't exist"
+
+frontend:
+  - task: "Sample questions display in sidebar"
+    implemented: true
+    working: false
+    file: "/app/frontend/src/components/chat/ChatInterface.js"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: false
+        agent: "main"
+        comment: "Frontend component exists but API call to /api/sample-questions fails, resulting in empty sampleQuestions state"
+
+metadata:
+  created_by: "main_agent"
+  version: "1.0"
+  test_sequence: 1
+  run_ui: false
+
+test_plan:
+  current_focus:
+    - "Create /api/sample-questions endpoint with curated questions"
+    - "Verify sample questions display correctly in sidebar"
+  stuck_tasks: []
+  test_all: false
+  test_priority: "high_first"
+
+agent_communication:
+  - agent: "main"
+    message: "User reported sample questions missing from sidebar. Frontend component exists and tries to fetch from /api/sample-questions but backend endpoint is missing. Need to implement endpoint with user-provided curated sample questions."
