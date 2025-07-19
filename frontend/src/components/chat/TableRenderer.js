@@ -1,25 +1,46 @@
 import React, { useState, useMemo, useEffect } from 'react';
+import LoadingProgressBar from './LoadingProgressBar';
 
 const TableRenderer = ({ data, title, description }) => {
   const [sortConfig, setSortConfig] = useState({ key: null, direction: 'asc' });
   const [currentPage, setCurrentPage] = useState(1);
   const [isDownloading, setIsDownloading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
   
   const itemsPerPage = 10;
 
-  // Simulate loading effect
+  // Enhanced loading effect with progress
   useEffect(() => {
-    const loadingTimer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1200); // 1.2 second loading effect
+    let progressInterval;
+    
+    const startLoading = () => {
+      setIsLoading(true);
+      setLoadingProgress(0);
+      
+      progressInterval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressInterval);
+            setTimeout(() => setIsLoading(false), 200);
+            return 100;
+          }
+          return prev + 10;
+        });
+      }, 100);
+    };
 
-    return () => clearTimeout(loadingTimer);
+    startLoading();
+
+    return () => {
+      if (progressInterval) clearInterval(progressInterval);
+    };
   }, [data]);
 
   // Reset loading when data changes
   useEffect(() => {
     setIsLoading(true);
+    setLoadingProgress(0);
   }, [data]);
 
   if (!data || !data.headers || !data.rows) {
@@ -32,16 +53,21 @@ const TableRenderer = ({ data, title, description }) => {
 
   const { headers, rows } = data;
 
-  // Loading component
+  // Loading component with progress bar
   const LoadingTable = () => (
     <div className="w-full">
+      <div className="mb-6">
+        <LoadingProgressBar 
+          progress={loadingProgress} 
+          text="Loading table data..." 
+        />
+      </div>
       <div className="animate-pulse space-y-4">
-        <div className="h-4 bg-slate-200 rounded w-3/4"></div>
-        <div className="border border-slate-200 rounded-lg overflow-hidden">
+        <div className="border border-slate-200 rounded-2xl overflow-hidden">
           <div className="bg-slate-50 p-4 border-b">
             <div className="grid grid-cols-4 gap-4">
               {[1, 2, 3, 4].map(i => (
-                <div key={i} className="h-3 bg-slate-200 rounded"></div>
+                <div key={i} className="h-3 bg-slate-200 rounded-full"></div>
               ))}
             </div>
           </div>
@@ -49,7 +75,7 @@ const TableRenderer = ({ data, title, description }) => {
             <div key={row} className="p-4 border-b border-slate-100">
               <div className="grid grid-cols-4 gap-4">
                 {[1, 2, 3, 4].map(col => (
-                  <div key={col} className="h-3 bg-slate-100 rounded"></div>
+                  <div key={col} className="h-3 bg-slate-100 rounded-full"></div>
                 ))}
               </div>
             </div>
@@ -57,9 +83,9 @@ const TableRenderer = ({ data, title, description }) => {
         </div>
       </div>
       <div className="text-center mt-4">
-        <div className="inline-flex items-center text-slate-600 text-sm">
+        <div className="inline-flex items-center text-slate-600 text-xs">
           <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-slate-600 mr-2"></div>
-          Loading table data...
+          Processing table data...
         </div>
       </div>
     </div>
@@ -187,16 +213,16 @@ const TableRenderer = ({ data, title, description }) => {
         </button>
       </div>
 
-      {/* Table */}
-      <div className="overflow-hidden border border-slate-200 rounded-lg">
+      {/* Table - Full Width with Horizontal Scroll */}
+      <div className="w-full overflow-hidden border border-slate-200 rounded-2xl shadow-sm bg-white/60 backdrop-blur-sm">
         <div className="overflow-x-auto">
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-slate-50">
+            <thead className="bg-gradient-to-r from-slate-50 to-blue-50">
               <tr>
                 {headers.map((header, index) => (
                   <th
                     key={index}
-                    className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider cursor-pointer hover:bg-slate-100 transition-colors duration-150"
+                    className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-colors duration-150 border-r border-slate-200 last:border-r-0"
                     onClick={() => handleSort(header)}
                   >
                     <div className="flex items-center space-x-1">
@@ -207,11 +233,11 @@ const TableRenderer = ({ data, title, description }) => {
                 ))}
               </tr>
             </thead>
-            <tbody className="bg-white divide-y divide-slate-200">
+            <tbody className="bg-white/80 backdrop-blur-sm divide-y divide-slate-200">
               {currentRows.map((row, rowIndex) => (
-                <tr key={rowIndex} className="hover:bg-slate-50 transition-colors duration-150">
+                <tr key={rowIndex} className="hover:bg-slate-50/80 transition-colors duration-150">
                   {row.map((cell, cellIndex) => (
-                    <td key={cellIndex} className="px-6 py-4 whitespace-nowrap text-sm text-slate-900">
+                    <td key={cellIndex} className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 border-r border-slate-100 last:border-r-0">
                       {typeof cell === 'number' ? cell.toLocaleString() : String(cell)}
                     </td>
                   ))}
@@ -223,7 +249,7 @@ const TableRenderer = ({ data, title, description }) => {
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="bg-white px-4 py-3 border-t border-slate-200 sm:px-6">
+          <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-4 border-t border-slate-200">
             <div className="flex items-center justify-between">
               <div className="text-sm text-slate-700">
                 Showing <span className="font-medium">{startIndex + 1}</span> to{' '}
@@ -234,17 +260,17 @@ const TableRenderer = ({ data, title, description }) => {
                 <button
                   onClick={() => setCurrentPage(prev => Math.max(prev - 1, 1))}
                   disabled={currentPage === 1}
-                  className="px-3 py-1 bg-white border border-slate-300 rounded-md text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                  className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-sm hover:shadow-md"
                 >
                   Previous
                 </button>
-                <span className="text-sm text-slate-600">
+                <span className="text-sm text-slate-600 bg-white px-3 py-2 rounded-lg border border-slate-200 shadow-sm">
                   Page {currentPage} of {totalPages}
                 </span>
                 <button
                   onClick={() => setCurrentPage(prev => Math.min(prev + 1, totalPages))}
                   disabled={currentPage === totalPages}
-                  className="px-3 py-1 bg-white border border-slate-300 rounded-md text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-150"
+                  className="px-4 py-2 bg-white border border-slate-300 rounded-lg text-sm text-slate-700 hover:bg-slate-50 disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-sm hover:shadow-md"
                 >
                   Next
                 </button>
