@@ -18,8 +18,21 @@ import {
 const COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'];
 
 const ChartRenderer = ({ data, type }) => {
-  if (!data || !data.data || !Array.isArray(data.data)) {
+  // Enhanced error handling
+  if (!data) {
+    return <div className="text-center py-8 text-gray-500">No chart data provided</div>;
+  }
+  
+  if (!data.data) {
     return <div className="text-center py-8 text-gray-500">No data available</div>;
+  }
+  
+  if (!Array.isArray(data.data)) {
+    return <div className="text-center py-8 text-gray-500">Invalid data format</div>;
+  }
+  
+  if (data.data.length === 0) {
+    return <div className="text-center py-8 text-gray-500">No data points available</div>;
   }
 
   const chartData = data.data;
@@ -32,7 +45,7 @@ const ChartRenderer = ({ data, type }) => {
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
-                dataKey={Object.keys(chartData[0])[0]} 
+                dataKey={Object.keys(chartData[0] || {})[0] || 'name'} 
                 tick={{ fontSize: 12 }}
               />
               <YAxis tick={{ fontSize: 12 }} />
@@ -43,7 +56,7 @@ const ChartRenderer = ({ data, type }) => {
                 ]}
               />
               <Legend />
-              {Object.keys(chartData[0]).slice(1).map((key, index) => (
+              {Object.keys(chartData[0] || {}).slice(1).map((key, index) => (
                 <Bar 
                   key={key} 
                   dataKey={key} 
@@ -61,7 +74,7 @@ const ChartRenderer = ({ data, type }) => {
             <LineChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
-                dataKey={Object.keys(chartData[0])[0]} 
+                dataKey={Object.keys(chartData[0] || {})[0] || 'name'} 
                 tick={{ fontSize: 12 }}
               />
               <YAxis tick={{ fontSize: 12 }} />
@@ -72,7 +85,7 @@ const ChartRenderer = ({ data, type }) => {
                 ]}
               />
               <Legend />
-              {Object.keys(chartData[0]).slice(1).map((key, index) => (
+              {Object.keys(chartData[0] || {}).slice(1).map((key, index) => (
                 <Line 
                   key={key} 
                   type="monotone" 
@@ -88,8 +101,8 @@ const ChartRenderer = ({ data, type }) => {
 
       case 'pie':
         const pieData = chartData.map((item, index) => ({
-          name: item[Object.keys(item)[0]],
-          value: item[Object.keys(item)[1]],
+          name: item[Object.keys(item || {})[0]] || 'Unknown',
+          value: item[Object.keys(item || {})[1]] || 0,
           color: COLORS[index % COLORS.length]
         }));
 
@@ -115,13 +128,16 @@ const ChartRenderer = ({ data, type }) => {
           </ResponsiveContainer>
         );
 
+      case 'none':
+        return <div className="text-center py-8 text-gray-500">Chart not available for this analysis</div>;
+
       default:
         return (
           <ResponsiveContainer width="100%" height={400}>
             <BarChart data={chartData}>
               <CartesianGrid strokeDasharray="3 3" />
               <XAxis 
-                dataKey={Object.keys(chartData[0])[0]} 
+                dataKey={Object.keys(chartData[0] || {})[0] || 'name'} 
                 tick={{ fontSize: 12 }}
               />
               <YAxis tick={{ fontSize: 12 }} />
@@ -132,7 +148,7 @@ const ChartRenderer = ({ data, type }) => {
                 ]}
               />
               <Legend />
-              {Object.keys(chartData[0]).slice(1).map((key, index) => (
+              {Object.keys(chartData[0] || {}).slice(1).map((key, index) => (
                 <Bar 
                   key={key} 
                   dataKey={key} 
