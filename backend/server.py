@@ -559,15 +559,16 @@ You MUST respond with ONLY this JSON structure:
                 return await self.create_regional_enhanced_response(data['regional_analysis'])
             elif intent == 'bidding_trends' and 'bidding_analysis' in data:
                 return await self.create_bidding_enhanced_response(data['bidding_analysis'])
-            else:
+            elif structured_data.get('raw_counts') and sum(structured_data.get('raw_counts', {}).values()) > 0:
                 return await self.create_general_enhanced_response(structured_data)
+            else:
+                # Use fallback when no specific data is available
+                return await self.create_fallback_response(user_query)
                 
         except Exception as e:
             logger.error(f"Error creating enhanced manual response: {e}")
-            return ChatResponse(
-                response="## Analysis Complete\n\nI've processed your query and prepared comprehensive insights.",
-                summary_points=["Analysis completed successfully", "Data processed from auction database"]
-            )
+            # Even in error cases, provide fallback
+            return await self.create_fallback_response(user_query)
     
     async def create_top_investors_enhanced_response(self, investors_data: list) -> ChatResponse:
         """Create enhanced response for top investors query"""
