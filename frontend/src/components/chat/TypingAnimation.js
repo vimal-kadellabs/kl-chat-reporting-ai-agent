@@ -42,9 +42,8 @@ const TypingAnimation = ({ text, speed = 30, startDelay = 0 }) => {
   }, [text]);
 
   return (
-    <div className="typing-animation">
-      <ReactMarkdown 
-        className="prose prose-sm max-w-none prose-headings:text-slate-800 prose-headings:font-semibold prose-p:text-slate-700 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:text-slate-700 prose-li:text-slate-700"
+    <div className="typing-animation prose prose-sm max-w-none prose-headings:text-slate-800 prose-headings:font-semibold prose-p:text-slate-700 prose-p:leading-relaxed prose-strong:text-slate-900 prose-ul:text-slate-700 prose-li:text-slate-700">
+      <ReactMarkdown
         components={{
           h2: ({ children }) => (
             <h2 className="text-xl font-semibold text-slate-800 mb-3 flex items-center">
