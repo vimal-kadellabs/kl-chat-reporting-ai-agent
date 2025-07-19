@@ -1661,22 +1661,22 @@ async def login(request: LoginRequest):
 
 @api_router.get("/users", response_model=List[User])
 async def get_users():
-    users = await db.users.find().to_list(100)
+    users = await db.users.find().to_list(None)  # Remove limit to get all users
     return [User(**user) for user in users]
 
 @api_router.get("/properties", response_model=List[Property])
 async def get_properties():
-    properties = await db.properties.find().to_list(100)
+    properties = await db.properties.find().to_list(None)  # Remove limit to get all properties
     return [Property(**prop) for prop in properties]
 
 @api_router.get("/auctions", response_model=List[Auction])
 async def get_auctions():
-    auctions = await db.auctions.find().to_list(100)
+    auctions = await db.auctions.find().to_list(None)  # Remove limit to get all auctions
     return [Auction(**auction) for auction in auctions]
 
 @api_router.get("/bids", response_model=List[Bid])
 async def get_bids():
-    bids = await db.bids.find().to_list(100)
+    bids = await db.bids.find().to_list(None)  # Remove limit to get all bids
     return [Bid(**bid) for bid in bids]
 
 @api_router.post("/chat", response_model=ChatResponse)
