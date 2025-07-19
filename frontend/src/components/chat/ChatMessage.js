@@ -31,7 +31,7 @@ const ChatMessage = ({ message }) => {
             </div>
             <div className="flex-1 min-w-0">
               
-              {/* Summary Points */}
+              {/* Summary Points with Typing Animation */}
               {message.summaryPoints && message.summaryPoints.length > 0 && (
                 <div className="mb-4">
                   <div className="modern-card bg-blue-50 border-blue-200 p-4">
@@ -43,14 +43,20 @@ const ChatMessage = ({ message }) => {
                       </div>
                       <h4 className="font-semibold text-blue-900 text-sm">Key Insights</h4>
                     </div>
-                    <ul className="space-y-2">
+                    <div className="space-y-2">
                       {message.summaryPoints.map((point, index) => (
-                        <li key={index} className="text-sm text-blue-800 flex items-start">
+                        <div key={index} className="text-sm text-blue-800 flex items-start">
                           <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <span className="leading-relaxed">{point}</span>
-                        </li>
+                          <div className="leading-relaxed flex-1">
+                            <TypingAnimation 
+                              text={point} 
+                              speed={20}
+                              startDelay={index * 1000 + 1000} // Stagger each point
+                            />
+                          </div>
+                        </div>
                       ))}
-                    </ul>
+                    </div>
                   </div>
                 </div>
               )}
