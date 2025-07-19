@@ -27,7 +27,7 @@ const ChatMessage = ({ message }) => {
         {!isUser && (
           <div className="flex items-start space-x-3 mb-3">
             <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
-              <span className="text-white text-sm">🤖</span>
+              {/* <span className="text-white text-sm">🤖</span> */}
             </div>
             <div className="flex-1 min-w-0">
               

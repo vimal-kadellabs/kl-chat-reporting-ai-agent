@@ -75,7 +75,7 @@ const SampleQuestions = ({ questions, onQuestionClick, onClose }) => {
               </svg>
             </div>
             <div>
-              <h3 className="font-semibold text-slate-900 text-sm">Sample Questions</h3>
+              <h3 className="font-semibold text-slate-900 text-sm">Suggested Questions</h3>
               <p className="text-xs text-slate-500">Click any question to get started</p>
             </div>
           </div>
