@@ -144,8 +144,8 @@ metadata:
 
 test_plan:
   current_focus:
-    - "Create /api/sample-questions endpoint with curated questions"
-    - "Verify sample questions display correctly in sidebar"
+    - "Force initialization of enhanced mock data"
+    - "Test AI chat functionality with mock data"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
@@ -153,3 +153,5 @@ test_plan:
 agent_communication:
   - agent: "main"
     message: "User reported sample questions missing from sidebar. Frontend component exists and tries to fetch from /api/sample-questions but backend endpoint is missing. Need to implement endpoint with user-provided curated sample questions."
+  - agent: "main"
+    message: "RESOLVED: Successfully implemented /api/sample-questions endpoint with 24 curated questions in 5 categories. Also completed force initialization of enhanced mock data. Both features tested and working correctly. Sample questions are now properly displayed in sidebar and fully functional."
