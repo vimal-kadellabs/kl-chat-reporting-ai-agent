@@ -14,6 +14,7 @@ import {
   Pie,
   Cell
 } from 'recharts';
+import LoadingProgressBar from './LoadingProgressBar';
 
 // Professional color palette
 const COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#84cc16'];
@@ -21,19 +22,39 @@ const COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'
 const ChartRenderer = ({ data, type, title, description }) => {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
+  const [loadingProgress, setLoadingProgress] = useState(0);
 
-  // Simulate loading effect
+  // Enhanced loading effect with progress
   useEffect(() => {
-    const loadingTimer = setTimeout(() => {
-      setIsLoading(false);
-    }, 1500); // 1.5 second loading effect
+    let progressInterval;
+    
+    const startLoading = () => {
+      setIsLoading(true);
+      setLoadingProgress(0);
+      
+      progressInterval = setInterval(() => {
+        setLoadingProgress(prev => {
+          if (prev >= 100) {
+            clearInterval(progressInterval);
+            setTimeout(() => setIsLoading(false), 200);
+            return 100;
+          }
+          return prev + 8;
+        });
+      }, 120);
+    };
 
-    return () => clearTimeout(loadingTimer);
+    startLoading();
+
+    return () => {
+      if (progressInterval) clearInterval(progressInterval);
+    };
   }, [data, type]);
 
   // Reset loading when data changes
   useEffect(() => {
     setIsLoading(true);
+    setLoadingProgress(0);
   }, [data, type]);
 
   // Enhanced error handling
@@ -86,12 +107,18 @@ const ChartRenderer = ({ data, type, title, description }) => {
     }
   };
 
-  // Loading component
+  // Loading component with progress bar
   const LoadingChart = () => (
-    <div className="w-full h-96 flex items-center justify-center">
-      <div className="text-center">
-        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
-        <div className="text-slate-600 text-sm">Loading chart visualization...</div>
+    <div className="w-full h-96 flex flex-col items-center justify-center p-8">
+      <div className="w-full max-w-sm">
+        <LoadingProgressBar 
+          progress={loadingProgress} 
+          text="Loading chart visualization..." 
+        />
+      </div>
+      <div className="mt-4 text-center">
+        <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-2"></div>
+        <div className="text-slate-600 text-xs">Processing data...</div>
       </div>
     </div>
   );
