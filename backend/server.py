@@ -1679,6 +1679,49 @@ async def get_bids():
     bids = await db.bids.find().to_list(None)  # Remove limit to get all bids
     return [Bid(**bid) for bid in bids]
 
+@api_router.get("/investors/active")
+async def get_active_investors():
+    """Get count of investors who have placed at least one bid in the past 6 months"""
+    from datetime import datetime, timedelta
+    
+    # Calculate 6 months ago
+    six_months_ago = datetime.now() - timedelta(days=180)
+    
+    # Find bids from the past 6 months
+    recent_bids = await db.bids.find({
+        "timestamp": {"$gte": six_months_ago}
+    }).to_list(None)
+    
+    # Get unique investor IDs
+    active_investor_ids = set(bid["investor_id"] for bid in recent_bids)
+    
+    return {"count": len(active_investor_ids)}
+
+@api_router.get("/investors/inactive")
+async def get_inactive_investors():
+    """Get count of investors who have not placed any bids in the past 6 months"""
+    from datetime import datetime, timedelta
+    
+    # Calculate 6 months ago
+    six_months_ago = datetime.now() - timedelta(days=180)
+    
+    # Get all users (investors)
+    all_users = await db.users.find().to_list(None)
+    all_investor_ids = set(user["id"] for user in all_users)
+    
+    # Find bids from the past 6 months
+    recent_bids = await db.bids.find({
+        "timestamp": {"$gte": six_months_ago}
+    }).to_list(None)
+    
+    # Get unique active investor IDs
+    active_investor_ids = set(bid["investor_id"] for bid in recent_bids)
+    
+    # Calculate inactive investors
+    inactive_investor_ids = all_investor_ids - active_investor_ids
+    
+    return {"count": len(inactive_investor_ids)}
+
 @api_router.post("/chat", response_model=ChatResponse)
 async def chat_query(query: ChatQuery):
     """Enhanced chat endpoint with multiple charts and tables support"""
