@@ -1647,7 +1647,7 @@ async def init_mock_data():
 # Authentication middleware (dummy for now)
 async def get_current_user(credentials: HTTPAuthorizationCredentials = Depends(security)):
     # For now, return a dummy user
-    return {"user_id": "demo_user", "email": "demo@example.com", "name": "Demo User"}
+    return {"user_id": "demo_user", "email": "demo@example.com", "name": "John Doe"}
 
 # API Routes
 @api_router.get("/")
@@ -1657,7 +1657,7 @@ async def root():
 @api_router.post("/auth/login")
 async def login(request: LoginRequest):
     # Dummy authentication
-    return {"token": "dummy_token", "user": {"id": "demo_user", "email": request.email, "name": "Demo User"}}
+    return {"token": "dummy_token", "user": {"id": "demo_user", "email": request.email, "name": "John Doe"}}
 
 @api_router.get("/users", response_model=List[User])
 async def get_users():
