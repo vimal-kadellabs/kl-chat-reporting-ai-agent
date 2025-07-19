@@ -181,6 +181,18 @@ metadata:
   test_sequence: 1
   run_ui: false
 
+  - task: "Enhanced mock data initialization" 
+    implemented: true
+    working: true
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: false
+    status_history:
+      - working: true
+        agent: "deep_testing_backend_v2"
+        comment: "Enhanced mock data successfully force-initialized. 17 users, 15 properties, 15 auctions, 33 bids all verified and accessible via API endpoints."
+
 test_plan:
   current_focus: []
   stuck_tasks: []
