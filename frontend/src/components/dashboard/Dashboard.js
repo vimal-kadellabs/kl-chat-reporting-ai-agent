@@ -126,7 +126,7 @@ const Dashboard = () => {
               </div>
               <div>
                 <h1 className="text-xl font-bold bg-gradient-to-r from-indigo-600 to-purple-600 bg-clip-text text-transparent">
-                  Chatbot Reporting & Analytics
+                  Chat Reporting Agent
                 </h1>
                 <p className="text-slate-500 text-sm">Real Estate Intelligence Platform</p>
               </div>
@@ -221,7 +221,7 @@ const Dashboard = () => {
                         <div className="w-10 h-10 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mx-auto mb-2 shadow-md">
                           <span className="text-white text-sm">🎯</span>
                         </div>
-                        <p className="text-xs font-medium text-slate-700">AI Insights</p>
+                        <p className="text-xs font-medium text-slate-700">Quick Insights</p>
                       </div>
                     </div>
                   </div>
@@ -230,7 +230,7 @@ const Dashboard = () => {
             </div>
 
             {/* Market Activity Card - Enhanced */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
+            {/* <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
                 <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-lg flex items-center justify-center mr-3">
                   <span className="text-white text-sm">📈</span>
@@ -251,7 +251,7 @@ const Dashboard = () => {
                   <span className="font-bold text-slate-900 text-xl">{stats.totalProperties}</span>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
 
           {/* RIGHT SIDE - Compact Stats Cards */}
@@ -289,7 +289,7 @@ const Dashboard = () => {
             </div>
 
             {/* Investor Engagement Card - Enhanced */}
-            <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
+            {/* <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-lg border border-white/20 p-6">
               <h3 className="text-lg font-semibold text-slate-900 mb-4 flex items-center">
                 <div className="w-8 h-8 bg-gradient-to-r from-purple-500 to-pink-500 rounded-lg flex items-center justify-center mr-3">
                   <span className="text-white text-sm">👥</span>
@@ -312,7 +312,7 @@ const Dashboard = () => {
                   </span>
                 </div>
               </div>
-            </div>
+            </div> */}
           </div>
         </div>
       </main>

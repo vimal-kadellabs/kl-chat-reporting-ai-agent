@@ -124,7 +124,7 @@ const ChatInterface = () => {
                 </div> */}
                 <div>
                   <h1 className="text-xl font-bold text-gradient">
-                    Chat Reporting and Analytics Agent
+                    Chat Reporting Agent
                   </h1>
                   <p className="text-xs text-slate-500">Ask anything about real estate & auctions</p>
                 </div>
