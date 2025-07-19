@@ -52,6 +52,7 @@ class AuctionStatus(str, Enum):
 class BidStatus(str, Enum):
     ACTIVE = "active"
     WINNING = "winning"
+    WON = "won"
     OUTBID = "outbid"
 
 # Models
