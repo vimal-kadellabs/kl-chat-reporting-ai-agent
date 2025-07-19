@@ -543,7 +543,7 @@ class BackendTester:
         print(f"📍 Testing against: {self.base_url}")
         print("=" * 60)
         
-        # Test in priority order based on review request
+        # Test in priority order based on review request - ENHANCED TESTING
         tests = [
             ("Health Check", self.test_health_check),
             ("Sample Questions (PRIMARY)", self.test_sample_questions_endpoint),
@@ -551,7 +551,10 @@ class BackendTester:
             ("Properties Data", self.test_properties_endpoint),
             ("Auctions Data", self.test_auctions_endpoint),
             ("Bids Data", self.test_bids_endpoint),
-            ("Chat with Sample Question (CORE)", self.test_chat_endpoint_with_sample_question),
+            ("🔥 ENHANCED: Top Investors Multi-Chart", self.test_enhanced_chat_endpoint_top_investors),
+            ("🔥 ENHANCED: Regional Analysis", self.test_enhanced_chat_regional_analysis),
+            ("🔥 ENHANCED: Upcoming Auctions", self.test_enhanced_chat_upcoming_auctions),
+            ("🔥 ENHANCED: Property Comparison", self.test_enhanced_chat_property_comparison),
             ("Force Init Data", self.test_force_init_data_endpoint),
         ]
         
