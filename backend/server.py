@@ -945,9 +945,14 @@ You MUST respond with ONLY this JSON structure:
         )
 
     async def analyze_query(self, user_query: str) -> ChatResponse:
-        """Main analysis method with enhanced data integration"""
+        """Main analysis method with enhanced data integration and domain validation"""
         try:
             logger.info(f"Processing enhanced query: {user_query}")
+            
+            # Step 0: Domain validation - Check if query is relevant to real estate auctions
+            if not self.is_domain_relevant(user_query):
+                logger.info(f"Query rejected - not domain relevant: {user_query}")
+                return await self.create_domain_irrelevant_response(user_query)
             
             # Step 1: Parse intent and entities
             intent_info = await self.parse_intent(user_query)
