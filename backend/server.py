@@ -647,6 +647,228 @@ Return ONLY valid JSON in this exact format:
                 ]
             )
 
+    async def get_property_analysis_data(self, properties, auctions, bids, entities):
+        """Get property performance analysis"""
+        property_analysis = {}
+        
+        # Create lookups
+        auction_lookup = {auction['property_id']: auction for auction in auctions}
+        
+        # Analyze each property
+        for prop in properties:
+            prop_id = prop['id']
+            property_analysis[prop_id] = {
+                'property_id': prop_id,
+                'title': prop['title'],
+                'city': prop['city'],
+                'state': prop['state'],
+                'property_type': prop['property_type'],
+                'reserve_price': prop['reserve_price'],
+                'estimated_value': prop['estimated_value'],
+                'has_auction': prop_id in auction_lookup,
+                'auction_performance': {}
+            }
+            
+            # Add auction performance if exists
+            if prop_id in auction_lookup:
+                auction = auction_lookup[prop_id]
+                property_analysis[prop_id]['auction_performance'] = {
+                    'status': auction['status'],
+                    'starting_bid': auction['starting_bid'],
+                    'current_highest_bid': auction['current_highest_bid'],
+                    'total_bids': auction['total_bids'],
+                    'bid_to_reserve_ratio': auction['current_highest_bid'] / prop['reserve_price'] if prop['reserve_price'] > 0 else 0
+                }
+        
+        # Convert to list and sort by performance
+        property_list = list(property_analysis.values())
+        property_list.sort(key=lambda x: x['auction_performance'].get('total_bids', 0), reverse=True)
+        
+        return {
+            'property_analysis': property_list,
+            'total_properties': len(property_list),
+            'properties_with_auctions': len([p for p in property_list if p['has_auction']])
+        }
+
+    async def get_bidding_trends_data(self, bids, auctions, entities):
+        """Get bidding trends and patterns"""
+        bidding_trends = {
+            'by_time': {},
+            'by_amount_range': {},
+            'by_investor': {},
+            'competition_levels': {}
+        }
+        
+        # Create auction lookup
+        auction_lookup = {auction['id']: auction for auction in auctions}
+        
+        # Analyze bidding patterns
+        for bid in bids:
+            # Time-based analysis (simplified to hour of day)
+            bid_hour = bid['bid_time'].hour if hasattr(bid['bid_time'], 'hour') else 12
+            if bid_hour not in bidding_trends['by_time']:
+                bidding_trends['by_time'][bid_hour] = 0
+            bidding_trends['by_time'][bid_hour] += 1
+            
+            # Amount range analysis
+            amount = bid['bid_amount']
+            if amount < 500000:
+                range_key = 'under_500k'
+            elif amount < 1000000:
+                range_key = '500k_1m'
+            elif amount < 5000000:
+                range_key = '1m_5m'
+            else:
+                range_key = 'over_5m'
+            
+            if range_key not in bidding_trends['by_amount_range']:
+                bidding_trends['by_amount_range'][range_key] = 0
+            bidding_trends['by_amount_range'][range_key] += 1
+            
+            # Investor activity
+            investor_id = bid['investor_id']
+            if investor_id not in bidding_trends['by_investor']:
+                bidding_trends['by_investor'][investor_id] = 0
+            bidding_trends['by_investor'][investor_id] += 1
+        
+        # Competition level analysis
+        for auction in auctions:
+            total_bids = auction['total_bids']
+            if total_bids < 5:
+                comp_level = 'low'
+            elif total_bids < 15:
+                comp_level = 'medium'
+            elif total_bids < 25:
+                comp_level = 'high'
+            else:
+                comp_level = 'very_high'
+            
+            if comp_level not in bidding_trends['competition_levels']:
+                bidding_trends['competition_levels'][comp_level] = 0
+            bidding_trends['competition_levels'][comp_level] += 1
+        
+        return {
+            'bidding_trends': bidding_trends,
+            'total_bids_analyzed': len(bids),
+            'total_auctions_analyzed': len(auctions)
+        }
+
+    async def get_price_analysis_data(self, properties, auctions, bids, entities):
+        """Get price analysis and trends"""
+        price_analysis = {
+            'reserve_vs_winning': [],
+            'price_by_location': {},
+            'price_by_type': {},
+            'price_trends': {}
+        }
+        
+        # Create lookups
+        auction_lookup = {auction['property_id']: auction for auction in auctions}
+        
+        # Reserve vs winning bid analysis
+        for prop in properties:
+            if prop['id'] in auction_lookup:
+                auction = auction_lookup[prop['id']]
+                if auction['status'] == 'ended' and auction['current_highest_bid'] > 0:
+                    price_analysis['reserve_vs_winning'].append({
+                        'property_id': prop['id'],
+                        'title': prop['title'],
+                        'reserve_price': prop['reserve_price'],
+                        'winning_bid': auction['current_highest_bid'],
+                        'premium_percentage': ((auction['current_highest_bid'] - prop['reserve_price']) / prop['reserve_price']) * 100
+                    })
+        
+        # Price by location
+        for prop in properties:
+            city = prop['city']
+            if city not in price_analysis['price_by_location']:
+                price_analysis['price_by_location'][city] = {
+                    'total_value': 0,
+                    'count': 0,
+                    'avg_price': 0
+                }
+            
+            price_analysis['price_by_location'][city]['total_value'] += prop['reserve_price']
+            price_analysis['price_by_location'][city]['count'] += 1
+        
+        # Calculate averages
+        for city in price_analysis['price_by_location']:
+            data = price_analysis['price_by_location'][city]
+            data['avg_price'] = data['total_value'] / data['count']
+        
+        # Price by property type
+        for prop in properties:
+            prop_type = prop['property_type']
+            if prop_type not in price_analysis['price_by_type']:
+                price_analysis['price_by_type'][prop_type] = {
+                    'total_value': 0,
+                    'count': 0,
+                    'avg_price': 0
+                }
+            
+            price_analysis['price_by_type'][prop_type]['total_value'] += prop['reserve_price']
+            price_analysis['price_by_type'][prop_type]['count'] += 1
+        
+        # Calculate averages for property types
+        for prop_type in price_analysis['price_by_type']:
+            data = price_analysis['price_by_type'][prop_type]
+            data['avg_price'] = data['total_value'] / data['count']
+        
+        return {
+            'price_analysis': price_analysis,
+            'total_properties_analyzed': len(properties)
+        }
+
+    async def get_auction_status_data(self, auctions, properties, bids, status_filter):
+        """Get auction data filtered by status"""
+        filtered_auctions = []
+        property_lookup = {prop['id']: prop for prop in properties}
+        
+        # Filter auctions by status
+        if status_filter == 'live_auctions':
+            target_status = 'live'
+        elif status_filter == 'upcoming_auctions':
+            target_status = 'upcoming'
+        elif status_filter == 'completed_auctions':
+            target_status = 'ended'
+        else:
+            target_status = None
+        
+        for auction in auctions:
+            if target_status is None or auction['status'] == target_status:
+                auction_data = {
+                    'auction_id': auction['id'],
+                    'title': auction['title'],
+                    'status': auction['status'],
+                    'starting_bid': auction['starting_bid'],
+                    'current_highest_bid': auction['current_highest_bid'],
+                    'total_bids': auction['total_bids'],
+                    'start_time': auction['start_time'],
+                    'end_time': auction['end_time']
+                }
+                
+                # Add property details
+                if auction['property_id'] in property_lookup:
+                    prop = property_lookup[auction['property_id']]
+                    auction_data.update({
+                        'property_title': prop['title'],
+                        'location': prop['city'],
+                        'state': prop['state'],
+                        'property_type': prop['property_type'],
+                        'reserve_price': prop['reserve_price']
+                    })
+                
+                filtered_auctions.append(auction_data)
+        
+        # Sort by current bid amount (descending)
+        filtered_auctions.sort(key=lambda x: x['current_highest_bid'], reverse=True)
+        
+        return {
+            'auctions': filtered_auctions,
+            'total_count': len(filtered_auctions),
+            'status_filter': status_filter
+        }
+
 # Initialize analytics service
 analytics_service = AnalyticsService()
 
