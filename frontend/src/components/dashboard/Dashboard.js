@@ -62,42 +62,36 @@ const Dashboard = () => {
       title: 'Total Properties',
       value: stats.totalProperties,
       icon: '🏠',
-      gradient: 'gradient-card',
       description: 'Available for auction'
     },
     {
       title: 'Active Auctions',
       value: stats.totalAuctions,
       icon: '🏛️',
-      gradient: 'gradient-card-secondary',
       description: 'Live & upcoming'
     },
     {
       title: 'Total Bids',
       value: stats.totalBids,
       icon: '💰',
-      gradient: 'gradient-card-accent',
       description: 'Placed by investors'
     },
     {
       title: 'Live Auctions',
       value: stats.liveAuctions,
       icon: '🔴',
-      gradient: 'gradient-card-cool',
       description: 'Currently active'
     },
     {
       title: 'Upcoming Auctions',
       value: stats.upcomingAuctions,
       icon: '📅',
-      gradient: 'modern-card',
       description: 'Scheduled soon'
     },
     {
       title: 'Active Investors',
       value: stats.totalUsers,
       icon: '👥',
-      gradient: 'modern-card',
       description: 'Registered users'
     }
   ];
