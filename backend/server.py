@@ -541,11 +541,15 @@ You MUST respond with ONLY this JSON structure:
                 
             except (json.JSONDecodeError, AttributeError, Exception) as e:
                 logger.error(f"Enhanced JSON parsing failed: {e}")
+                # Try fallback response first before manual response
+                if not structured_data.get('data') and not structured_data.get('raw_counts'):
+                    return await self.create_fallback_response(user_query)
                 return await self.create_enhanced_manual_response(user_query, structured_data)
                 
         except Exception as e:
             logger.error(f"Error in enhanced analysis: {e}")
-            return await self.create_enhanced_manual_response(user_query, structured_data)
+            # Always provide fallback for any errors
+            return await self.create_fallback_response(user_query)
 
     async def create_enhanced_manual_response(self, user_query: str, structured_data: dict) -> ChatResponse:
         """Create enhanced response with multiple charts and tables when OpenAI fails"""
