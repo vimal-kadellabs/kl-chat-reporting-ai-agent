@@ -446,60 +446,62 @@ class AnalyticsService:
     async def analyze_query_with_data(self, user_query: str, structured_data: dict) -> ChatResponse:
         """Enhanced OpenAI analysis with structured data"""
         try:
-            system_prompt = f"""You are an expert real estate auction analytics assistant with access to comprehensive, real-time market data.
+            system_prompt = f"""You are a real estate auction analytics expert. You must respond ONLY with valid JSON in the exact format specified.
 
-STRUCTURED DATA CONTEXT:
-Intent: {structured_data.get('intent', 'general_analysis')}
-Raw Data Counts: {structured_data.get('raw_counts', {})}
-
-REAL DATA PROVIDED:
+AVAILABLE DATA:
 {json.dumps(structured_data.get('data', {}), indent=2, default=str)}
 
-Your task is to provide:
-1. A comprehensive, markdown-formatted response explaining the data and insights
-2. Specific references to actual names, amounts, and details from the provided data
-3. Professional analysis with actionable recommendations
-4. Appropriate chart data using the REAL numbers from the structured data
+INSTRUCTIONS:
+1. Analyze the user query using the provided data
+2. Create professional insights with specific references to actual data
+3. Format response as markdown with ## headers and **bold** text
+4. Generate chart data using real numbers from the provided data
+5. Provide 2-4 actionable summary points
 
-RESPONSE REQUIREMENTS:
-- Use markdown formatting for clear structure (## headings, **bold**, bullet points)
-- Reference specific investor names, property titles, and exact amounts from the data
-- Create chart visualizations using the actual data provided
-- Provide 2-4 actionable insights based on real patterns in the data
-- If the data is limited, acknowledge this and suggest ways to get more insights
-
-Return ONLY valid JSON in this exact format:
+You MUST respond with ONLY this JSON structure (no other text):
 {{
-  "response": "## Comprehensive markdown-formatted analysis with real data references\\n\\n**Key Findings:**\\n- Actual insight with specific names and numbers\\n- Another insight with real data...",
-  "chart_type": "bar|line|pie|area|scatter",
-  "chart_data": {{"data": [actual data from structured_data formatted for charts]}},
-  "summary_points": ["Real insight with specific data", "Another actionable recommendation", "Specific next steps"]
-}}
-"""
+  "response": "## Professional Analysis\\n\\n**Key Findings:**\\n- Specific insight with actual data\\n- Another insight with real numbers",
+  "chart_type": "bar",
+  "chart_data": {{"data": [actual data from provided dataset]}},
+  "summary_points": ["Specific insight with real data", "Actionable recommendation", "Next steps"]
+}}"""
+
+            # Add explicit JSON mode instruction
+            messages = [
+                {"role": "system", "content": system_prompt},
+                {"role": "user", "content": f"Analyze this query using the provided data and respond ONLY with valid JSON: {user_query}"}
+            ]
 
             response = self.client.chat.completions.create(
                 model="gpt-4",
-                messages=[
-                    {"role": "system", "content": system_prompt},
-                    {"role": "user", "content": user_query}
-                ],
-                temperature=0.7
+                messages=messages,
+                temperature=0.3,  # Lower temperature for more consistent JSON output
+                max_tokens=2000
             )
 
             response_text = response.choices[0].message.content.strip()
-            
-            # Extract JSON from response
-            if "```json" in response_text:
-                start = response_text.find("```json") + 7
-                end = response_text.find("```", start)
-                response_text = response_text[start:end].strip()
-            elif "```" in response_text:
-                start = response_text.find("```") + 3
-                end = response_text.find("```", start)
-                response_text = response_text[start:end].strip()
-            
+            logger.info(f"Raw OpenAI response: {response_text[:200]}...")
+
+            # Clean and extract JSON
             try:
+                # Remove any markdown formatting
+                if "```json" in response_text:
+                    start = response_text.find("```json") + 7
+                    end = response_text.find("```", start)
+                    response_text = response_text[start:end].strip()
+                elif "```" in response_text:
+                    start = response_text.find("```") + 3
+                    end = response_text.find("```", start)
+                    response_text = response_text[start:end].strip()
+                
+                # Try to find JSON in the response
+                import re
+                json_match = re.search(r'\{.*\}', response_text, re.DOTALL)
+                if json_match:
+                    response_text = json_match.group()
+                
                 result = json.loads(response_text)
+                logger.info("Successfully parsed JSON response")
                 
                 return ChatResponse(
                     response=result.get("response", "Analysis complete with structured data."),
@@ -507,13 +509,133 @@ Return ONLY valid JSON in this exact format:
                     chart_data=result.get("chart_data", {"data": []}),
                     summary_points=result.get("summary_points", ["Analysis complete with real market data"])
                 )
-            except json.JSONDecodeError:
-                logger.error(f"Failed to parse JSON response: {response_text}")
-                return await self.generate_fallback_with_data(user_query, structured_data)
+                
+            except (json.JSONDecodeError, AttributeError) as e:
+                logger.error(f"JSON parsing failed: {e}. Raw response: {response_text[:500]}")
+                
+                # Create structured response manually using the data
+                return await self.create_manual_response(user_query, structured_data)
                 
         except Exception as e:
             logger.error(f"Error in enhanced OpenAI analysis: {e}")
-            return await self.generate_fallback_with_data(user_query, structured_data)
+            return await self.create_manual_response(user_query, structured_data)
+
+    async def create_manual_response(self, user_query: str, structured_data: dict) -> ChatResponse:
+        """Create a structured response manually when OpenAI parsing fails"""
+        try:
+            intent = structured_data.get('intent', 'general_analysis')
+            data = structured_data.get('data', {})
+            
+            if intent == 'top_investors' and 'top_investors' in data:
+                investors = data['top_investors'][:5]  # Top 5
+                
+                if investors:
+                    response_text = "## Top Investor Analysis\n\n**Based on our current auction data, here are the leading investors:**\n\n"
+                    for i, inv in enumerate(investors, 1):
+                        response_text += f"{i}. **{inv['name']}** ({inv['location']})\n"
+                        response_text += f"   - Total Bid Amount: ${inv['total_amount']:,.0f}\n"
+                        response_text += f"   - Success Rate: {inv['success_rate']:.1f}%\n"
+                        response_text += f"   - Total Bids: {inv['total_bids']}\n\n"
+                    
+                    chart_data = {
+                        "data": [
+                            {
+                                "name": inv['name'],
+                                "total_amount": inv['total_amount'],
+                                "success_rate": round(inv['success_rate'], 1)
+                            }
+                            for inv in investors
+                        ]
+                    }
+                    
+                    summary_points = [
+                        f"Top investor: {investors[0]['name']} with ${investors[0]['total_amount']:,.0f} in total bids",
+                        f"Success rates range from {min(inv['success_rate'] for inv in investors):.1f}% to {max(inv['success_rate'] for inv in investors):.1f}%",
+                        f"Analyzed {len(data['top_investors'])} active investors in our database",
+                        "High performers show consistent bidding patterns and strong win rates"
+                    ]
+                    
+                    return ChatResponse(
+                        response=response_text,
+                        chart_type="bar",
+                        chart_data=chart_data,
+                        summary_points=summary_points
+                    )
+            
+            elif intent == 'regional_analysis' and 'regional_analysis' in data:
+                regions = data['regional_analysis'][:8]  # Top 8 regions
+                
+                if regions:
+                    response_text = "## Regional Market Analysis\n\n**Auction activity breakdown by metropolitan area:**\n\n"
+                    for region in regions:
+                        response_text += f"### {region['city']}, {region['state']}\n"
+                        response_text += f"- **Properties**: {region['properties']}\n"
+                        response_text += f"- **Average Reserve Price**: ${region['avg_reserve_price']:,.0f}\n"
+                        response_text += f"- **Total Market Value**: ${region['total_value']:,.0f}\n"
+                        response_text += f"- **Active Auctions**: {region['auctions']}\n"
+                        response_text += f"- **Average Bids/Auction**: {region['avg_bids_per_auction']:.1f}\n\n"
+                    
+                    chart_data = {
+                        "data": [
+                            {
+                                "city": region['city'],
+                                "total_value": region['total_value'],
+                                "properties": region['properties'],
+                                "avg_price": round(region['avg_reserve_price'])
+                            }
+                            for region in regions
+                        ]
+                    }
+                    
+                    summary_points = [
+                        f"Highest value market: {regions[0]['city']} with ${regions[0]['total_value']:,.0f} total value",
+                        f"Most active market: {max(regions, key=lambda x: x['auctions'])['city']} with {max(regions, key=lambda x: x['auctions'])['auctions']} auctions",
+                        f"Analyzed {len(data['regional_analysis'])} metropolitan markets",
+                        "Significant regional variations in property values and auction activity"
+                    ]
+                    
+                    return ChatResponse(
+                        response=response_text,
+                        chart_type="bar",
+                        chart_data=chart_data,
+                        summary_points=summary_points
+                    )
+            
+            # Default response for other intents or when data is limited
+            raw_counts = structured_data.get('raw_counts', {})
+            response_text = f"## Market Overview\n\n**Current auction platform statistics:**\n\n"
+            response_text += f"- **Total Properties**: {raw_counts.get('total_properties', 0)}\n"
+            response_text += f"- **Active Auctions**: {raw_counts.get('total_auctions', 0)}\n" 
+            response_text += f"- **Registered Investors**: {raw_counts.get('total_users', 0)}\n"
+            response_text += f"- **Total Bids Placed**: {raw_counts.get('total_bids', 0)}\n"
+            
+            return ChatResponse(
+                response=response_text,
+                chart_type="bar",
+                chart_data={"data": [
+                    {"metric": "Properties", "count": raw_counts.get('total_properties', 0)},
+                    {"metric": "Auctions", "count": raw_counts.get('total_auctions', 0)},
+                    {"metric": "Investors", "count": raw_counts.get('total_users', 0)},
+                    {"metric": "Bids", "count": raw_counts.get('total_bids', 0)}
+                ]},
+                summary_points=[
+                    f"Platform hosts {raw_counts.get('total_properties', 0)} properties across multiple markets",
+                    f"{raw_counts.get('total_users', 0)} active investors participating in auctions",
+                    f"Strong engagement with {raw_counts.get('total_bids', 0)} bids placed to date",
+                    "Comprehensive data available for detailed market analysis"
+                ]
+            )
+            
+        except Exception as e:
+            logger.error(f"Error creating manual response: {e}")
+            return ChatResponse(
+                response="Sorry, we couldn't find any relevant records for this query. Try rephrasing or checking auction filters.",
+                summary_points=[
+                    "No matching data found in our database",
+                    "Try using different search terms or time periods",
+                    "Check if the requested information exists in our current dataset"
+                ]
+            )
 
     async def generate_fallback_with_data(self, query: str, structured_data: dict) -> ChatResponse:
         """Generate fallback response using structured data"""
