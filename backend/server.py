@@ -1301,25 +1301,28 @@ async def get_bids():
 
 @api_router.post("/chat", response_model=ChatResponse)
 async def chat_query(query: ChatQuery):
-    """Enhanced chat endpoint with OpenAI integration"""
+    """Enhanced chat endpoint with multiple charts and tables support"""
     try:
         logger.info(f"Processing query: {query.message}")
         
-        # Use OpenAI-powered analytics service
+        # Use enhanced OpenAI-powered analytics service
         response = await analytics_service.analyze_query(query.message)
         
-        # Store chat message in database
+        # Store enhanced chat message in database
         chat_message = ChatMessage(
             user_id=query.user_id,
             message=query.message,
             response=response.response,
+            charts=[chart.dict() for chart in response.charts] if response.charts else None,
+            tables=[table.dict() for table in response.tables] if response.tables else None,
+            summary_points=response.summary_points,
+            # Backward compatibility
             chart_data=response.chart_data,
-            chart_type=response.chart_type,
-            summary_points=response.summary_points
+            chart_type=response.chart_type
         )
         await db.chat_messages.insert_one(chat_message.dict())
         
-        logger.info(f"Generated response with chart type: {response.chart_type}")
+        logger.info(f"Generated enhanced response with {len(response.charts)} charts and {len(response.tables)} tables")
         return response
         
     except Exception as e:
