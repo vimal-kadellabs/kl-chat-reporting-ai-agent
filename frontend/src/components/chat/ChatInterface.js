@@ -12,6 +12,7 @@ const ChatInterface = () => {
   const [inputMessage, setInputMessage] = useState('');
   const [loading, setLoading] = useState(false);
   const [sampleQuestions, setSampleQuestions] = useState([]);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const messagesEndRef = useRef(null);
 
   useEffect(() => {
@@ -48,6 +49,7 @@ const ChatInterface = () => {
     setMessages(prev => [...prev, userMessage]);
     setInputMessage('');
     setLoading(true);
+    setSidebarOpen(false); // Close sidebar on mobile after question selection
 
     try {
       const response = await axios.post('/chat', {
@@ -93,29 +95,68 @@ const ChatInterface = () => {
   };
 
   return (
-    <div className="h-screen bg-gray-50 flex flex-col">
-      {/* Fixed Header */}
-      <header className="bg-white shadow-sm border-b flex-shrink-0">
+    <div className="h-screen bg-slate-50 bg-pattern flex flex-col">
+      {/* Enhanced Header */}
+      <header className="bg-white border-b border-slate-200 shadow-sm flex-shrink-0 relative">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center py-4">
+          <div className="flex items-center justify-between py-4">
+            {/* Left: Back Button */}
             <div className="flex items-center space-x-4">
               <button
                 onClick={() => navigate('/dashboard')}
-                className="text-indigo-600 hover:text-indigo-800 font-medium"
+                className="btn-outline p-2 hover:scale-105 transition-all duration-200"
+                title="Back to Dashboard"
               >
-                ← Back to Dashboard
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
               </button>
-              <h1 className="text-2xl font-bold text-gray-900">
-                Auction Analytics Chat
-              </h1>
             </div>
-            <div className="flex items-center space-x-4">
-              <span className="text-sm text-gray-700">Welcome, {user?.name}</span>
+
+            {/* Center: Title */}
+            <div className="flex-1 text-center">
+              <div className="flex items-center justify-center space-x-3">
+                <div className="w-8 h-8 bg-gradient-primary rounded-lg flex items-center justify-center">
+                  <span className="text-white text-lg">🤖</span>
+                </div>
+                <div>
+                  <h1 className="text-xl font-bold text-gradient">
+                    AI Analytics Agent
+                  </h1>
+                  <p className="text-xs text-slate-500">Ask anything about real estate auctions</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Right: User Menu */}
+            <div className="flex items-center space-x-3">
+              <div className="hidden sm:block text-right">
+                <p className="text-sm font-medium text-slate-700">{user?.name}</p>
+              </div>
+              <div className="w-8 h-8 bg-slate-200 rounded-full flex items-center justify-center">
+                <span className="text-slate-600 text-sm font-medium">
+                  {user?.name?.charAt(0).toUpperCase()}
+                </span>
+              </div>
               <button
                 onClick={handleLogout}
-                className="text-sm text-red-600 hover:text-red-800"
+                className="text-slate-400 hover:text-slate-600 transition-colors"
+                title="Logout"
               >
-                Logout
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1" />
+                </svg>
+              </button>
+
+              {/* Mobile Sidebar Toggle */}
+              <button
+                onClick={() => setSidebarOpen(!sidebarOpen)}
+                className="md:hidden btn-outline p-2"
+                title="Toggle Questions"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
+                </svg>
               </button>
             </div>
           </div>
@@ -124,16 +165,41 @@ const ChatInterface = () => {
 
       {/* Main Content Area */}
       <div className="flex-1 flex overflow-hidden">
-        {/* Scrollable Chat Messages Area */}
+        {/* Chat Messages Area */}
         <div className="flex-1 flex flex-col">
-          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+          <div className="flex-1 overflow-y-auto p-4 space-y-6">
             {messages.length === 0 ? (
-              <div className="text-center py-12">
-                <div className="text-gray-500 text-lg mb-4">
-                  👋 Welcome to Auction Analytics Chat!
+              <div className="text-center py-16 fade-in">
+                <div className="w-20 h-20 bg-gradient-cool rounded-full flex items-center justify-center mx-auto mb-6">
+                  <span className="text-3xl">👋</span>
                 </div>
-                <div className="text-gray-400 text-sm">
+                <h2 className="text-2xl font-bold text-slate-800 mb-3">
+                  Welcome to AI Analytics!
+                </h2>
+                <p className="text-lg text-slate-600 mb-6 max-w-md mx-auto">
                   Ask me anything about real estate auctions, bidding trends, or investor insights.
+                </p>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl mx-auto">
+                  <div className="modern-card p-4">
+                    <div className="text-2xl mb-2">📊</div>
+                    <h3 className="font-semibold text-slate-800 mb-1">Market Analysis</h3>
+                    <p className="text-sm text-slate-600">Regional performance and trends</p>
+                  </div>
+                  <div className="modern-card p-4">
+                    <div className="text-2xl mb-2">👥</div>
+                    <h3 className="font-semibold text-slate-800 mb-1">Investor Insights</h3>
+                    <p className="text-sm text-slate-600">Performance and strategies</p>
+                  </div>
+                  <div className="modern-card p-4">
+                    <div className="text-2xl mb-2">🏠</div>
+                    <h3 className="font-semibold text-slate-800 mb-1">Property Data</h3>
+                    <p className="text-sm text-slate-600">Auction results and pricing</p>
+                  </div>
+                  <div className="modern-card p-4">
+                    <div className="text-2xl mb-2">📈</div>
+                    <h3 className="font-semibold text-slate-800 mb-1">Trend Analysis</h3>
+                    <p className="text-sm text-slate-600">Market patterns and forecasts</p>
+                  </div>
                 </div>
               </div>
             ) : (
@@ -143,15 +209,15 @@ const ChatInterface = () => {
             )}
             
             {loading && (
-              <div className="flex justify-start">
-                <div className="bg-gray-100 rounded-lg p-4 max-w-sm">
-                  <div className="flex items-center space-x-2">
-                    <div className="animate-pulse flex space-x-1">
-                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
-                      <div className="w-2 h-2 bg-gray-400 rounded-full"></div>
+              <div className="flex justify-start fade-in">
+                <div className="modern-card p-4 max-w-sm">
+                  <div className="flex items-center space-x-3">
+                    <div className="loading-dots">
+                      <div className="loading-dot"></div>
+                      <div className="loading-dot"></div>
+                      <div className="loading-dot"></div>
                     </div>
-                    <span className="text-gray-500 text-sm">Analyzing...</span>
+                    <span className="text-slate-600 text-sm">AI is analyzing your query...</span>
                   </div>
                 </div>
               </div>
@@ -160,41 +226,68 @@ const ChatInterface = () => {
             <div ref={messagesEndRef} />
           </div>
 
-          {/* Fixed Input Area */}
-          <div className="bg-white border-t shadow-lg flex-shrink-0">
-            <div className="p-3">
+          {/* Enhanced Input Area */}
+          <div className="bg-white border-t border-slate-200 shadow-lg flex-shrink-0">
+            <div className="max-w-4xl mx-auto p-4">
               <div className="flex space-x-3">
-                <div className="flex-1">
+                <div className="flex-1 relative">
                   <textarea
                     value={inputMessage}
                     onChange={(e) => setInputMessage(e.target.value)}
                     onKeyPress={handleKeyPress}
                     placeholder="Ask anything about real estate auctions..."
-                    className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:border-transparent resize-none shadow-sm"
+                    className="input-modern w-full resize-none focus-ring"
                     rows="2"
                     disabled={loading}
                   />
+                  {inputMessage && (
+                    <div className="absolute right-3 top-3 text-xs text-slate-400">
+                      Press Enter to send
+                    </div>
+                  )}
                 </div>
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={loading || !inputMessage.trim()}
-                  className="px-4 py-2 bg-indigo-600 text-white rounded-lg hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+                  className="btn-modern px-6 flex items-center space-x-2"
                 >
-                  {loading ? 'Sending...' : 'Send'}
+                  {loading ? (
+                    <div className="loading-dots">
+                      <div className="loading-dot bg-white"></div>
+                      <div className="loading-dot bg-white"></div>
+                      <div className="loading-dot bg-white"></div>
+                    </div>
+                  ) : (
+                    <>
+                      <span>Send</span>
+                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
+                      </svg>
+                    </>
+                  )}
                 </button>
               </div>
             </div>
           </div>
         </div>
 
-        {/* Fixed Sample Questions Sidebar */}
-        <div className="w-80 border-l bg-white flex-shrink-0">
+        {/* Enhanced Sample Questions Sidebar */}
+        <div className={`sidebar-modern w-80 md:block ${sidebarOpen ? 'block' : 'hidden'} md:relative md:translate-x-0`}>
           <SampleQuestions 
             questions={sampleQuestions} 
             onQuestionClick={handleSendMessage}
+            onClose={() => setSidebarOpen(false)}
           />
         </div>
       </div>
+
+      {/* Mobile Overlay */}
+      {sidebarOpen && (
+        <div 
+          className="fixed inset-0 bg-black bg-opacity-50 z-40 md:hidden"
+          onClick={() => setSidebarOpen(false)}
+        />
+      )}
     </div>
   );
 };
