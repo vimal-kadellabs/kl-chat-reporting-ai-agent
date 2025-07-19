@@ -250,7 +250,7 @@ const ChatInterface = () => {
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={loading || !inputMessage.trim()}
-                  className="btn-modern px-4 flex items-center space-x-2"
+                  className="bg-indigo-600 hover:bg-indigo-700 text-white border-none rounded-lg px-3 py-2 font-medium transition-all duration-200 cursor-pointer shadow-sm hover:shadow-md disabled:opacity-60 disabled:cursor-not-allowed flex items-center space-x-1.5"
                 >
                   {loading ? (
                     <div className="loading-dots">
@@ -260,8 +260,8 @@ const ChatInterface = () => {
                     </div>
                   ) : (
                     <>
-                      <span>Send</span>
-                      <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <span className="text-sm">Send</span>
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 19l9 2-9-18-9 18 9-2zm0 0v-8" />
                       </svg>
                     </>
