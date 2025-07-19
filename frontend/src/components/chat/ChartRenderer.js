@@ -131,7 +131,7 @@ const ChartRenderer = ({ data, type, title, description }) => {
     switch (type) {
       case 'bar':
         return (
-          <ResponsiveContainer width="100%" height={400}>
+          <ResponsiveContainer width="100%" height={320}>
             <BarChart data={chartData} margin={{ top: 5, right: 30, left: 20, bottom: 5 }}>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
               <XAxis 
