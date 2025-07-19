@@ -8,7 +8,7 @@ const ChatMessage = ({ message }) => {
 
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} fade-in`}>
-      <div className={`max-w-4xl w-full ${isUser ? 'text-right' : 'text-left'}`}>
+      <div className={`max-w-[1000px] w-full ${isUser ? 'text-right' : 'text-left'}`}>
         {/* User Message Bubble */}
         {isUser && (
           <div className="flex items-start space-x-3 mb-3">
