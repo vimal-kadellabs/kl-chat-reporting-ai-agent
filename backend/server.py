@@ -659,6 +659,8 @@ You MUST respond with ONLY this JSON structure:
             
             if intent == 'top_investors' and 'top_investors' in data:
                 return await self.create_top_investors_enhanced_response(data['top_investors'])
+            elif intent == 'last_month_winners':
+                return await self.create_last_month_winners_enhanced_response(data)
             elif intent == 'regional_analysis' and 'regional_analysis' in data:
                 return await self.create_regional_enhanced_response(data['regional_analysis'])
             elif intent == 'bidding_trends' and 'bidding_analysis' in data:
