@@ -1,5 +1,7 @@
 import React from 'react';
 import ChartRenderer from './ChartRenderer';
+import TableRenderer from './TableRenderer';
+import TypingAnimation from './TypingAnimation';
 
 const ChatMessage = ({ message }) => {
   const isUser = message.type === 'user';
@@ -7,7 +9,7 @@ const ChatMessage = ({ message }) => {
   return (
     <div className={`flex ${isUser ? 'justify-end' : 'justify-start'} fade-in`}>
       <div className={`max-w-4xl w-full ${isUser ? 'text-right' : 'text-left'}`}>
-        {/* Message Bubble */}
+        {/* User Message Bubble */}
         {isUser && (
           <div className="flex items-start space-x-3 mb-3">
             <div className="flex-1 flex justify-end">
@@ -21,54 +23,143 @@ const ChatMessage = ({ message }) => {
           </div>
         )}
 
-        {/* Summary Points for Bot Messages */}
-        {!isUser && message.summaryPoints && message.summaryPoints.length > 0 && (
-          <div className="ml-11 mb-4">
-            <div className="modern-card bg-blue-50 border-blue-200 p-4">
-              <div className="flex items-center mb-3">
-                <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-2">
-                  <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                    <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
-                  </svg>
-                </div>
-                <h4 className="font-semibold text-blue-900 text-sm">Key Insights</h4>
-              </div>
-              <ul className="space-y-2">
-                {message.summaryPoints.map((point, index) => (
-                  <li key={index} className="text-sm text-blue-800 flex items-start">
-                    <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                    <span className="leading-relaxed">{point}</span>
-                  </li>
-                ))}
-              </ul>
+        {/* Bot Messages */}
+        {!isUser && (
+          <div className="flex items-start space-x-3 mb-3">
+            <div className="w-8 h-8 bg-gradient-primary rounded-full flex items-center justify-center flex-shrink-0 mt-1">
+              <span className="text-white text-sm">🤖</span>
             </div>
-          </div>
-        )}
-
-        {/* Chart for Bot Messages */}
-        {!isUser && message.chartData && message.chartType && (
-          <div className="ml-11 mb-4">
-            <div className="modern-card overflow-hidden">
-              <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-3 border-b border-slate-200">
-                <div className="flex items-center">
-                  <div className="w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center mr-2">
-                    <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                      <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
-                      <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
-                    </svg>
+            <div className="flex-1 min-w-0">
+              
+              {/* Summary Points */}
+              {message.summaryPoints && message.summaryPoints.length > 0 && (
+                <div className="mb-4">
+                  <div className="modern-card bg-blue-50 border-blue-200 p-4">
+                    <div className="flex items-center mb-3">
+                      <div className="w-5 h-5 bg-blue-500 rounded-full flex items-center justify-center mr-2">
+                        <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                          <path fillRule="evenodd" d="M3.172 5.172a4 4 0 015.656 0L10 6.343l1.172-1.171a4 4 0 115.656 5.656L10 17.657l-6.828-6.829a4 4 0 010-5.656z" clipRule="evenodd" />
+                        </svg>
+                      </div>
+                      <h4 className="font-semibold text-blue-900 text-sm">Key Insights</h4>
+                    </div>
+                    <ul className="space-y-2">
+                      {message.summaryPoints.map((point, index) => (
+                        <li key={index} className="text-sm text-blue-800 flex items-start">
+                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
+                          <span className="leading-relaxed">{point}</span>
+                        </li>
+                      ))}
+                    </ul>
                   </div>
-                  <h4 className="font-semibold text-slate-700 text-sm">Data Visualization</h4>
-                  <span className="ml-2 text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
-                    {message.chartType.toUpperCase()}
-                  </span>
                 </div>
-              </div>
-              <div className="p-4">
-                <ChartRenderer
-                  data={message.chartData}
-                  type={message.chartType}
-                />
-              </div>
+              )}
+
+              {/* Multiple Charts */}
+              {message.charts && message.charts.length > 0 && (
+                <div className="space-y-6 mb-6">
+                  {message.charts.map((chart, index) => (
+                    <div key={index} className="modern-card overflow-hidden">
+                      <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-3 border-b border-slate-200">
+                        <div className="flex items-center">
+                          <div className="w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center mr-2">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                              <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+                            </svg>
+                          </div>
+                          <h4 className="font-semibold text-slate-700 text-sm">
+                            Data Visualization {message.charts.length > 1 && `${index + 1}/${message.charts.length}`}
+                          </h4>
+                          <span className="ml-2 text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
+                            {chart.type.toUpperCase()}
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-6">
+                        <ChartRenderer
+                          data={chart.data}
+                          type={chart.type}
+                          title={chart.title}
+                          description={chart.description}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Tables */}
+              {message.tables && message.tables.length > 0 && (
+                <div className="space-y-6 mb-6">
+                  {message.tables.map((table, index) => (
+                    <div key={index} className="modern-card overflow-hidden">
+                      <div className="bg-gradient-to-r from-slate-50 to-green-50 px-4 py-3 border-b border-slate-200">
+                        <div className="flex items-center">
+                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mr-2">
+                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                            </svg>
+                          </div>
+                          <h4 className="font-semibold text-slate-700 text-sm">
+                            Data Table {message.tables.length > 1 && `${index + 1}/${message.tables.length}`}
+                          </h4>
+                          <span className="ml-2 text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
+                            INTERACTIVE
+                          </span>
+                        </div>
+                      </div>
+                      <div className="p-6">
+                        <TableRenderer
+                          data={table}
+                          title={table.title}
+                          description={table.description}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Backward compatibility for single chart */}
+              {!message.charts && message.chartData && message.chartType && (
+                <div className="mb-4">
+                  <div className="modern-card overflow-hidden">
+                    <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-3 border-b border-slate-200">
+                      <div className="flex items-center">
+                        <div className="w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center mr-2">
+                          <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
+                            <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
+                            <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
+                          </svg>
+                        </div>
+                        <h4 className="font-semibold text-slate-700 text-sm">Data Visualization</h4>
+                        <span className="ml-2 text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
+                          {message.chartType.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <ChartRenderer
+                        data={message.chartData}
+                        type={message.chartType}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Main Response with Typing Animation */}
+              {message.content && (
+                <div className="modern-card p-6 bg-gradient-to-br from-white to-slate-50 border border-slate-200">
+                  <TypingAnimation 
+                    text={message.content} 
+                    speed={25}
+                    startDelay={500}
+                  />
+                </div>
+              )}
+
             </div>
           </div>
         )}
