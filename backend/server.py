@@ -145,6 +145,40 @@ class AnalyticsService:
             auctions = await db.auctions.find().to_list(100)
             bids = await db.bids.find().to_list(100)
             
+            # Rich contextual analysis
+            investor_types = {
+                "individual_hnw": len([u for u in users if "@email.com" in u['email'] and u['success_rate'] > 80]),
+                "institutional": len([u for u in users if any(domain in u['email'] for domain in ['@blackrock.com', '@vanguard.com', '@cbre.com', '@cushman.com'])]),
+                "reits_funds": len([u for u in users if any(keyword in u['name'].lower() for keyword in ['reit', 'fund', 'equity'])]),
+                "international": len([u for u in users if any(domain in u['email'] for domain in ['.jp', '.fr', '@invest'])]),
+                "flippers": len([u for u in users if 50 < u['success_rate'] < 80 and u['total_bids'] > 20])
+            }
+            
+            market_segments = {
+                "luxury": len([p for p in properties if p['reserve_price'] > 2000000]),
+                "mid_market": len([p for p in properties if 500000 <= p['reserve_price'] <= 2000000]),
+                "affordable": len([p for p in properties if p['reserve_price'] < 500000]),
+                "commercial": len([p for p in properties if p['property_type'] == 'commercial']),
+                "industrial": len([p for p in properties if p['property_type'] == 'industrial'])
+            }
+            
+            geographic_markets = {}
+            for prop in properties:
+                city = prop['city']
+                if city not in geographic_markets:
+                    geographic_markets[city] = {'properties': 0, 'avg_price': 0, 'total_value': 0}
+                geographic_markets[city]['properties'] += 1
+                geographic_markets[city]['total_value'] += prop['reserve_price']
+            
+            for city in geographic_markets:
+                geographic_markets[city]['avg_price'] = geographic_markets[city]['total_value'] / geographic_markets[city]['properties']
+            
+            auction_activity = {
+                "total_volume": sum([a['current_highest_bid'] for a in auctions if a['current_highest_bid'] > 0]),
+                "avg_competition": sum([a['total_bids'] for a in auctions]) / len(auctions) if auctions else 0,
+                "success_rate": len([a for a in auctions if a['status'] == 'ended' and a.get('winner_id')]) / len([a for a in auctions if a['status'] == 'ended']) * 100 if auctions else 0
+            }
+            
             context = {
                 "total_users": len(users),
                 "total_properties": len(properties),
@@ -155,7 +189,18 @@ class AnalyticsService:
                 "upcoming_auctions": len([a for a in auctions if a['status'] == 'upcoming']),
                 "property_types": list(set([p['property_type'] for p in properties])),
                 "states": list(set([p['state'] for p in properties])),
-                "cities": list(set([p['city'] for p in properties]))
+                "cities": list(set([p['city'] for p in properties])),
+                "investor_types": investor_types,
+                "market_segments": market_segments,
+                "geographic_markets": geographic_markets,
+                "auction_activity": auction_activity,
+                "top_markets": sorted(geographic_markets.items(), key=lambda x: x[1]['avg_price'], reverse=True)[:5],
+                "price_ranges": {
+                    "under_500k": len([p for p in properties if p['reserve_price'] < 500000]),
+                    "500k_1m": len([p for p in properties if 500000 <= p['reserve_price'] < 1000000]),
+                    "1m_5m": len([p for p in properties if 1000000 <= p['reserve_price'] < 5000000]),
+                    "over_5m": len([p for p in properties if p['reserve_price'] >= 5000000])
+                }
             }
             return context, {"users": users, "properties": properties, "auctions": auctions, "bids": bids}
         except Exception as e:
