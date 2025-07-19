@@ -61,9 +61,12 @@ const ChatInterface = () => {
         id: (Date.now() + 1).toString(),
         type: 'bot',
         content: response.data.response,
+        charts: response.data.charts || [],
+        tables: response.data.tables || [],
+        summaryPoints: response.data.summary_points || [],
+        // Backward compatibility
         chartData: response.data.chart_data,
         chartType: response.data.chart_type,
-        summaryPoints: response.data.summary_points,
         timestamp: new Date()
       };
 
