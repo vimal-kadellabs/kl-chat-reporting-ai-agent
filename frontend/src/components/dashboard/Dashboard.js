@@ -141,22 +141,22 @@ const Dashboard = () => {
           {statCards.map((card, index) => (
             <div 
               key={index} 
-              className={`${card.gradient} p-6 transition-all duration-300 hover:scale-105 fade-in`}
+              className="modern-card p-6 transition-all duration-300 hover:scale-105 fade-in"
               style={{ animationDelay: `${index * 0.1}s` }}
             >
               <div className="flex items-center justify-between">
                 <div className="flex-1">
-                  <p className={`text-sm font-medium ${card.gradient === 'modern-card' ? 'text-slate-500' : 'text-white/80'} mb-1`}>
+                  <p className="text-sm font-medium text-slate-500 mb-1">
                     {card.title}
                   </p>
-                  <p className={`text-3xl font-bold ${card.gradient === 'modern-card' ? 'text-slate-900' : 'text-white'} mb-1`}>
+                  <p className="text-3xl font-bold text-slate-900 mb-1">
                     {card.value}
                   </p>
-                  <p className={`text-xs ${card.gradient === 'modern-card' ? 'text-slate-400' : 'text-white/60'}`}>
+                  <p className="text-xs text-slate-400">
                     {card.description}
                   </p>
                 </div>
-                <div className="text-3xl opacity-80">
+                <div className="text-3xl opacity-60">
                   {card.icon}
                 </div>
               </div>
