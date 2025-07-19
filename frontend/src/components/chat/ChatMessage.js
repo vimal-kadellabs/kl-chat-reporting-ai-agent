@@ -95,38 +95,6 @@ const ChatMessage = ({ message }) => {
                       key={index} 
                       className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20 overflow-hidden mb-4 last:mb-0"
                     >
-                      <div className="bg-gradient-to-r from-slate-50 to-green-50 px-4 py-3 border-b border-slate-200">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center">
-                            <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mr-3 shadow-sm flex-shrink-0">
-                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H9z" />
-                              </svg>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-slate-700 text-sm">
-                                {table.title || `Data Table ${message.tables.length > 1 ? `${index + 1} of ${message.tables.length}` : ''}`}
-                              </h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
-                                  INTERACTIVE
-                                </span>
-                                {table.description && (
-                                  <span className="text-xs text-slate-400 truncate hidden sm:inline">
-                                    {table.description}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                          <div className="hidden sm:flex text-xs text-slate-500 bg-white/80 px-3 py-1 rounded-full">
-                            <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 16l-4-4m0 0l4-4m-4 4h18" />
-                            </svg>
-                            Scroll for more
-                          </div>
-                        </div>
-                      </div>
                       {/* Full-width table container with enhanced scrolling */}
                       <div className="w-full">
                         <TableRenderer
