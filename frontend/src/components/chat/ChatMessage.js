@@ -163,7 +163,7 @@ const ChatMessage = ({ message }) => {
 
               {/* Main Response with Typing Animation */}
               {message.content && (
-                <div className="modern-card p-6 bg-gradient-to-br from-white to-slate-50 border border-slate-200">
+                <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20 p-6">
                   <TypingAnimation 
                     text={message.content} 
                     speed={25}
