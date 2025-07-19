@@ -762,9 +762,9 @@ You MUST respond with ONLY this JSON structure:
         )
     
     async def create_no_data_response(self, user_query: str) -> ChatResponse:
-        """Create a response when no relevant data is available"""
-        response_text = "## No Relevant Data Found\n\n"
-        response_text += "Sorry, we couldn't find any relevant records for this query. Try rephrasing your query or using different search terms.\n\n"
+        """Create a response when no relevant data is available for domain-relevant queries"""
+        response_text = "## No Data Available\n\n"
+        response_text += "Sorry, no graphs or insights available for your query. Please try rephrasing it.\n\n"
         response_text += "**Suggestions:**\n"
         response_text += "- Try asking about general topics like 'top investors' or 'regional analysis'\n"
         response_text += "- Use broader time periods or geographic regions\n"
