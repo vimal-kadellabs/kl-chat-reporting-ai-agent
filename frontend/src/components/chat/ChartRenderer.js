@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   BarChart,
   Bar,
@@ -20,6 +20,21 @@ const COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444'
 
 const ChartRenderer = ({ data, type, title, description }) => {
   const [isDownloading, setIsDownloading] = useState(false);
+  const [isLoading, setIsLoading] = useState(true);
+
+  // Simulate loading effect
+  useEffect(() => {
+    const loadingTimer = setTimeout(() => {
+      setIsLoading(false);
+    }, 1500); // 1.5 second loading effect
+
+    return () => clearTimeout(loadingTimer);
+  }, [data, type]);
+
+  // Reset loading when data changes
+  useEffect(() => {
+    setIsLoading(true);
+  }, [data, type]);
 
   // Enhanced error handling
   if (!data) {
@@ -71,7 +86,21 @@ const ChartRenderer = ({ data, type, title, description }) => {
     }
   };
 
+  // Loading component
+  const LoadingChart = () => (
+    <div className="w-full h-96 flex items-center justify-center">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+        <div className="text-slate-600 text-sm">Loading chart visualization...</div>
+      </div>
+    </div>
+  );
+
   const renderChart = () => {
+    if (isLoading) {
+      return <LoadingChart />;
+    }
+
     switch (type) {
       case 'bar':
         return (
@@ -243,17 +272,19 @@ const ChartRenderer = ({ data, type, title, description }) => {
             <p className="text-sm text-slate-600">{description}</p>
           )}
         </div>
-        <button
-          onClick={downloadChart}
-          disabled={isDownloading}
-          className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-lg transition-colors duration-200 disabled:opacity-50"
-          title="Download chart data"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
-        </button>
+        {!isLoading && (
+          <button
+            onClick={downloadChart}
+            disabled={isDownloading}
+            className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-lg transition-colors duration-200 disabled:opacity-50"
+            title="Download chart data"
+          >
+            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+            </svg>
+            <span>{isDownloading ? 'Downloading...' : 'Download'}</span>
+          </button>
+        )}
       </div>
       
       {/* Chart */}
