@@ -15,11 +15,13 @@ const Dashboard = () => {
 
   const fetchDashboardStats = async () => {
     try {
-      const [users, properties, auctions, bids] = await Promise.all([
-        axios.get('/users'),
-        axios.get('/properties'),
-        axios.get('/auctions'),
-        axios.get('/bids')
+      const [users, properties, auctions, bids, activeInvestors, inactiveInvestors] = await Promise.all([
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/users`),
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/properties`),
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/auctions`),
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/bids`),
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/investors/active`),
+        axios.get(`${process.env.REACT_APP_BACKEND_URL}/api/investors/inactive`)
       ]);
 
       setStats({
@@ -28,7 +30,9 @@ const Dashboard = () => {
         totalAuctions: auctions.data.length,
         totalBids: bids.data.length,
         liveAuctions: auctions.data.filter(a => a.status === 'live').length,
-        upcomingAuctions: auctions.data.filter(a => a.status === 'upcoming').length
+        upcomingAuctions: auctions.data.filter(a => a.status === 'upcoming').length,
+        activeInvestors: activeInvestors.data.count,
+        inactiveInvestors: inactiveInvestors.data.count
       });
     } catch (error) {
       console.error('Error fetching dashboard stats:', error);
