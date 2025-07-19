@@ -7,30 +7,61 @@ const SampleQuestions = ({ questions, onQuestionClick, onClose }) => {
       color: 'bg-blue-50 border-blue-100',
       iconBg: 'bg-blue-500',
       textColor: 'text-blue-700',
-      questions: questions.slice(0, 5)
+      questions: questions.slice(0, 6)
     },
     {
       title: 'Investor Insights',
       color: 'bg-purple-50 border-purple-100',
       iconBg: 'bg-purple-500',
       textColor: 'text-purple-700',
-      questions: questions.slice(5, 10)
+      questions: questions.slice(6, 12)
     },
     {
       title: 'Property Trends',
       color: 'bg-green-50 border-green-100',
       iconBg: 'bg-green-500',
       textColor: 'text-green-700',
-      questions: questions.slice(10, 15)
+      questions: questions.slice(12, 18)
     },
     {
       title: 'Quick Analytics',
       color: 'bg-orange-50 border-orange-100',
       iconBg: 'bg-orange-500',
       textColor: 'text-orange-700',
-      questions: questions.slice(15, 20)
+      questions: questions.slice(18)
     }
   ];
+
+  const renderCategoryIcon = (categoryIndex) => {
+    switch (categoryIndex) {
+      case 0:
+        return (
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+          </svg>
+        );
+      case 1:
+        return (
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 515.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0zm6 3a2 2 0 11-4 0 2 2 0 014 0zM7 10a2 2 0 11-4 0 2 2 0 014 0z" />
+          </svg>
+        );
+      case 2:
+        return (
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+          </svg>
+        );
+      case 3:
+        return (
+          <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        );
+      default:
+        return null;
+    }
+  };
 
   return (
     <div className="h-full flex flex-col bg-gradient-to-b from-slate-50 to-white">
