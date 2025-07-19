@@ -93,7 +93,7 @@ const SampleQuestions = ({ questions, onQuestionClick, onClose }) => {
       </div>
       
       {/* Categories */}
-      <div className="flex-1 overflow-y-auto p-4 space-y-4 scrollbar-thin scrollbar-thumb-slate-300 scrollbar-track-slate-100">
+      <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {questionCategories.map((category, categoryIndex) => (
           <div 
             key={categoryIndex} 
