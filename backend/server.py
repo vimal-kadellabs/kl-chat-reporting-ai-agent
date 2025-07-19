@@ -1563,7 +1563,330 @@ async def get_sample_questions():
         }
     }
 
-@api_router.post("/force-init-data")
+@api_router.post("/enhanced-init-data")
+async def enhanced_init_data():
+    """Initialize comprehensive mock data for advanced analytics"""
+    try:
+        logger.info("Starting enhanced comprehensive mock data initialization...")
+        
+        # Clear existing data
+        await db.users.delete_many({})
+        await db.properties.delete_many({})
+        await db.auctions.delete_many({})
+        await db.bids.delete_many({})
+        await db.chat_messages.delete_many({})
+        
+        # Generate realistic date ranges
+        from datetime import timedelta
+        import random
+        
+        base_date = datetime.utcnow()
+        last_month_start = base_date - timedelta(days=60)
+        last_month_end = base_date - timedelta(days=30)
+        recent_start = base_date - timedelta(days=30)
+        
+        # 1. Create 25 diverse users/investors
+        users_data = []
+        user_names = [
+            # Individual investors
+            ("Sarah Wilson", "sarah.wilson@email.com", "Manhattan, NY"),
+            ("James Chen", "james.chen@email.com", "Palo Alto, CA"),
+            ("Maria Rodriguez", "maria.rodriguez@email.com", "Miami, FL"),
+            ("Michael Johnson", "mike.johnson@email.com", "Austin, TX"),
+            ("Jennifer Davis", "jennifer.davis@email.com", "Denver, CO"),
+            ("Robert Kim", "robert.kim@email.com", "Seattle, WA"),
+            ("Emily Carter", "emily.carter@email.com", "Nashville, TN"),
+            ("Kevin Martinez", "kevin.martinez@email.com", "Atlanta, GA"),
+            ("Lisa Chang", "lisa.chang@email.com", "San Francisco, CA"),
+            ("David Thompson", "david.thompson@email.com", "Boston, MA"),
+            
+            # Institutional investors
+            ("BlackRock Fund", "fund@blackrock.com", "Chicago, IL"),
+            ("Vanguard REIT", "investments@vanguard.com", "Boston, MA"),
+            ("American Tower REIT", "fund@americantower.com", "Boston, MA"),
+            ("Equity Residential Fund", "investments@equity.com", "Chicago, IL"),
+            ("Brookfield Properties", "deals@brookfield.com", "New York, NY"),
+            
+            # International investors  
+            ("Yuki Tanaka", "yuki.tanaka@invest.jp", "San Francisco, CA"),
+            ("Pierre Dubois", "pierre.dubois@invest.fr", "New York, NY"),
+            ("Hans Mueller", "hans.mueller@invest.de", "Los Angeles, CA"),
+            
+            # Property management companies
+            ("CBRE Investment", "invest@cbre.com", "Los Angeles, CA"),
+            ("Cushman Wakefield", "deals@cushman.com", "Washington, DC"),
+            ("JLL Capital", "capital@jll.com", "New York, NY"),
+            
+            # Smaller investors
+            ("Tom Builder", "tom.builder@email.com", "Phoenix, AZ"),
+            ("Jessica Flip", "jessica.flip@email.com", "Orlando, FL"),
+            ("Mark Property", "mark.property@email.com", "Las Vegas, NV"),
+            ("Anna Development", "anna.dev@email.com", "Portland, OR")
+        ]
+        
+        for i, (name, email, location) in enumerate(user_names):
+            success_rate = random.uniform(15, 95) if i < 20 else random.uniform(5, 45)
+            total_bids = random.randint(5, 150) if i < 15 else random.randint(1, 25)
+            won_auctions = int(total_bids * success_rate / 100)
+            
+            user = User(
+                id=f"user_{i+1}",
+                email=email,
+                name=name,
+                location=location,
+                profile_verified=i < 20,
+                success_rate=success_rate,
+                total_bids=total_bids,
+                won_auctions=won_auctions,
+                created_at=base_date - timedelta(days=random.randint(30, 365))
+            )
+            users_data.append(user.dict())
+        
+        # 2. Create 120 diverse properties
+        properties_data = []
+        property_templates = [
+            # Residential properties
+            ("Luxury Manhattan Penthouse", "Stunning 4BR penthouse with Central Park views", "Manhattan", "New York", "NY", "10021", PropertyType.RESIDENTIAL, 4500000, 5200000, 4, 3),
+            ("Beverly Hills Modern Estate", "Contemporary 6BR estate with pool and spa", "Beverly Hills", "Los Angeles", "CA", "90210", PropertyType.RESIDENTIAL, 8500000, 9200000, 6, 5),
+            ("Palo Alto Tech Executive Home", "Smart home with solar, 5BR near Stanford", "Palo Alto", "San Francisco", "CA", "94301", PropertyType.RESIDENTIAL, 3200000, 3650000, 5, 4),
+            ("Miami Brickell High-Rise Condo", "Luxury 2BR condo with bay views", "Brickell", "Miami", "FL", "33131", PropertyType.RESIDENTIAL, 750000, 825000, 2, 2),
+            ("Austin Hill Country Ranch", "10-acre ranch property with main house", "Austin", "Austin", "TX", "78746", PropertyType.RESIDENTIAL, 1200000, 1350000, 4, 3),
+            
+            # Commercial properties
+            ("Wall Street Office Building", "35-story Class A office tower", "Financial District", "New York", "NY", "10005", PropertyType.COMMERCIAL, 15000000, 17500000, None, None),
+            ("Chicago Manufacturing Facility", "200K sq ft industrial facility", "South Side", "Chicago", "IL", "60609", PropertyType.INDUSTRIAL, 2200000, 2500000, None, None),
+            ("Seattle Tech Campus", "Modern office complex for tech companies", "Bellevue", "Seattle", "WA", "98004", PropertyType.COMMERCIAL, 12000000, 13500000, None, None),
+            ("Phoenix Logistics Warehouse", "500K sq ft distribution center", "Phoenix", "Phoenix", "AZ", "85043", PropertyType.INDUSTRIAL, 3500000, 4000000, None, None),
+            ("Denver Retail Shopping Center", "Anchor tenant retail complex", "Denver", "Denver", "CO", "80202", PropertyType.COMMERCIAL, 5500000, 6200000, None, None)
+        ]
+        
+        cities = ["New York", "Los Angeles", "Chicago", "Houston", "Phoenix", "Philadelphia", "San Antonio", "San Diego", "Dallas", "San Jose", "Austin", "Jacksonville", "Fort Worth", "Columbus", "Charlotte", "San Francisco", "Indianapolis", "Seattle", "Denver", "Washington", "Boston", "El Paso", "Nashville", "Detroit", "Oklahoma City", "Portland", "Las Vegas", "Memphis", "Louisville", "Baltimore", "Milwaukee", "Albuquerque", "Tucson", "Fresno", "Sacramento", "Kansas City", "Mesa", "Atlanta", "Omaha", "Colorado Springs", "Raleigh", "Miami", "Oakland", "Minneapolis", "Tulsa", "Cleveland", "Wichita", "Arlington", "New Orleans", "Bakersfield", "Tampa", "Honolulu", "Anaheim", "Aurora", "Santa Ana", "St. Louis", "Riverside", "Corpus Christi", "Lexington", "Pittsburgh", "Anchorage", "Stockton", "Cincinnati", "St. Paul", "Toledo", "Greensboro", "Newark", "Plano", "Henderson", "Lincoln", "Buffalo", "Jersey City", "Chula Vista", "Fort Wayne", "Orlando", "St. Petersburg", "Chandler", "Laredo", "Norfolk", "Durham", "Madison", "Lubbock", "Irvine", "Winston-Salem", "Glendale", "Garland", "Hialeah", "Reno", "Chesapeake", "Gilbert", "Baton Rouge", "Irving", "Scottsdale", "North Las Vegas", "Fremont", "Boise", "Richmond"]
+        
+        for i in range(120):
+            if i < len(property_templates):
+                template = property_templates[i]
+                title, desc, neighborhood, city, state, zipcode, prop_type, reserve, estimate, bed, bath = template
+            else:
+                # Generate random properties
+                prop_types = [PropertyType.RESIDENTIAL, PropertyType.COMMERCIAL, PropertyType.INDUSTRIAL, PropertyType.LAND]
+                prop_type = random.choice(prop_types)
+                city = random.choice(cities[:50])  # Use top 50 cities
+                state = "CA" if city in ["Los Angeles", "San Francisco", "San Jose", "San Diego", "Sacramento", "Fresno", "Oakland", "Santa Ana", "Anaheim"] else "TX" if city in ["Houston", "San Antonio", "Dallas", "Austin", "Fort Worth", "El Paso"] else "FL" if city in ["Jacksonville", "Miami", "Tampa", "Orlando", "St. Petersburg"] else random.choice(["NY", "IL", "OH", "PA", "MI", "GA", "NC", "NJ", "WA", "MA", "TN", "IN", "MO", "MD", "WI", "CO", "MN", "SC", "AL", "LA", "KY", "OR", "OK", "CT", "IA", "MS", "AR", "UT", "KS", "NV", "NM", "WV", "NE", "ID", "HI", "ME", "NH", "RI", "MT", "DE", "SD", "ND", "AK", "VT", "WY"])
+                
+                if prop_type == PropertyType.RESIDENTIAL:
+                    title = f"{city} {random.choice(['Executive', 'Luxury', 'Modern', 'Traditional', 'Victorian', 'Colonial'])} {random.choice(['Home', 'Estate', 'Residence', 'House'])}"
+                    desc = f"Beautiful {random.randint(2,6)}BR {random.choice(['family home', 'executive residence', 'luxury property'])}"
+                    reserve = random.randint(300000, 8000000)
+                    bed = random.randint(2, 6)
+                    bath = random.randint(1, 5)
+                elif prop_type == PropertyType.COMMERCIAL:
+                    title = f"{city} {random.choice(['Office', 'Retail', 'Mixed-Use', 'Business'])} {random.choice(['Building', 'Complex', 'Center', 'Tower'])}"
+                    desc = f"Prime {random.choice(['office', 'retail', 'mixed-use'])} space in {city}"
+                    reserve = random.randint(2000000, 25000000)
+                    bed = None
+                    bath = None
+                elif prop_type == PropertyType.INDUSTRIAL:
+                    title = f"{city} {random.choice(['Manufacturing', 'Warehouse', 'Distribution', 'Logistics'])} Facility"
+                    desc = f"Industrial {random.choice(['manufacturing', 'warehouse', 'distribution'])} facility"
+                    reserve = random.randint(1500000, 15000000)
+                    bed = None
+                    bath = None
+                else:  # LAND
+                    title = f"{city} Development Land"
+                    desc = f"Prime development land in {city}"
+                    reserve = random.randint(500000, 5000000)
+                    bed = None
+                    bath = None
+                
+                neighborhood = f"{random.choice(['Downtown', 'Uptown', 'Midtown', 'North', 'South', 'East', 'West'])} {city}"
+                zipcode = f"{random.randint(10000, 99999)}"
+                estimate = int(reserve * random.uniform(1.1, 1.4))
+                
+            prop = Property(
+                id=f"prop_{i+1}",
+                title=title,
+                description=desc,
+                location=neighborhood,
+                city=city,
+                state=state,
+                zipcode=zipcode,
+                property_type=prop_type,
+                reserve_price=reserve,
+                estimated_value=estimate,
+                bedrooms=bed,
+                bathrooms=bath,
+                created_at=base_date - timedelta(days=random.randint(60, 365))
+            )
+            properties_data.append(prop.dict())
+        
+        # 3. Create 150 auctions (mix of ended, live, upcoming, cancelled)
+        auctions_data = []
+        for i in range(150):
+            prop_id = f"prop_{(i % 120) + 1}"
+            
+            # Determine auction status and timing
+            if i < 60:  # 60 ended auctions (40% - good for historical analysis)
+                status = AuctionStatus.ENDED
+                # Mix of recent and older ended auctions
+                if i < 20:  # Recent ended (last month)
+                    start_time = base_date - timedelta(days=random.randint(7, 30))
+                else:  # Older ended
+                    start_time = base_date - timedelta(days=random.randint(30, 90))
+                end_time = start_time + timedelta(days=random.randint(3, 14))
+                
+            elif i < 75:  # 15 live auctions (10%)
+                status = AuctionStatus.LIVE
+                start_time = base_date - timedelta(days=random.randint(1, 5))
+                end_time = base_date + timedelta(days=random.randint(1, 7))
+                
+            elif i < 130:  # 55 upcoming auctions (37%)
+                status = AuctionStatus.UPCOMING
+                start_time = base_date + timedelta(days=random.randint(1, 30))
+                end_time = start_time + timedelta(days=random.randint(3, 14))
+                
+            else:  # 20 cancelled auctions (13%)
+                status = AuctionStatus.CANCELLED
+                start_time = base_date - timedelta(days=random.randint(10, 60))
+                end_time = start_time + timedelta(days=random.randint(3, 14))
+            
+            # Get property info for starting bid
+            prop = next(p for p in properties_data if p['id'] == prop_id)
+            starting_bid = int(prop['reserve_price'] * random.uniform(0.7, 0.9))
+            
+            # For ended auctions, determine winner and final price
+            winner_id = None
+            current_highest_bid = 0
+            total_bids = 0
+            
+            if status == AuctionStatus.ENDED:
+                total_bids = random.randint(8, 45)
+                current_highest_bid = int(starting_bid * random.uniform(1.05, 1.6))
+                winner_id = f"user_{random.randint(1, 25)}"
+            elif status == AuctionStatus.LIVE:
+                total_bids = random.randint(3, 25)
+                current_highest_bid = int(starting_bid * random.uniform(1.0, 1.3))
+            else:
+                total_bids = 0
+                current_highest_bid = 0
+                
+            auction = Auction(
+                id=f"auction_{i+1}",
+                property_id=prop_id,
+                title=f"{prop['title']} Auction",
+                start_time=start_time,
+                end_time=end_time,
+                status=status,
+                starting_bid=starting_bid,
+                current_highest_bid=current_highest_bid,
+                total_bids=total_bids,
+                winner_id=winner_id,
+                created_at=base_date - timedelta(days=random.randint(70, 400))
+            )
+            auctions_data.append(auction.dict())
+        
+        # 4. Create 800+ comprehensive bidding records
+        bids_data = []
+        bid_counter = 1
+        
+        for auction in auctions_data:
+            if auction['status'] in [AuctionStatus.ENDED, AuctionStatus.LIVE] and auction['total_bids'] > 0:
+                auction_id = auction['id']
+                property_id = auction['property_id']
+                starting_bid = auction['starting_bid']
+                final_bid = auction['current_highest_bid']
+                winner_id = auction.get('winner_id')
+                
+                # Generate bidding history
+                num_bids = auction['total_bids']
+                bid_progression = []
+                
+                # Create realistic bid amounts progression
+                for i in range(num_bids):
+                    if i == 0:
+                        bid_amount = starting_bid
+                    else:
+                        increment = random.uniform(0.02, 0.08)  # 2-8% increments
+                        bid_amount = int(bid_progression[-1] * (1 + increment))
+                    bid_progression.append(bid_amount)
+                
+                # Ensure final bid matches auction data
+                if final_bid > 0:
+                    bid_progression[-1] = final_bid
+                
+                # Generate bids from different users
+                auction_start = auction['start_time']
+                auction_end = auction['end_time']
+                duration = auction_end - auction_start
+                
+                # Select bidding users (3-8 unique bidders per auction)
+                num_bidders = min(random.randint(3, 8), 25)
+                bidding_users = random.sample([f"user_{i}" for i in range(1, 26)], num_bidders)
+                
+                for i, bid_amount in enumerate(bid_progression):
+                    # Select bidder (winner for final bid if ended)
+                    if i == len(bid_progression) - 1 and auction['status'] == AuctionStatus.ENDED and winner_id:
+                        investor_id = winner_id
+                    else:
+                        investor_id = random.choice(bidding_users)
+                    
+                    # Determine bid time (spread throughout auction duration)
+                    time_fraction = i / max(num_bids - 1, 1)
+                    bid_time = auction_start + timedelta(seconds=int(duration.total_seconds() * time_fraction))
+                    bid_time += timedelta(minutes=random.randint(-30, 30))  # Add some randomness
+                    
+                    # Determine bid status
+                    if auction['status'] == AuctionStatus.ENDED:
+                        if i == len(bid_progression) - 1:
+                            bid_status = BidStatus.WON
+                        else:
+                            bid_status = BidStatus.OUTBID
+                    else:  # LIVE auction
+                        if i == len(bid_progression) - 1:
+                            bid_status = BidStatus.WINNING
+                        else:
+                            bid_status = BidStatus.OUTBID
+                    
+                    bid = Bid(
+                        id=f"bid_{bid_counter}",
+                        auction_id=auction_id,
+                        property_id=property_id,
+                        investor_id=investor_id,
+                        bid_amount=bid_amount,
+                        bid_time=bid_time,
+                        status=bid_status,
+                        is_auto_bid=random.choice([True, False]) if random.random() < 0.3 else False
+                    )
+                    bids_data.append(bid.dict())
+                    bid_counter += 1
+        
+        # Insert all data
+        await db.users.insert_many(users_data)
+        await db.properties.insert_many(properties_data)
+        await db.auctions.insert_many(auctions_data)
+        await db.bids.insert_many(bids_data)
+        
+        logger.info(f"Enhanced comprehensive mock data inserted:")
+        logger.info(f"- Users: {len(users_data)}")
+        logger.info(f"- Properties: {len(properties_data)}")
+        logger.info(f"- Auctions: {len(auctions_data)}")
+        logger.info(f"- Bids: {len(bids_data)}")
+        
+        return {
+            "message": "Enhanced comprehensive mock data inserted successfully",
+            "status": "success",
+            "stats": {
+                "users": len(users_data),
+                "properties": len(properties_data),
+                "auctions": len(auctions_data),
+                "bids": len(bids_data),
+                "ended_auctions": len([a for a in auctions_data if a['status'] == 'ended']),
+                "won_bids": len([b for b in bids_data if b['status'] == 'won'])
+            }
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in enhanced comprehensive mock data initialization: {e}")
+        return {"message": f"Error: {str(e)}", "status": "error"}
 async def force_init_data():
     """Force initialization of enhanced mock data"""
     try:
