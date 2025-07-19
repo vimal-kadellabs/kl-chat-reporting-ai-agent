@@ -190,43 +190,20 @@ const TableRenderer = ({ data, title, description }) => {
 
   return (
     <div className="w-full">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div className="flex-1">
-          {title && (
-            <h4 className="font-semibold text-slate-800 text-base mb-1">{title}</h4>
-          )}
-          {description && (
-            <p className="text-sm text-slate-600">{description}</p>
-          )}
-        </div>
-        <button
-          onClick={downloadTable}
-          disabled={isDownloading}
-          className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-lg transition-colors duration-200 disabled:opacity-50"
-          title="Download table as CSV"
-        >
-          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-          </svg>
-          <span>{isDownloading ? 'Downloading...' : 'CSV'}</span>
-        </button>
-      </div>
-
-      {/* Table - Full Width with Horizontal Scroll */}
+      {/* Table - Full Width with Horizontal Scroll and Enhanced Design */}
       <div className="w-full overflow-hidden border border-slate-200 rounded-2xl shadow-sm bg-white/60 backdrop-blur-sm">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto scrollbar-thin scrollbar-track-slate-100 scrollbar-thumb-slate-300">
           <table className="min-w-full divide-y divide-slate-200">
-            <thead className="bg-gradient-to-r from-slate-50 to-blue-50">
+            <thead className="bg-gradient-to-r from-slate-50 to-blue-50 sticky top-0 z-10">
               <tr>
                 {headers.map((header, index) => (
                   <th
                     key={index}
-                    className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-colors duration-150 border-r border-slate-200 last:border-r-0"
+                    className="px-6 py-4 text-left text-xs font-semibold text-slate-700 uppercase tracking-wider cursor-pointer hover:bg-blue-100 transition-colors duration-150 border-r border-slate-200 last:border-r-0 select-none"
                     onClick={() => handleSort(header)}
                   >
                     <div className="flex items-center space-x-1">
-                      <span>{header}</span>
+                      <span className="truncate">{header}</span>
                       {getSortIcon(header)}
                     </div>
                   </th>
@@ -238,7 +215,9 @@ const TableRenderer = ({ data, title, description }) => {
                 <tr key={rowIndex} className="hover:bg-slate-50/80 transition-colors duration-150">
                   {row.map((cell, cellIndex) => (
                     <td key={cellIndex} className="px-6 py-4 whitespace-nowrap text-sm text-slate-900 border-r border-slate-100 last:border-r-0">
-                      {typeof cell === 'number' ? cell.toLocaleString() : String(cell)}
+                      <div className="truncate max-w-xs" title={String(cell)}>
+                        {typeof cell === 'number' ? cell.toLocaleString() : String(cell)}
+                      </div>
                     </td>
                   ))}
                 </tr>
@@ -247,7 +226,7 @@ const TableRenderer = ({ data, title, description }) => {
           </table>
         </div>
 
-        {/* Pagination */}
+        {/* Enhanced Pagination */}
         {totalPages > 1 && (
           <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-4 border-t border-slate-200">
             <div className="flex items-center justify-between">
@@ -278,6 +257,27 @@ const TableRenderer = ({ data, title, description }) => {
             </div>
           </div>
         )}
+
+        {/* Download Section - Moved inside table container */}
+        <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-6 py-3 border-t border-slate-200">
+          <div className="flex items-center justify-between">
+            <div className="text-xs text-slate-600">
+              {title && <span className="font-medium">{title}</span>}
+              {description && <span className="ml-2">{description}</span>}
+            </div>
+            <button
+              onClick={downloadTable}
+              disabled={isDownloading}
+              className="flex items-center space-x-2 px-3 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs rounded-lg transition-colors duration-200 disabled:opacity-50"
+              title="Download table as CSV"
+            >
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+              </svg>
+              <span>{isDownloading ? 'Downloading...' : 'CSV'}</span>
+            </button>
+          </div>
+        </div>
       </div>
     </div>
   );
