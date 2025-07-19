@@ -99,27 +99,29 @@ const ChatMessage = ({ message }) => {
                 </div>
               )}
 
-              {/* Tables */}
+              {/* Tables - Full Width */}
               {message.tables && message.tables.length > 0 && (
-                <div className="space-y-6 mb-6">
+                <div className="mb-6">
                   {message.tables.map((table, index) => (
-                    <div key={index} className="modern-card overflow-hidden">
+                    <div key={index} className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20 overflow-hidden mb-4">
                       <div className="bg-gradient-to-r from-slate-50 to-green-50 px-4 py-3 border-b border-slate-200">
                         <div className="flex items-center">
-                          <div className="w-5 h-5 bg-green-500 rounded-full flex items-center justify-center mr-2">
-                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path fillRule="evenodd" d="M3 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1zm0 4a1 1 0 011-1h12a1 1 0 110 2H4a1 1 0 01-1-1z" clipRule="evenodd" />
+                          <div className="w-8 h-8 bg-gradient-to-r from-green-500 to-emerald-500 rounded-xl flex items-center justify-center mr-3 shadow-sm">
+                            <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2H9z" />
                             </svg>
                           </div>
-                          <h4 className="font-semibold text-slate-700 text-sm">
-                            Data Table {message.tables.length > 1 && `${index + 1}/${message.tables.length}`}
-                          </h4>
-                          <span className="ml-2 text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
-                            INTERACTIVE
-                          </span>
+                          <div className="flex-1">
+                            <h4 className="font-semibold text-slate-700 text-sm">
+                              Data Table {message.tables.length > 1 && `${index + 1} of ${message.tables.length}`}
+                            </h4>
+                            <span className="text-xs text-slate-500 bg-white px-2 py-1 rounded-full ml-2">
+                              INTERACTIVE
+                            </span>
+                          </div>
                         </div>
                       </div>
-                      <div className="p-6">
+                      <div className="p-4">
                         <TableRenderer
                           data={table}
                           title={table.title}
