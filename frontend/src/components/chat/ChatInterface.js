@@ -228,8 +228,8 @@ const ChatInterface = () => {
 
           {/* Enhanced Input Area */}
           <div className="bg-white border-t border-slate-200 shadow-lg flex-shrink-0">
-            <div className="max-w-4xl mx-auto p-4">
-              <div className="flex space-x-3">
+            <div className="max-w-4xl mx-auto p-2">
+              <div className="flex space-x-2">
                 <div className="flex-1 relative">
                   <textarea
                     value={inputMessage}
@@ -239,9 +239,10 @@ const ChatInterface = () => {
                     className="input-modern w-full resize-none focus-ring"
                     rows="2"
                     disabled={loading}
+                    style={{ padding: '0.5rem 0.75rem' }}
                   />
                   {inputMessage && (
-                    <div className="absolute right-3 top-3 text-xs text-slate-400">
+                    <div className="absolute right-2 top-2 text-xs text-slate-400">
                       Press Enter to send
                     </div>
                   )}
@@ -249,7 +250,7 @@ const ChatInterface = () => {
                 <button
                   onClick={() => handleSendMessage()}
                   disabled={loading || !inputMessage.trim()}
-                  className="btn-modern px-6 flex items-center space-x-2"
+                  className="btn-modern px-4 flex items-center space-x-2"
                 >
                   {loading ? (
                     <div className="loading-dots">
