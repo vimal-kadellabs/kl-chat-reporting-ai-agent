@@ -1887,6 +1887,11 @@ async def enhanced_init_data():
     except Exception as e:
         logger.error(f"Error in enhanced comprehensive mock data initialization: {e}")
         return {"message": f"Error: {str(e)}", "status": "error"}
+
+@api_router.post("/force-init-data")
+async def force_init_data():
+    """Keep original force-init-data for backward compatibility"""
+    return await enhanced_init_data()
 async def force_init_data():
     """Force initialization of enhanced mock data"""
     try:
