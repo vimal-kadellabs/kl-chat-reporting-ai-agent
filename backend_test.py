@@ -239,10 +239,9 @@ class BackendTester:
             self.log_test("Bids Endpoint", False, f"Exception: {str(e)}")
             return False
     
-    def test_chat_endpoint_with_sample_question(self):
-        """Test /api/chat endpoint with a sample question - CORE FUNCTIONALITY"""
+    def test_enhanced_chat_endpoint_top_investors(self):
+        """Test /api/chat endpoint with enhanced multiple charts and tables format - TOP INVESTORS"""
         try:
-            # Use one of the sample questions
             test_query = "Who are the top 5 investors by bid amount?"
             
             payload = {
@@ -257,38 +256,263 @@ class BackendTester:
             )
             
             if response.status_code != 200:
-                self.log_test("Chat Endpoint", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_test("Enhanced Chat - Top Investors", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
             chat_response = response.json()
             
-            # Verify response structure
+            # Verify basic response structure
             required_fields = ["response", "summary_points"]
             missing_fields = [field for field in required_fields if field not in chat_response]
             if missing_fields:
-                self.log_test("Chat Response Structure", False, f"Missing fields: {missing_fields}")
+                self.log_test("Enhanced Chat Structure", False, f"Missing basic fields: {missing_fields}")
                 return False
-                
-            # Verify response content
-            if not chat_response.get("response"):
-                self.log_test("Chat Response Content", False, "Empty response field")
-                return False
-                
-            # Verify summary points
-            summary_points = chat_response.get("summary_points", [])
-            if not isinstance(summary_points, list) or len(summary_points) == 0:
-                self.log_test("Chat Summary Points", False, "Missing or empty summary_points")
-                return False
-                
-            # Check for chart data (optional but expected for this query)
-            has_chart_data = "chart_data" in chat_response and chat_response["chart_data"]
-            chart_info = f"Chart data: {'Present' if has_chart_data else 'Not present'}"
             
-            self.log_test("Chat Endpoint", True, f"Successfully processed query. Response length: {len(chat_response['response'])}, Summary points: {len(summary_points)}. {chart_info}", chat_response)
+            # Test NEW ENHANCED FORMAT - Multiple Charts Array
+            charts = chat_response.get("charts", [])
+            if not isinstance(charts, list):
+                self.log_test("Enhanced Charts Format", False, "Charts field is not an array")
+                return False
+            
+            if len(charts) < 2:
+                self.log_test("Multiple Charts Generation", False, f"Expected 2-3 charts, got {len(charts)}")
+                return False
+            
+            # Verify chart structure and types
+            chart_types_found = []
+            for i, chart in enumerate(charts):
+                if not isinstance(chart, dict):
+                    self.log_test("Chart Structure", False, f"Chart {i} is not a dictionary")
+                    return False
+                
+                chart_required_fields = ["data", "type", "title"]
+                chart_missing = [field for field in chart_required_fields if field not in chart]
+                if chart_missing:
+                    self.log_test("Chart Fields", False, f"Chart {i} missing fields: {chart_missing}")
+                    return False
+                
+                chart_types_found.append(chart["type"])
+                
+                # Verify chart data is not empty
+                if not chart["data"] or not isinstance(chart["data"], list):
+                    self.log_test("Chart Data", False, f"Chart {i} has empty or invalid data")
+                    return False
+                
+                # Verify title is meaningful
+                if not chart["title"] or len(chart["title"]) < 5:
+                    self.log_test("Chart Title", False, f"Chart {i} has empty or too short title")
+                    return False
+            
+            # Verify different chart types
+            expected_types = ["bar", "donut", "line"]
+            found_expected_types = [t for t in chart_types_found if t in expected_types]
+            if len(found_expected_types) < 2:
+                self.log_test("Chart Type Variety", False, f"Expected multiple chart types from {expected_types}, got {chart_types_found}")
+                return False
+            
+            # Test NEW ENHANCED FORMAT - Tables Array
+            tables = chat_response.get("tables", [])
+            if not isinstance(tables, list):
+                self.log_test("Enhanced Tables Format", False, "Tables field is not an array")
+                return False
+            
+            if len(tables) < 1:
+                self.log_test("Table Generation", False, "Expected at least 1 table")
+                return False
+            
+            # Verify table structure
+            for i, table in enumerate(tables):
+                if not isinstance(table, dict):
+                    self.log_test("Table Structure", False, f"Table {i} is not a dictionary")
+                    return False
+                
+                table_required_fields = ["headers", "rows", "title"]
+                table_missing = [field for field in table_required_fields if field not in table]
+                if table_missing:
+                    self.log_test("Table Fields", False, f"Table {i} missing fields: {table_missing}")
+                    return False
+                
+                # Verify headers and rows
+                if not isinstance(table["headers"], list) or len(table["headers"]) == 0:
+                    self.log_test("Table Headers", False, f"Table {i} has invalid headers")
+                    return False
+                
+                if not isinstance(table["rows"], list) or len(table["rows"]) == 0:
+                    self.log_test("Table Rows", False, f"Table {i} has invalid rows")
+                    return False
+                
+                # Verify row structure matches headers
+                for row_idx, row in enumerate(table["rows"]):
+                    if not isinstance(row, list) or len(row) != len(table["headers"]):
+                        self.log_test("Table Row Structure", False, f"Table {i} row {row_idx} doesn't match header count")
+                        return False
+            
+            # Test BACKWARD COMPATIBILITY - Old format should still exist
+            has_old_chart_data = "chart_data" in chat_response
+            has_old_chart_type = "chart_type" in chat_response
+            
+            if not (has_old_chart_data and has_old_chart_type):
+                self.log_test("Backward Compatibility", False, "Missing old chart_data or chart_type fields")
+                return False
+            
+            # Verify summary points quality
+            summary_points = chat_response.get("summary_points", [])
+            if len(summary_points) < 3:
+                self.log_test("Summary Points Quality", False, f"Expected 3-4 summary points, got {len(summary_points)}")
+                return False
+            
+            self.log_test("Enhanced Chat - Top Investors", True, 
+                         f"✅ Multiple charts: {len(charts)} ({chart_types_found}), Tables: {len(tables)}, Summary: {len(summary_points)} points, Backward compatible", 
+                         {"charts_count": len(charts), "chart_types": chart_types_found, "tables_count": len(tables)})
             return True
             
         except Exception as e:
-            self.log_test("Chat Endpoint", False, f"Exception: {str(e)}")
+            self.log_test("Enhanced Chat - Top Investors", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_enhanced_chat_regional_analysis(self):
+        """Test /api/chat endpoint with regional analysis query"""
+        try:
+            test_query = "Which regions had the highest number of bids last month?"
+            
+            payload = {
+                "message": test_query,
+                "user_id": "test_user"
+            }
+            
+            response = self.session.post(
+                f"{self.base_url}/chat",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code != 200:
+                self.log_test("Enhanced Chat - Regional", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            chat_response = response.json()
+            
+            # Verify enhanced format
+            charts = chat_response.get("charts", [])
+            tables = chat_response.get("tables", [])
+            
+            if len(charts) < 1:
+                self.log_test("Regional Charts", False, "No charts generated for regional query")
+                return False
+            
+            # Check for regional-specific content
+            response_text = chat_response.get("response", "").lower()
+            regional_keywords = ["region", "city", "location", "market", "geographic"]
+            has_regional_content = any(keyword in response_text for keyword in regional_keywords)
+            
+            if not has_regional_content:
+                self.log_test("Regional Content", False, "Response doesn't contain regional analysis content")
+                return False
+            
+            self.log_test("Enhanced Chat - Regional", True, 
+                         f"Regional analysis with {len(charts)} charts, {len(tables)} tables", 
+                         {"query_type": "regional", "charts": len(charts), "tables": len(tables)})
+            return True
+            
+        except Exception as e:
+            self.log_test("Enhanced Chat - Regional", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_enhanced_chat_upcoming_auctions(self):
+        """Test /api/chat endpoint with upcoming auctions query"""
+        try:
+            test_query = "Show upcoming auctions by city in California."
+            
+            payload = {
+                "message": test_query,
+                "user_id": "test_user"
+            }
+            
+            response = self.session.post(
+                f"{self.base_url}/chat",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code != 200:
+                self.log_test("Enhanced Chat - Upcoming Auctions", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            chat_response = response.json()
+            
+            # Verify response contains auction-specific content
+            response_text = chat_response.get("response", "").lower()
+            auction_keywords = ["auction", "upcoming", "scheduled", "california"]
+            has_auction_content = any(keyword in response_text for keyword in auction_keywords)
+            
+            if not has_auction_content:
+                self.log_test("Auction Content", False, "Response doesn't contain auction-specific content")
+                return False
+            
+            # Verify enhanced format exists
+            charts = chat_response.get("charts", [])
+            summary_points = chat_response.get("summary_points", [])
+            
+            if len(summary_points) < 2:
+                self.log_test("Auction Summary Points", False, "Insufficient summary points for auction query")
+                return False
+            
+            self.log_test("Enhanced Chat - Upcoming Auctions", True, 
+                         f"Auction analysis with {len(charts)} charts, {len(summary_points)} summary points", 
+                         {"query_type": "auctions", "charts": len(charts), "summary": len(summary_points)})
+            return True
+            
+        except Exception as e:
+            self.log_test("Enhanced Chat - Upcoming Auctions", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_enhanced_chat_property_comparison(self):
+        """Test /api/chat endpoint with property type comparison"""
+        try:
+            test_query = "Compare bidding activity across property types"
+            
+            payload = {
+                "message": test_query,
+                "user_id": "test_user"
+            }
+            
+            response = self.session.post(
+                f"{self.base_url}/chat",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code != 200:
+                self.log_test("Enhanced Chat - Property Comparison", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            chat_response = response.json()
+            
+            # Verify comparison content
+            response_text = chat_response.get("response", "").lower()
+            comparison_keywords = ["compare", "comparison", "property type", "residential", "commercial", "bidding activity"]
+            has_comparison_content = any(keyword in response_text for keyword in comparison_keywords)
+            
+            if not has_comparison_content:
+                self.log_test("Comparison Content", False, "Response doesn't contain property comparison content")
+                return False
+            
+            # Verify enhanced format
+            charts = chat_response.get("charts", [])
+            tables = chat_response.get("tables", [])
+            
+            # For comparison queries, expect at least some visualization
+            if len(charts) == 0 and len(tables) == 0:
+                self.log_test("Comparison Visualization", False, "No charts or tables for comparison query")
+                return False
+            
+            self.log_test("Enhanced Chat - Property Comparison", True, 
+                         f"Property comparison with {len(charts)} charts, {len(tables)} tables", 
+                         {"query_type": "comparison", "visualizations": len(charts) + len(tables)})
+            return True
+            
+        except Exception as e:
+            self.log_test("Enhanced Chat - Property Comparison", False, f"Exception: {str(e)}")
             return False
     
     def test_force_init_data_endpoint(self):
