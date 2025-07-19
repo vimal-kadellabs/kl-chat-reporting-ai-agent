@@ -122,11 +122,26 @@ class ChatQuery(BaseModel):
     message: str
     user_id: str = "demo_user"
 
+class ChartData(BaseModel):
+    data: List[Dict[str, Any]]
+    type: str  # 'bar', 'line', 'donut', 'pie'
+    title: str
+    description: Optional[str] = None
+
+class TableData(BaseModel):
+    headers: List[str]
+    rows: List[List[Any]]
+    title: str
+    description: Optional[str] = None
+
 class ChatResponse(BaseModel):
     response: str
+    charts: List[ChartData] = []
+    tables: List[TableData] = []
+    summary_points: List[str] = []
+    # Keep backward compatibility
     chart_data: Optional[Dict[str, Any]] = None
     chart_type: Optional[str] = None
-    summary_points: List[str] = []
 
 class LoginRequest(BaseModel):
     email: str
