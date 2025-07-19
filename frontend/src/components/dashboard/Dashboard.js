@@ -108,13 +108,31 @@ const Dashboard = () => {
       textColor: 'text-orange-600'
     },
     {
-      title: 'Investors',
+      title: 'Total Investors',
       value: stats.totalUsers,
       icon: '👥',
-      description: 'Active users',
+      description: 'Registered users',
       gradient: 'from-slate-500 to-gray-500',
       bgColor: 'bg-slate-50',
       textColor: 'text-slate-600'
+    },
+    {
+      title: 'Active Investors',
+      value: stats.activeInvestors,
+      icon: '🟢',
+      description: 'Bid in past 6 months',
+      gradient: 'from-emerald-500 to-teal-500',
+      bgColor: 'bg-emerald-50',
+      textColor: 'text-emerald-600'
+    },
+    {
+      title: 'Inactive Investors',
+      value: stats.inactiveInvestors,
+      icon: '⚪',
+      description: 'No bids in 6 months',
+      gradient: 'from-gray-400 to-slate-400',
+      bgColor: 'bg-gray-50',
+      textColor: 'text-gray-600'
     }
   ];
 
