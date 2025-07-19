@@ -167,48 +167,12 @@ class AnalyticsService:
         try:
             context, raw_data = await self.get_database_context()
             
-            # Define function for OpenAI to call
-            functions = [
-                {
-                    "name": "generate_analytics_response",
-                    "description": "Generate analytics response with chart data and insights",
-                    "parameters": {
-                        "type": "object",
-                        "properties": {
-                            "response": {
-                                "type": "string",
-                                "description": "Human-readable response to the user's query"
-                            },
-                            "chart_type": {
-                                "type": "string",
-                                "enum": ["bar", "line", "pie", "area", "scatter"],
-                                "description": "Most appropriate chart type for the data"
-                            },
-                            "chart_data": {
-                                "type": "object",
-                                "description": "Chart data with structure: {data: [{key: value, ...}]}"
-                            },
-                            "summary_points": {
-                                "type": "array",
-                                "items": {"type": "string"},
-                                "description": "Key insights as bullet points (2-4 points)"
-                            },
-                            "query_type": {
-                                "type": "string",
-                                "enum": ["regional_analysis", "investor_performance", "auction_trends", "property_analysis", "bidding_patterns", "time_series", "comparison"],
-                                "description": "Category of the query"
-                            }
-                        },
-                        "required": ["response", "chart_type", "chart_data", "summary_points", "query_type"]
-                    }
-                }
-            ]
-
+            # Use OpenAI without function calling for better compatibility
             system_prompt = f"""You are an expert real estate auction analytics assistant. 
 
 Current Database Context:
 - Total Users: {context.get('total_users', 0)}
-- Total Properties: {context.get('total_properties', 0)}
+- Total Properties: {context.get('total_properties', 0)}  
 - Total Auctions: {context.get('total_auctions', 0)}
 - Total Bids: {context.get('total_bids', 0)}
 - Live Auctions: {context.get('live_auctions', 0)}
@@ -217,9 +181,10 @@ Current Database Context:
 - Available Cities: {', '.join(context.get('cities', []))}
 
 Your task is to analyze user queries about real estate auction data and generate:
-1. Appropriate chart visualizations with realistic data
-2. Insightful summary points
-3. Human-readable responses
+1. A human-readable response
+2. Appropriate chart type (bar, line, pie, area, scatter)
+3. Chart data in JSON format with structure: {{"data": [{{"key": "value", ...}}]}}
+4. 2-4 key insights as bullet points
 
 Chart Type Guidelines:
 - Bar charts: Comparisons between categories (regions, investors, property types)
@@ -230,6 +195,14 @@ Chart Type Guidelines:
 
 Generate realistic data that matches the query context and current database state.
 Make insights actionable and relevant to real estate professionals.
+
+Return your response in this exact JSON format:
+{{
+  "response": "Human-readable response text",
+  "chart_type": "bar|line|pie|area|scatter",
+  "chart_data": {{"data": [{{"key": "value", ...}}]}},
+  "summary_points": ["insight 1", "insight 2", "insight 3"]
+}}
 """
 
             response = self.client.chat.completions.create(
@@ -238,24 +211,33 @@ Make insights actionable and relevant to real estate professionals.
                     {"role": "system", "content": system_prompt},
                     {"role": "user", "content": user_query}
                 ],
-                functions=functions,
-                function_call={"name": "generate_analytics_response"},
                 temperature=0.7
             )
 
-            # Parse the function call response
-            function_call = response.choices[0].message.function_call
-            if function_call and function_call.name == "generate_analytics_response":
-                result = json.loads(function_call.arguments)
+            # Parse the JSON response
+            response_text = response.choices[0].message.content.strip()
+            
+            # Extract JSON from response (in case it's wrapped in markdown)
+            if "```json" in response_text:
+                start = response_text.find("```json") + 7
+                end = response_text.find("```", start)
+                response_text = response_text[start:end].strip()
+            elif "```" in response_text:
+                start = response_text.find("```") + 3
+                end = response_text.find("```", start)
+                response_text = response_text[start:end].strip()
+            
+            try:
+                result = json.loads(response_text)
                 
                 return ChatResponse(
-                    response=result["response"],
-                    chart_type=result["chart_type"],
-                    chart_data=result["chart_data"],
-                    summary_points=result["summary_points"]
+                    response=result.get("response", "I've analyzed your query."),
+                    chart_type=result.get("chart_type", "bar"),
+                    chart_data=result.get("chart_data", {"data": []}),
+                    summary_points=result.get("summary_points", ["Analysis complete"])
                 )
-            else:
-                # Fallback if function calling fails
+            except json.JSONDecodeError:
+                logger.error(f"Failed to parse JSON response: {response_text}")
                 return await self.generate_fallback_response(user_query, context, raw_data)
                 
         except Exception as e:
