@@ -257,6 +257,9 @@ class AnalyticsService:
             if primary_intent in ['top_bidders', 'top_investors']:
                 structured_data['data'] = await self.get_top_investors_data(users, bids, entities)
                 
+            elif primary_intent == 'last_month_winners':
+                structured_data['data'] = await self.get_last_month_winners_data(users, auctions, bids, entities)
+                
             elif primary_intent == 'auction_summary':
                 structured_data['data'] = await self.get_auction_summary_data(auctions, properties, bids, entities)
                 
