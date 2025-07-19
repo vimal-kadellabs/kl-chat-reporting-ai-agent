@@ -63,35 +63,39 @@ const ChatMessage = ({ message }) => {
 
               {/* Multiple Charts */}
               {message.charts && message.charts.length > 0 && (
-                <div className="space-y-6 mb-6">
-                  {message.charts.map((chart, index) => (
-                    <div key={index} className="modern-card overflow-hidden">
-                      <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-3 border-b border-slate-200">
-                        <div className="flex items-center">
-                          <div className="w-5 h-5 bg-slate-400 rounded-full flex items-center justify-center mr-2">
-                            <svg className="w-3 h-3 text-white" fill="currentColor" viewBox="0 0 20 20">
-                              <path d="M2 10a8 8 0 018-8v8h8a8 8 0 11-16 0z" />
-                              <path d="M12 2.252A8.014 8.014 0 0117.748 8H12V2.252z" />
-                            </svg>
+                <div className="mb-6">
+                  {/* Charts Grid - Two Column Layout */}
+                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    {message.charts.map((chart, index) => (
+                      <div key={index} className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20 overflow-hidden">
+                        <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-3 border-b border-slate-200">
+                          <div className="flex items-center">
+                            <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mr-3 shadow-sm">
+                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                              </svg>
+                            </div>
+                            <div className="flex-1">
+                              <h4 className="font-semibold text-slate-700 text-sm">
+                                Chart {index + 1} of {message.charts.length}
+                              </h4>
+                              <span className="text-xs text-slate-500 bg-white px-2 py-1 rounded-full ml-2">
+                                {chart.type.toUpperCase()}
+                              </span>
+                            </div>
                           </div>
-                          <h4 className="font-semibold text-slate-700 text-sm">
-                            Data Visualization {message.charts.length > 1 && `${index + 1}/${message.charts.length}`}
-                          </h4>
-                          <span className="ml-2 text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
-                            {chart.type.toUpperCase()}
-                          </span>
+                        </div>
+                        <div className="p-4">
+                          <ChartRenderer
+                            data={chart.data}
+                            type={chart.type}
+                            title={chart.title}
+                            description={chart.description}
+                          />
                         </div>
                       </div>
-                      <div className="p-6">
-                        <ChartRenderer
-                          data={chart.data}
-                          type={chart.type}
-                          title={chart.title}
-                          description={chart.description}
-                        />
-                      </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
 
