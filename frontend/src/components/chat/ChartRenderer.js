@@ -109,7 +109,7 @@ const ChartRenderer = ({ data, type, title, description }) => {
 
   // Loading component with progress bar
   const LoadingChart = () => (
-    <div className="w-full h-96 flex flex-col items-center justify-center p-8">
+    <div className="w-full h-80 flex flex-col items-center justify-center p-8">
       <div className="w-full max-w-sm">
         <LoadingProgressBar 
           progress={loadingProgress} 
