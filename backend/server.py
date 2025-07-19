@@ -800,6 +800,108 @@ You MUST respond with ONLY this JSON structure:
             summary_points=summary_points
         )
     
+    async def create_last_month_winners_enhanced_response(self, winners_data: dict) -> ChatResponse:
+        """Create enhanced response for last month winners query"""
+        if 'error' in winners_data:
+            return await self.create_no_data_response("Error fetching last month winners data")
+            
+        qualified_winners = winners_data.get('qualified_winners', [])
+        query_period = winners_data.get('query_period', {})
+        summary_stats = winners_data.get('summary_stats', {})
+        
+        if not qualified_winners:
+            response_text = "## 🏆 Last Month's Multiple Property Winners\n\n"
+            response_text += "**No investors won more than 2 properties in the last month.**\n\n"
+            response_text += f"**Analysis Period**: {query_period.get('start_date', 'Unknown')} to {query_period.get('end_date', 'Unknown')}\n\n"
+            response_text += "This could indicate:\n"
+            response_text += "- Highly competitive market with wins distributed among many investors\n"
+            response_text += "- Most investors are focusing on single high-value acquisitions\n"
+            response_text += "- Limited auction volume during this period\n"
+            
+            return ChatResponse(
+                response=response_text,
+                charts=[],
+                tables=[],
+                summary_points=[
+                    f"Analyzed {summary_stats.get('total_ended_auctions_last_month', 0)} completed auctions",
+                    f"{summary_stats.get('investors_with_wins', 0)} investors had at least one win",
+                    "No investor won more than 2 properties in the analyzed period",
+                    "Market appears highly competitive with distributed wins"
+                ]
+            )
+        
+        # Response text with winners
+        response_text = "## 🏆 Last Month's Multiple Property Winners\n\n"
+        response_text += f"**Found {len(qualified_winners)} investors who won more than 2 properties in the last month.**\n\n"
+        response_text += f"**Analysis Period**: {query_period.get('start_date', 'Unknown')[:10]} to {query_period.get('end_date', 'Unknown')[:10]}\n\n"
+        
+        for i, winner in enumerate(qualified_winners[:5], 1):  # Show top 5
+            response_text += f"**{i}. {winner['name']}** ({winner['location']})\n"
+            response_text += f"   - **Properties Won**: {winner['properties_won_last_month']}\n"
+            response_text += f"   - **Total Spent**: ${winner['total_spent_last_month']:,.0f}\n"
+            response_text += f"   - **Average Winning Bid**: ${winner['average_winning_bid']:,.0f}\n"
+            response_text += f"   - **Overall Success Rate**: {winner['overall_success_rate']:.1f}%\n\n"
+        
+        # Chart 1: Properties won by each investor
+        chart1 = ChartData(
+            data=[{"name": w['name'][:20], "properties_won": w['properties_won_last_month'], "total_spent": w['total_spent_last_month']} 
+                  for w in qualified_winners],
+            type="bar",
+            title="Properties Won Last Month by Investor",
+            description="Number of properties won by each qualifying investor"
+        )
+        
+        # Chart 2: Total spending distribution
+        chart2 = ChartData(
+            data=[{"name": w['name'][:15], "value": w['total_spent_last_month']} for w in qualified_winners],
+            type="donut",
+            title="Investment Distribution",
+            description="Total amount spent by each investor last month"
+        )
+        
+        # Chart 3: Average winning bid comparison
+        chart3 = ChartData(
+            data=[{"investor": w['name'][:15], "avg_bid": w['average_winning_bid'], 
+                   "success_rate": w['overall_success_rate']} for w in qualified_winners],
+            type="line",
+            title="Average Winning Bid vs Success Rate",
+            description="Relationship between average bid amounts and overall success rates"
+        )
+        
+        # Table: Detailed breakdown
+        table_rows = []
+        for winner in qualified_winners:
+            table_rows.append([
+                winner['name'],
+                winner['location'],
+                winner['properties_won_last_month'],
+                f"${winner['total_spent_last_month']:,.0f}",
+                f"${winner['average_winning_bid']:,.0f}",
+                f"{winner['overall_success_rate']:.1f}%",
+                "Verified" if winner['profile_verified'] else "Unverified"
+            ])
+        
+        table = TableData(
+            headers=["Investor", "Location", "Properties Won", "Total Spent", "Avg Winning Bid", "Success Rate", "Status"],
+            rows=table_rows,
+            title="Multiple Property Winners - Last Month Analysis",
+            description="Comprehensive breakdown of investors who won more than 2 properties"
+        )
+        
+        summary_points = [
+            f"Top performer: {qualified_winners[0]['name']} won {qualified_winners[0]['properties_won_last_month']} properties",
+            f"Total value transacted by these investors: ${summary_stats.get('total_value_transacted', 0):,.0f}",
+            f"Average properties won per investor: {summary_stats.get('total_properties_won', 0) / len(qualified_winners):.1f}",
+            f"These {len(qualified_winners)} investors represent the most active buyers in the market"
+        ]
+        
+        return ChatResponse(
+            response=response_text,
+            charts=[chart1, chart2, chart3],
+            tables=[table],
+            summary_points=summary_points
+        )
+    
     async def create_general_enhanced_response(self, structured_data: dict) -> ChatResponse:
         """Create enhanced general response with fallback data"""
         raw_counts = structured_data.get('raw_counts', {})
