@@ -163,6 +163,7 @@ class AnalyticsService:
         intent_patterns = {
             'top_bidders': ['top bidder', 'highest bidder', 'most active investor', 'biggest investor', 'leading bidder'],
             'top_investors': ['top investor', 'best investor', 'successful investor', 'winning investor', 'investor ranking', 'top 5 investor', 'top 3 investor', 'top 10 investor', 'investors by bid amount', 'investors by total bid'],
+            'last_month_winners': ['won more than', 'winners in last month', 'investors who won', 'properties in last month', 'won in the last month', 'multiple properties last month', 'winners last month', 'won 2 properties', 'won 3 properties', 'more than 2 properties'],
             'auction_summary': ['auction summary', 'auction overview', 'auction status', 'auction report'],
             'property_analysis': ['property performance', 'property trend', 'property comparison', 'property market'],
             'bidding_trends': ['bidding trend', 'bid pattern', 'bidding activity', 'bid volume', 'bidding behavior'],
