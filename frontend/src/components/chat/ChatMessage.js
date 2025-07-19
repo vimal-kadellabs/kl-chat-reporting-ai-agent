@@ -137,17 +137,6 @@ const ChatMessage = ({ message }) => {
                 </div>
               )}
 
-              {/* Main Response with Typing Animation */}
-              {message.content && (
-                <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20 p-6">
-                  <TypingAnimation 
-                    text={message.content} 
-                    speed={25}
-                    startDelay={500}
-                  />
-                </div>
-              )}
-
             </div>
           </div>
         )}
