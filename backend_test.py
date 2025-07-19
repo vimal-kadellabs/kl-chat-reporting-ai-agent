@@ -576,11 +576,11 @@ class BackendTester:
             for test in failed_tests:
                 print(f"   • {test['test']}: {test['details']}")
         
-        # Show critical issues
+        # Show critical issues - Updated for enhanced testing
         critical_failures = [
             result for result in self.test_results 
             if not result["success"] and any(keyword in result["test"].lower() 
-            for keyword in ["sample questions", "chat", "users"])
+            for keyword in ["enhanced", "sample questions", "chat", "users", "multi-chart", "regional", "auctions", "comparison"])
         ]
         
         if critical_failures:
