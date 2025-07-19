@@ -566,13 +566,13 @@ You MUST respond with ONLY this JSON structure:
             elif structured_data.get('raw_counts') and sum(structured_data.get('raw_counts', {}).values()) > 0:
                 return await self.create_general_enhanced_response(structured_data)
             else:
-                # Use fallback when no specific data is available
-                return await self.create_fallback_response(user_query)
+                # Use no-data response when no specific data is available
+                return await self.create_no_data_response(user_query)
                 
         except Exception as e:
             logger.error(f"Error creating enhanced manual response: {e}")
-            # Even in error cases, provide fallback
-            return await self.create_fallback_response(user_query)
+            # Even in error cases, provide no-data response
+            return await self.create_no_data_response(user_query)
     
     async def create_top_investors_enhanced_response(self, investors_data: list) -> ChatResponse:
         """Create enhanced response for top investors query"""
