@@ -182,9 +182,7 @@ metadata:
   run_ui: false
 
 test_plan:
-  current_focus:
-    - "Force initialization of enhanced mock data"
-    - "Test AI chat functionality with mock data"
+  current_focus: []
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
