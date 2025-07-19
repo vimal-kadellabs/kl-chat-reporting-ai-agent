@@ -61,7 +61,7 @@ const ChatMessage = ({ message }) => {
                 </div>
               )}
 
-              {/* Multiple Charts */}
+              {/* Multiple Charts - Compact Layout */}
               {message.charts && message.charts.length > 0 && (
                 <div className="mb-6">
                   {/* Charts Grid - Enhanced Two Column Layout with Responsive Breakpoints */}
@@ -73,30 +73,6 @@ const ChatMessage = ({ message }) => {
                           message.charts.length === 1 ? 'md:col-span-2 xl:col-span-1' : ''
                         }`}
                       >
-                        <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-3 border-b border-slate-200 flex-shrink-0">
-                          <div className="flex items-center">
-                            <div className="w-8 h-8 bg-gradient-to-r from-indigo-500 to-purple-500 rounded-xl flex items-center justify-center mr-3 shadow-sm flex-shrink-0">
-                              <svg className="w-4 h-4 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
-                              </svg>
-                            </div>
-                            <div className="flex-1 min-w-0">
-                              <h4 className="font-semibold text-slate-700 text-sm truncate">
-                                {chart.title || `Chart ${index + 1} of ${message.charts.length}`}
-                              </h4>
-                              <div className="flex items-center gap-2 mt-1">
-                                <span className="text-xs text-slate-500 bg-white px-2 py-1 rounded-full">
-                                  {chart.type.toUpperCase()}
-                                </span>
-                                {message.charts.length > 1 && (
-                                  <span className="text-xs text-slate-400">
-                                    {index + 1}/{message.charts.length}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          </div>
-                        </div>
                         <div className="p-4 flex-1 flex flex-col">
                           <ChartRenderer
                             data={chart.data}
