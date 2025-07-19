@@ -240,7 +240,7 @@ const ChatInterface = () => {
                     onKeyPress={handleKeyPress}
                     placeholder="Ask anything about real estate auctions..."
                     className="input-modern w-full resize-none focus-ring"
-                    rows="2"
+                    rows="1"
                     disabled={loading}
                     style={{ padding: '0.5rem 0.75rem' }}
                   />
