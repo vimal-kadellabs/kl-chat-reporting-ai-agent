@@ -1137,7 +1137,7 @@ You MUST respond with ONLY this JSON structure:
             'monthly', 'quarterly', 'yearly', 'last month', 'this month', 'recent', 'historical'
         ]
         
-        # Non-domain keywords that clearly indicate irrelevant topics
+        # Non-domain keywords that clearly indicate irrelevant topics (use word boundaries)
         irrelevant_keywords = [
             # Weather
             'weather', 'temperature', 'rain', 'sunny', 'cloudy', 'storm', 'forecast', 'climate',
@@ -1152,7 +1152,7 @@ You MUST respond with ONLY this JSON structure:
             
             # Entertainment
             'movie', 'film', 'actor', 'actress', 'music', 'song', 'album', 'concert', 'tv', 'television',
-            'netflix', 'youtube', 'streaming', 'video', 'game', 'gaming',
+            'netflix', 'youtube', 'streaming', 'video', 'gaming',
             
             # Health & Medicine
             'doctor', 'hospital', 'medicine', 'health', 'disease', 'symptom', 'treatment', 'therapy',
@@ -1160,27 +1160,30 @@ You MUST respond with ONLY this JSON structure:
             
             # Technology (unless related to real estate)
             'programming', 'coding', 'software', 'hardware', 'computer', 'laptop', 'phone', 'smartphone',
-            'app', 'website', 'internet', 'wifi', 'bluetooth',
+            'internet', 'wifi', 'bluetooth',
             
             # Travel
             'travel', 'vacation', 'hotel', 'flight', 'airport', 'passport', 'tourism', 'holiday',
             
-            # General non-domain topics
+            # General non-domain topics (removed 'art', 'game', 'app', 'website' to avoid false positives)
             'love', 'relationship', 'dating', 'marriage', 'family', 'friendship', 'hobby', 'book', 'reading',
-            'art', 'painting', 'music', 'dance', 'fashion', 'clothing', 'car', 'automobile', 'driving'
+            'painting', 'dance', 'fashion', 'clothing', 'automobile', 'driving'
         ]
         
-        # Check for irrelevant keywords first
+        # Use word boundary matching for irrelevant keywords to avoid false positives
+        import re
         irrelevant_found = []
         for keyword in irrelevant_keywords:
-            if keyword in query_lower:
+            # Use word boundaries to match whole words only
+            pattern = r'\b' + re.escape(keyword) + r'\b'
+            if re.search(pattern, query_lower):
                 irrelevant_found.append(keyword)
                 
         if irrelevant_found:
             logger.info(f"Found irrelevant keywords: {irrelevant_found}")
             return False
         
-        # Check for domain relevant keywords
+        # Check for domain relevant keywords (can use substring matching for these)
         relevant_found = []
         for keyword in domain_keywords:
             if keyword in query_lower:
@@ -1209,7 +1212,6 @@ You MUST respond with ONLY this JSON structure:
             return True
         
         # If query contains numbers and auction/property context, likely relevant
-        import re
         has_numbers = bool(re.search(r'\d+', query_lower))
         has_action_words = any(word in query_lower for word in ['top', 'list', 'show', 'find'])
         
