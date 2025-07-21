@@ -245,6 +245,17 @@ class AnalyticsService:
                 'finished auction', 'finished auctions',
                 'ended auction', 'ended auctions',
                 'past auction', 'past auctions'
+            ],
+            'cancelled_auctions': [
+                'cancelled auction', 'cancelled auctions',
+                'canceled auction', 'canceled auctions',
+                'auction cancellation', 'auction cancellations',
+                'cancelled due to no bidders', 'canceled due to no bidders',
+                'cancelled due to no bids', 'canceled due to no bids',
+                'no bidders', 'no bidding',
+                'auctions cancelled', 'auctions canceled',
+                'unsuccessful auction', 'unsuccessful auctions',
+                'failed auction', 'failed auctions'
             ]
         }
 
