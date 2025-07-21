@@ -1034,6 +1034,192 @@ You MUST respond with ONLY this JSON structure:
             summary_points=summary_points
         )
 
+    async def create_fewest_bids_enhanced_response(self, data: dict) -> ChatResponse:
+        """Create enhanced response for fewest bids auctions query"""
+        fewest_bids_auctions = data.get('fewest_bids_auctions', [])
+        analysis = data.get('analysis', {})
+        
+        # Response text
+        response_text = "## 🎯 Auctions with Fewest Bids Analysis\n\n"
+        response_text += "**Identifying auctions that received the lowest bidder interest:**\n\n"
+        
+        if fewest_bids_auctions:
+            lowest_count = fewest_bids_auctions[0]['bid_count']
+            response_text += f"- **Lowest Bid Count**: {lowest_count} bids\n"
+            response_text += f"- **Average Bid Count**: {analysis.get('average_bid_count', 0):.1f} bids per auction\n"
+            response_text += f"- **Total Auctions Analyzed**: {analysis.get('total_auctions', 0)}\n\n"
+            
+            response_text += "**Key Insights:**\n"
+            response_text += f"- {len(fewest_bids_auctions)} auctions show minimal bidder engagement\n"
+            response_text += "- Low bid counts may indicate pricing or marketing issues\n"
+        else:
+            response_text += "- **No auction data available** for analysis\n"
+        
+        # Create charts
+        charts = []
+        if fewest_bids_auctions:
+            # Bar chart of bid counts
+            charts.append(ChartData(
+                data=[{
+                    "auction": f"{auction.get('property_title', 'N/A')[:20]}...",
+                    "bid_count": auction['bid_count'],
+                    "location": auction.get('location', 'N/A')
+                } for auction in fewest_bids_auctions],
+                type="bar",
+                title="Bottom 10 Auctions by Bid Count",
+                description="Auctions that received the fewest bids"
+            ))
+        
+        # Create table
+        tables = []
+        if fewest_bids_auctions:
+            headers = ["Auction Title", "Location", "Property Type", "Bid Count", "Status"]
+            rows = []
+            
+            for auction in fewest_bids_auctions:
+                rows.append([
+                    auction.get('property_title', 'N/A'),
+                    f"{auction.get('location', 'N/A')}, {auction.get('state', 'N/A')}",
+                    auction.get('property_type', 'unknown').capitalize(),
+                    auction['bid_count'],
+                    auction.get('status', 'unknown').capitalize()
+                ])
+            
+            tables.append(TableData(
+                headers=headers,
+                rows=rows,
+                title="Auctions with Fewest Bids",
+                description=f"Complete list of {len(fewest_bids_auctions)} auctions with lowest bid counts"
+            ))
+        
+        # Summary points
+        summary_points = []
+        if fewest_bids_auctions:
+            summary_points.extend([
+                f"{len(fewest_bids_auctions)} auctions received {lowest_count} or fewer bids",
+                f"Average auction receives {analysis.get('average_bid_count', 0):.1f} bids",
+                "Low bid counts may indicate overpricing or limited marketing reach"
+            ])
+            
+            if lowest_count == 0:
+                summary_points.append("Consider reviewing reserve prices and marketing strategies for zero-bid auctions")
+        else:
+            summary_points.extend([
+                "No auction data available for bid count analysis",
+                "Unable to identify underperforming auctions",
+                "Consider reviewing data collection processes"
+            ])
+        
+        return ChatResponse(
+            response=response_text,
+            charts=charts,
+            tables=tables,
+            summary_points=summary_points
+        )
+
+    async def create_investor_activity_by_type_enhanced_response(self, data: dict) -> ChatResponse:
+        """Create enhanced response for investor activity by property type"""
+        investor_activity = data.get('investor_activity_by_type', [])
+        summary = data.get('summary', {})
+        
+        # Response text
+        response_text = "## 🏢 Investor Activity by Property Type\n\n"
+        response_text += "**Analysis of investor preferences across residential vs commercial auctions:**\n\n"
+        
+        if investor_activity:
+            response_text += f"- **Total Active Investors**: {summary.get('total_active_investors', 0)}\n"
+            response_text += f"- **Most Active Investor**: {investor_activity[0]['investor_name']}\n"
+            response_text += f"- **Top Investor Total Bids**: {investor_activity[0]['total_bids']}\n\n"
+            
+            response_text += "**Property Type Distribution:**\n"
+            dist = summary.get('property_type_distribution', {})
+            for prop_type, count in dist.items():
+                response_text += f"- **{prop_type.capitalize()}**: {count} bids\n"
+        else:
+            response_text += "- **No investor activity data** available for analysis\n"
+        
+        # Create charts
+        charts = []
+        if investor_activity:
+            # Grouped bar chart for top investors
+            chart_data = []
+            for inv in investor_activity[:5]:  # Top 5
+                chart_data.append({
+                    "investor": inv['investor_name'][:15] + "..." if len(inv['investor_name']) > 15 else inv['investor_name'],
+                    "residential": inv['residential_bids'],
+                    "commercial": inv['commercial_bids'],
+                    "industrial": inv['industrial_bids'],
+                    "land": inv['land_bids']
+                })
+            
+            charts.append(ChartData(
+                data=chart_data,
+                type="bar",
+                title="Top Investors by Property Type Activity",
+                description="Bid activity comparison across property types"
+            ))
+            
+            # Pie chart for overall distribution
+            dist = summary.get('property_type_distribution', {})
+            pie_data = [{"type": k.capitalize(), "bids": v} for k, v in dist.items() if v > 0]
+            
+            charts.append(ChartData(
+                data=pie_data,
+                type="donut",
+                title="Overall Bidding Distribution by Property Type",
+                description="Total bid distribution across all property types"
+            ))
+        
+        # Create table
+        tables = []
+        if investor_activity:
+            headers = ["Investor", "Total Bids", "Residential", "Commercial", "Industrial", "Land", "Dominant Type"]
+            rows = []
+            
+            for inv in investor_activity[:10]:  # Top 10
+                rows.append([
+                    inv['investor_name'],
+                    inv['total_bids'],
+                    inv['residential_bids'],
+                    inv['commercial_bids'],
+                    inv['industrial_bids'],
+                    inv['land_bids'],
+                    inv['dominant_property_type'].capitalize()
+                ])
+            
+            tables.append(TableData(
+                headers=headers,
+                rows=rows,
+                title="Investor Activity Breakdown",
+                description=f"Detailed activity analysis for top {len(rows)} investors"
+            ))
+        
+        # Summary points
+        summary_points = []
+        if investor_activity and summary:
+            dist = summary.get('property_type_distribution', {})
+            most_active_type = max(dist.items(), key=lambda x: x[1])[0] if dist else 'none'
+            
+            summary_points.extend([
+                f"{summary.get('total_active_investors', 0)} investors actively participate in auctions",
+                f"Most popular property type: {most_active_type.capitalize()} ({dist.get(most_active_type, 0)} bids)",
+                f"Top investor focuses on {investor_activity[0]['dominant_property_type']} properties",
+                f"Property type preferences vary significantly among active investors"
+            ])
+        else:
+            summary_points.extend([
+                "No investor activity data available for analysis",
+                "Unable to determine property type preferences",
+                "Consider reviewing bidding data collection"
+            ])
+        
+        return ChatResponse(
+            response=response_text,
+            charts=charts,
+            tables=tables,
+            summary_points=summary_points
+        )
+
     async def create_top_investors_enhanced_response(self, investors_data: list) -> ChatResponse:
         """Create enhanced response for top investors query"""
         investors = investors_data[:5]
