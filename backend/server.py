@@ -256,6 +256,67 @@ class AnalyticsService:
                 'auctions cancelled', 'auctions canceled',
                 'unsuccessful auction', 'unsuccessful auctions',
                 'failed auction', 'failed auctions'
+            ],
+            'fewest_bids_auctions': [
+                'fewest bids', 'lowest bids', 'least bids',
+                'minimum bids', 'auctions with fewest bids',
+                'auctions with lowest bids', 'auctions with least bids',
+                'bottom auctions by bids', 'auctions with minimal bids'
+            ],
+            'investor_activity_by_property_type': [
+                'investors by property type', 'investor activity by property type',
+                'residential vs commercial investors', 'commercial vs residential investors',
+                'investors in residential', 'investors in commercial',
+                'most active in residential', 'most active in commercial',
+                'investor property preference', 'investor type preference'
+            ],
+            'location_based_auction_count': [
+                'auctions in', 'properties auctioned in', 'how many auctions',
+                'auction count in', 'auctions by location', 'auctions by city',
+                'auctions by state', 'properties in new york', 'auctions in california',
+                'how many properties were auctioned', 'property count by location'
+            ],
+            'properties_most_bids_timeframe': [
+                'properties with most bids', 'most bids in', 'highest bid count',
+                'properties with highest bids', 'top bid properties',
+                'most popular properties', 'properties most bids july',
+                'properties most bids month', 'properties most bids timeframe'
+            ],
+            'completed_auctions_summary': [
+                'summary report completed auctions', 'completed auctions summary',
+                'report of completed auctions', 'completed auction report',
+                'summary of completed', 'generate summary completed',
+                'completed auctions this month', 'monthly completion report'
+            ],
+            'upcoming_auctions_by_value': [
+                'upcoming auctions by value', 'top upcoming auctions',
+                'highest value upcoming auctions', 'upcoming by property value',
+                'future auctions by value', 'scheduled auctions by value',
+                'top 10 upcoming', 'upcoming auctions ranked by value'
+            ],
+            'bidding_activity_by_property_type': [
+                'bidding activity across property types', 'compare bidding activity',
+                'bidding by property type', 'bid comparison property types',
+                'residential vs commercial bidding', 'property type bidding',
+                'bidding across types', 'compare property type bids'
+            ],
+            'auction_wins_by_investor_type': [
+                'auction wins by investor type', 'wins by investor type',
+                'breakdown by investor type', 'corporate vs individual wins',
+                'investor type breakdown', 'wins by corporate individual firm',
+                'auction winners by type', 'investor category wins'
+            ],
+            'unsold_properties': [
+                'unsold properties', 'properties remained unsold',
+                'properties not sold', 'unsold after bidding',
+                'properties unsold after auction', 'properties that didnt sell',
+                'failed to sell', 'reserve not met', 'no sale properties'
+            ],
+            'property_types_exceeding_reserve': [
+                'higher than expected', 'exceeded reserve', 'above reserve',
+                'winning bids exceeded', 'property types exceeding',
+                'higher than reserve', 'above expected bids',
+                'outperformed reserve', 'bids higher than expected'
             ]
         }
 
