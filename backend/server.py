@@ -864,6 +864,26 @@ You MUST respond with ONLY this JSON structure:
                 return await self.create_top_investors_enhanced_response(data['top_investors'])
             elif intent == 'cancelled_auctions' and 'cancellation_analysis' in data:
                 return await self.create_cancelled_auctions_enhanced_response(data)
+            elif intent == 'fewest_bids_auctions' and 'fewest_bids_auctions' in data:
+                return await self.create_fewest_bids_enhanced_response(data)
+            elif intent == 'investor_activity_by_property_type' and 'investor_activity_by_type' in data:
+                return await self.create_investor_activity_by_type_enhanced_response(data)
+            elif intent == 'location_based_auction_count' and 'location_analysis' in data:
+                return await self.create_location_analysis_enhanced_response(data)
+            elif intent == 'properties_most_bids_timeframe' and 'properties_most_bids' in data:
+                return await self.create_properties_most_bids_enhanced_response(data)
+            elif intent == 'completed_auctions_summary' and 'completed_auctions_summary' in data:
+                return await self.create_completed_auctions_summary_enhanced_response(data)
+            elif intent == 'upcoming_auctions_by_value' and 'upcoming_auctions_by_value' in data:
+                return await self.create_upcoming_auctions_enhanced_response(data)
+            elif intent == 'bidding_activity_by_property_type' and 'bidding_activity_by_property_type' in data:
+                return await self.create_bidding_activity_by_type_enhanced_response(data)
+            elif intent == 'auction_wins_by_investor_type' and 'auction_wins_by_investor_type' in data:
+                return await self.create_auction_wins_by_type_enhanced_response(data)
+            elif intent == 'unsold_properties' and 'unsold_properties' in data:
+                return await self.create_unsold_properties_enhanced_response(data)
+            elif intent == 'property_types_exceeding_reserve' and 'property_types_exceeding_reserve' in data:
+                return await self.create_property_types_exceeding_enhanced_response(data)
             elif intent == 'last_month_winners':
                 return await self.create_last_month_winners_enhanced_response(data)
             elif intent == 'regional_analysis' and 'regional_analysis' in data:
