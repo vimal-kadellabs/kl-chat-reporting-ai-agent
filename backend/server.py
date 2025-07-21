@@ -1105,6 +1105,10 @@ You MUST respond with ONLY this JSON structure:
         """Check if the query is relevant to real estate auction analytics domain"""
         query_lower = user_query.lower()
         
+        # Add debugging
+        logger.info(f"Domain validation for query: '{user_query}'")
+        logger.info(f"Query lowercase: '{query_lower}'")
+        
         # Real estate and auction related keywords
         domain_keywords = [
             # Real Estate terms
@@ -1167,14 +1171,24 @@ You MUST respond with ONLY this JSON structure:
         ]
         
         # Check for irrelevant keywords first
+        irrelevant_found = []
         for keyword in irrelevant_keywords:
             if keyword in query_lower:
-                return False
+                irrelevant_found.append(keyword)
+                
+        if irrelevant_found:
+            logger.info(f"Found irrelevant keywords: {irrelevant_found}")
+            return False
         
         # Check for domain relevant keywords
+        relevant_found = []
         for keyword in domain_keywords:
             if keyword in query_lower:
-                return True
+                relevant_found.append(keyword)
+                
+        if relevant_found:
+            logger.info(f"Found domain keywords: {relevant_found}")
+            return True
                 
         # Additional context checks
         # Common real estate phrases
@@ -1185,16 +1199,26 @@ You MUST respond with ONLY this JSON structure:
             'auction activity', 'market analysis', 'sales data'
         ]
         
+        phrases_found = []
         for phrase in real_estate_phrases:
             if phrase in query_lower:
-                return True
+                phrases_found.append(phrase)
+                
+        if phrases_found:
+            logger.info(f"Found domain phrases: {phrases_found}")
+            return True
         
         # If query contains numbers and auction/property context, likely relevant
         import re
-        if re.search(r'\d+', query_lower) and any(word in query_lower for word in ['top', 'list', 'show', 'find']):
+        has_numbers = bool(re.search(r'\d+', query_lower))
+        has_action_words = any(word in query_lower for word in ['top', 'list', 'show', 'find'])
+        
+        if has_numbers and has_action_words:
+            logger.info(f"Found numbers + action words combination")
             return True
             
         # Default to False for unclear queries
+        logger.info(f"Query failed all domain relevance checks")
         return False
 
     async def create_domain_irrelevant_response(self, user_query: str) -> ChatResponse:
