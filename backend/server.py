@@ -2318,14 +2318,22 @@ You MUST respond with ONLY this JSON structure:
                 
                 auction = auction_lookup[prop['id']]
                 location_counts[city]['total'] += 1
-                location_counts[city][auction['status']] += 1
+                
+                # Map auction status to expected keys
+                status = auction['status']
+                if status == 'ended':
+                    status = 'completed'
+                elif status not in ['live', 'upcoming', 'cancelled']:
+                    status = 'completed'  # Default mapping
+                
+                location_counts[city][status] += 1
                 
                 # State counts
                 if state not in state_counts:
                     state_counts[state] = {'total': 0, 'live': 0, 'completed': 0, 'upcoming': 0, 'cancelled': 0}
                 
                 state_counts[state]['total'] += 1
-                state_counts[state][auction['status']] += 1
+                state_counts[state][status] += 1
         
         # Filter by target location if specified
         if target_location:
