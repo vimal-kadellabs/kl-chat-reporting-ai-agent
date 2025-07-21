@@ -325,10 +325,10 @@ class AnalyticsService:
             }
             
             # Get base collections
-            users = await db.users.find().to_list(100)
-            properties = await db.properties.find().to_list(100)
-            auctions = await db.auctions.find().to_list(100)
-            bids = await db.bids.find().to_list(100)
+            users = await db.users.find().to_list(None)  # Remove limit to get all data
+            properties = await db.properties.find().to_list(None)
+            auctions = await db.auctions.find().to_list(None)
+            bids = await db.bids.find().to_list(None)
             
             structured_data['raw_counts'] = {
                 'total_users': len(users),
