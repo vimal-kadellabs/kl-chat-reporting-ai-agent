@@ -1591,11 +1591,50 @@ You MUST respond with ONLY this JSON structure:
         # Sort by current bid amount (descending)
         filtered_auctions.sort(key=lambda x: x['current_highest_bid'], reverse=True)
         
-        return {
+        # Add cancellation-specific analysis for cancelled auctions
+        cancellation_analysis = {}
+        if status_filter == 'cancelled_auctions':
+            cancelled_no_bidders = [a for a in filtered_auctions if a['total_bids'] == 0]
+            cancelled_with_bidders = [a for a in filtered_auctions if a['total_bids'] > 0]
+            
+            cancellation_analysis = {
+                'total_cancelled': len(filtered_auctions),
+                'cancelled_no_bidders': len(cancelled_no_bidders),
+                'cancelled_with_bidders': len(cancelled_with_bidders),
+                'no_bidder_percentage': (len(cancelled_no_bidders) / len(filtered_auctions) * 100) if len(filtered_auctions) > 0 else 0,
+                'cancellation_reasons': {
+                    'no_bidders': len(cancelled_no_bidders),
+                    'other_reasons': len(cancelled_with_bidders)
+                },
+                'cancelled_by_property_type': {}
+            }
+            
+            # Analyze cancellation by property type
+            for auction in filtered_auctions:
+                prop_type = auction.get('property_type', 'unknown')
+                if prop_type not in cancellation_analysis['cancelled_by_property_type']:
+                    cancellation_analysis['cancelled_by_property_type'][prop_type] = {
+                        'total': 0,
+                        'no_bidders': 0,
+                        'with_bidders': 0
+                    }
+                
+                cancellation_analysis['cancelled_by_property_type'][prop_type]['total'] += 1
+                if auction['total_bids'] == 0:
+                    cancellation_analysis['cancelled_by_property_type'][prop_type]['no_bidders'] += 1
+                else:
+                    cancellation_analysis['cancelled_by_property_type'][prop_type]['with_bidders'] += 1
+        
+        result = {
             'auctions': filtered_auctions,
             'total_count': len(filtered_auctions),
             'status_filter': status_filter
         }
+        
+        if cancellation_analysis:
+            result['cancellation_analysis'] = cancellation_analysis
+        
+        return result
 
 # Initialize analytics service
 analytics_service = AnalyticsService()
