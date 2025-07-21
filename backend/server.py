@@ -1224,6 +1224,112 @@ You MUST respond with ONLY this JSON structure:
             summary_points=summary_points
         )
 
+    async def create_location_analysis_enhanced_response(self, data: dict) -> ChatResponse:
+        """Create enhanced response for location-based auction count"""
+        location_analysis = data.get('location_analysis', {})
+        
+        # Response text
+        response_text = "## 📍 Location-Based Auction Analysis\n\n"
+        response_text += f"**Auction distribution across {location_analysis.get('target_location', 'All Locations')}:**\n\n"
+        
+        city_breakdown = location_analysis.get('city_breakdown', {})
+        if city_breakdown:
+            total_auctions = location_analysis.get('total_auctions', 0)
+            response_text += f"- **Total Auctions**: {total_auctions}\n"
+            response_text += f"- **Total Cities**: {location_analysis.get('total_locations', 0)}\n"
+            response_text += f"- **Total States**: {location_analysis.get('total_states', 0)}\n\n"
+            
+            # Show top cities
+            sorted_cities = sorted(city_breakdown.items(), key=lambda x: x[1]['total'], reverse=True)
+            response_text += "**Top Cities by Auction Count:**\n"
+            for city, data in sorted_cities[:5]:
+                response_text += f"- **{city}**: {data['total']} auctions\n"
+        else:
+            response_text += "- **No location data available** for the specified area\n"
+        
+        # Create charts
+        charts = []
+        if city_breakdown:
+            # Bar chart for top cities
+            city_chart_data = []
+            sorted_cities = sorted(city_breakdown.items(), key=lambda x: x[1]['total'], reverse=True)
+            for city, data in sorted_cities[:10]:  # Top 10 cities
+                city_chart_data.append({
+                    "city": city,
+                    "total_auctions": data['total'],
+                    "live": data.get('live', 0),
+                    "completed": data.get('completed', 0),
+                    "upcoming": data.get('upcoming', 0)
+                })
+            
+            charts.append(ChartData(
+                data=city_chart_data,
+                type="bar",
+                title="Auctions by Location",
+                description="Distribution of auctions across top cities"
+            ))
+            
+            # State breakdown if available
+            state_breakdown = location_analysis.get('state_breakdown', {})
+            if state_breakdown and len(state_breakdown) > 1:
+                state_data = [{"state": k, "auctions": v['total']} for k, v in state_breakdown.items()]
+                charts.append(ChartData(
+                    data=state_data,
+                    type="donut",
+                    title="Auctions by State",
+                    description="State-wise distribution of auctions"
+                ))
+        
+        # Create table
+        tables = []
+        if city_breakdown:
+            headers = ["City", "Total Auctions", "Live", "Upcoming", "Completed", "Cancelled"]
+            rows = []
+            
+            sorted_cities = sorted(city_breakdown.items(), key=lambda x: x[1]['total'], reverse=True)
+            for city, data in sorted_cities[:15]:  # Top 15 cities
+                rows.append([
+                    city,
+                    data['total'],
+                    data.get('live', 0),
+                    data.get('upcoming', 0),
+                    data.get('completed', 0),
+                    data.get('cancelled', 0)
+                ])
+            
+            tables.append(TableData(
+                headers=headers,
+                rows=rows,
+                title="Location-Based Auction Breakdown",
+                description=f"Detailed auction counts for {len(rows)} locations"
+            ))
+        
+        # Summary points
+        summary_points = []
+        if city_breakdown:
+            sorted_cities = sorted(city_breakdown.items(), key=lambda x: x[1]['total'], reverse=True)
+            top_city = sorted_cities[0][0] if sorted_cities else 'none'
+            
+            summary_points.extend([
+                f"{location_analysis.get('total_auctions', 0)} total auctions across all locations",
+                f"Most active city: {top_city} ({sorted_cities[0][1]['total']} auctions)" if sorted_cities else "No location data",
+                f"Geographic distribution spans {location_analysis.get('total_states', 0)} states",
+                "Location analysis helps identify high-activity markets"
+            ])
+        else:
+            summary_points.extend([
+                "No location data available for analysis",
+                "Unable to determine geographic distribution",
+                "Consider reviewing location data collection"
+            ])
+        
+        return ChatResponse(
+            response=response_text,
+            charts=charts,
+            tables=tables,
+            summary_points=summary_points
+        )
+
     async def create_top_investors_enhanced_response(self, investors_data: list) -> ChatResponse:
         """Create enhanced response for top investors query"""
         investors = investors_data[:5]
