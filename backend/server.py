@@ -668,6 +668,14 @@ class AnalyticsService:
     async def analyze_query_with_data(self, user_query: str, structured_data: dict) -> ChatResponse:
         """Enhanced OpenAI analysis with multiple charts and tables"""
         try:
+            # Add debug logging for cancellation queries
+            if 'cancel' in user_query.lower() or 'no bidder' in user_query.lower():
+                logger.info(f"Cancellation query detected. Data keys: {list(structured_data.keys())}")
+                if 'data' in structured_data:
+                    logger.info(f"Data structure: {list(structured_data['data'].keys())}")
+                    if 'cancellation_analysis' in structured_data['data']:
+                        logger.info(f"Cancellation analysis: {structured_data['data']['cancellation_analysis']}")
+            
             system_prompt = f"""You are a real estate auction analytics expert. Analyze the query and create comprehensive insights with multiple visualizations.
 
 AVAILABLE DATA:
