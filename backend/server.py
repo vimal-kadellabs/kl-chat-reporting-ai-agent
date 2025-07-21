@@ -851,8 +851,12 @@ You MUST respond with ONLY this JSON structure:
                 
         except Exception as e:
             logger.error(f"Error in enhanced analysis: {e}")
-            # Show no-data message for any errors
-            return await self.create_no_data_response(user_query)
+            # Try manual response first if we have data
+            if structured_data.get('data') or structured_data.get('raw_counts'):
+                return await self.create_enhanced_manual_response(user_query, structured_data)
+            else:
+                # Show no-data message only when no data is available
+                return await self.create_no_data_response(user_query)
 
     async def create_enhanced_manual_response(self, user_query: str, structured_data: dict) -> ChatResponse:
         """Create enhanced response with multiple charts and tables when OpenAI fails"""
