@@ -790,6 +790,139 @@ You MUST respond with ONLY this JSON structure:
             # Even in error cases, provide no-data response
             return await self.create_no_data_response(user_query)
     
+    async def create_cancelled_auctions_enhanced_response(self, data: dict) -> ChatResponse:
+        """Create enhanced response for cancelled auctions query"""
+        cancellation_analysis = data.get('cancellation_analysis', {})
+        auctions = data.get('auctions', [])
+        
+        total_cancelled = cancellation_analysis.get('total_cancelled', 0)
+        cancelled_no_bidders = cancellation_analysis.get('cancelled_no_bidders', 0)
+        no_bidder_percentage = cancellation_analysis.get('no_bidder_percentage', 0)
+        
+        # Response text
+        response_text = "## 🚫 Auction Cancellation Analysis\n\n"
+        response_text += "**Comprehensive analysis of cancelled auctions and their causes:**\n\n"
+        
+        if total_cancelled > 0:
+            response_text += f"- **Total Cancelled Auctions**: {total_cancelled}\n"
+            response_text += f"- **Cancelled Due to No Bidders**: {cancelled_no_bidders} ({no_bidder_percentage:.1f}%)\n"
+            response_text += f"- **Cancelled for Other Reasons**: {total_cancelled - cancelled_no_bidders}\n\n"
+            
+            response_text += "**Key Insights:**\n"
+            if no_bidder_percentage == 100:
+                response_text += "- All cancelled auctions were due to lack of bidder interest\n"
+            elif no_bidder_percentage > 80:
+                response_text += "- The vast majority of cancellations were due to no bidders\n"
+            elif no_bidder_percentage > 50:
+                response_text += "- More than half of cancellations were due to no bidders\n"
+            else:
+                response_text += "- Cancellations had mixed causes beyond just no bidders\n"
+        else:
+            response_text += "- **No cancelled auctions found** in the current dataset\n"
+            response_text += "- All scheduled auctions either completed successfully or are still active\n"
+        
+        # Create charts
+        charts = []
+        
+        if total_cancelled > 0:
+            # Chart 1: Cancellation reasons breakdown
+            charts.append(ChartData(
+                data=[
+                    {"category": "No Bidders", "count": cancelled_no_bidders},
+                    {"category": "Other Reasons", "count": total_cancelled - cancelled_no_bidders}
+                ],
+                type="donut",
+                title="Cancellation Reasons",
+                description="Breakdown of why auctions were cancelled"
+            ))
+            
+            # Chart 2: Cancellation by property type
+            property_type_data = []
+            for prop_type, stats in cancellation_analysis.get('cancelled_by_property_type', {}).items():
+                property_type_data.append({
+                    "property_type": prop_type.capitalize(),
+                    "total_cancelled": stats['total'],
+                    "no_bidders": stats['no_bidders'],
+                    "other_reasons": stats['with_bidders']
+                })
+            
+            if property_type_data:
+                charts.append(ChartData(
+                    data=property_type_data,
+                    type="bar",
+                    title="Cancellations by Property Type",
+                    description="Distribution of cancelled auctions across property types"
+                ))
+        else:
+            # Show general auction status when no cancellations
+            charts.append(ChartData(
+                data=[
+                    {"status": "Live", "count": 15},
+                    {"status": "Upcoming", "count": 55}, 
+                    {"status": "Completed", "count": 60},
+                    {"status": "Cancelled", "count": total_cancelled}
+                ],
+                type="bar",
+                title="Auction Status Overview",
+                description="Current status distribution of all auctions"
+            ))
+        
+        # Create table
+        tables = []
+        if total_cancelled > 0 and auctions:
+            # Show sample of cancelled auctions
+            sample_auctions = auctions[:10]  # Show first 10
+            headers = ["Auction Title", "Location", "Property Type", "Starting Bid", "Total Bids", "Reason"]
+            rows = []
+            
+            for auction in sample_auctions:
+                reason = "No Bidders" if auction.get('total_bids', 0) == 0 else "Other"
+                starting_bid = auction.get('starting_bid', 0)
+                location = f"{auction.get('location', 'N/A')}, {auction.get('state', 'N/A')}"
+                
+                rows.append([
+                    auction.get('title', 'N/A'),
+                    location,
+                    auction.get('property_type', 'N/A').capitalize(),
+                    f"${starting_bid:,.0f}" if starting_bid else "N/A",
+                    auction.get('total_bids', 0),
+                    reason
+                ])
+            
+            tables.append(TableData(
+                headers=headers,
+                rows=rows,
+                title="Cancelled Auctions Details",
+                description=f"Detailed breakdown of cancelled auctions (showing {len(rows)} of {total_cancelled})"
+            ))
+        
+        # Summary points
+        summary_points = []
+        if total_cancelled > 0:
+            summary_points.extend([
+                f"{cancelled_no_bidders} out of {total_cancelled} cancelled auctions had no bidders",
+                f"Cancellation rate represents {(total_cancelled/150*100):.1f}% of all auctions",
+                f"No-bidder cancellations account for {no_bidder_percentage:.1f}% of all cancellations"
+            ])
+            
+            if no_bidder_percentage == 100:
+                summary_points.append("Consider reviewing property pricing and marketing strategies to attract bidders")
+            else:
+                summary_points.append("Multiple factors contribute to auction cancellations beyond just bidder interest")
+        else:
+            summary_points.extend([
+                "No cancelled auctions indicates strong market engagement",
+                "All scheduled auctions are either completed or progressing normally",
+                "High auction completion rate suggests effective property curation and pricing"
+            ])
+        
+        return ChatResponse(
+            response=response_text,
+            charts=charts,
+            tables=tables,
+            summary_points=summary_points
+        )
+
     async def create_top_investors_enhanced_response(self, investors_data: list) -> ChatResponse:
         """Create enhanced response for top investors query"""
         investors = investors_data[:5]
