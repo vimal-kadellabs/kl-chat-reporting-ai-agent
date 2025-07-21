@@ -1,253 +1,192 @@
-# Real Estate Auction Analytics Agent - Sequence Diagram
+# Real Estate Auction Analytics - Sequence Diagram
 
-## Complete User Query to Analysis Flow
+## Complete Data Flow and Logic Architecture
 
 ```mermaid
 sequenceDiagram
-    participant User
-    participant ChatInterface as React ChatInterface
-    participant AuthContext as Auth Context
-    participant Backend as FastAPI Backend
-    participant AnalyticsService as Analytics Service
-    participant MongoDB as MongoDB Database
-    participant OpenAI as OpenAI GPT-4 API
-    participant ChartRenderer as Chart Renderer
+    participant U as User Browser
+    participant FE as React Frontend
+    participant API as FastAPI Backend
+    participant LLM as OpenAI GPT-4
+    participant DB as MongoDB
+    participant AS as Analytics Service
 
-    Note over User, ChartRenderer: User Query Processing Flow
+    Note over U,DB: 🏠 Real Estate Auction Analytics Platform
 
-    %% User Input Phase
-    User->>ChatInterface: Types query: "Compare institutional vs individual investors"
-    ChatInterface->>ChatInterface: Validate input (non-empty, length)
-    ChatInterface->>ChatInterface: Update UI state (loading: true)
-    ChatInterface->>AuthContext: Get current user context
-    AuthContext-->>ChatInterface: Returns user_id: "demo_user"
-
-    %% API Request Phase
-    ChatInterface->>Backend: POST /api/chat
-    Note right of ChatInterface: ChatQuery{<br/>message: "Compare institutional...",<br/>user_id: "demo_user"<br/>}
-
-    Backend->>Backend: Receive request at chat_query() endpoint
-    Backend->>Backend: Log: "Processing query: Compare institutional..."
-    Backend->>AnalyticsService: Call analyze_query(user_query)
-
-    %% Context Gathering Phase
-    AnalyticsService->>AnalyticsService: Call get_database_context()
-    AnalyticsService->>MongoDB: Query users collection
-    MongoDB-->>AnalyticsService: Returns 17 investors
-    AnalyticsService->>MongoDB: Query properties collection  
-    MongoDB-->>AnalyticsService: Returns 15 properties
-    AnalyticsService->>MongoDB: Query auctions collection
-    MongoDB-->>AnalyticsService: Returns 15 auctions
-    AnalyticsService->>MongoDB: Query bids collection
-    MongoDB-->>AnalyticsService: Returns 33 bids
-
-    %% Data Analysis Phase
-    AnalyticsService->>AnalyticsService: Analyze investor types
-    Note right of AnalyticsService: institutional: 4<br/>individual_hnw: 6<br/>international: 2<br/>flippers: 5
-    
-    AnalyticsService->>AnalyticsService: Calculate market segments
-    Note right of AnalyticsService: luxury: 4 properties<br/>mid_market: 8 properties<br/>affordable: 3 properties
-    
-    AnalyticsService->>AnalyticsService: Compute geographic markets
-    Note right of AnalyticsService: NY: avg $8.5M<br/>Beverly Hills: avg $9.8M<br/>Palo Alto: avg $3.6M
-    
-    AnalyticsService->>AnalyticsService: Generate auction activity metrics
-    Note right of AnalyticsService: total_volume: $45.8M<br/>avg_competition: 18.2 bids<br/>success_rate: 87.5%
-
-    %% AI Processing Phase
-    AnalyticsService->>AnalyticsService: Build enhanced system prompt
-    Note right of AnalyticsService: Include:<br/>- Market Overview<br/>- Investor Ecosystem<br/>- Auction Activity<br/>- Top Markets
-
-    AnalyticsService->>OpenAI: POST /v1/chat/completions
-    Note right of AnalyticsService: {<br/>model: "gpt-4",<br/>messages: [system_prompt, user_query],<br/>temperature: 0.7<br/>}
-
-    OpenAI->>OpenAI: Process natural language query
-    OpenAI->>OpenAI: Apply market intelligence
-    OpenAI->>OpenAI: Determine chart type: "bar"
-    OpenAI->>OpenAI: Generate chart data
-    OpenAI->>OpenAI: Create summary insights
-    
-    OpenAI-->>AnalyticsService: Return JSON response
-    Note left of OpenAI: {<br/>"response": "Professional analysis...",<br/>"chart_type": "bar",<br/>"chart_data": {...},<br/>"summary_points": [...]<br/>}
-
-    %% Response Processing Phase
-    AnalyticsService->>AnalyticsService: Parse JSON response
-    AnalyticsService->>AnalyticsService: Validate chart_data format
-    AnalyticsService->>AnalyticsService: Create ChatResponse object
-
-    %% Database Storage Phase
-    AnalyticsService->>MongoDB: Insert chat_messages
-    Note right of AnalyticsService: Store query history:<br/>user_id, message, response,<br/>chart_data, chart_type,<br/>summary_points, timestamp
-    MongoDB-->>AnalyticsService: Confirm storage
-
-    %% Return Response Phase
-    AnalyticsService-->>Backend: Return ChatResponse
-    Backend->>Backend: Log: "Generated response with chart type: bar"
-    Backend-->>ChatInterface: HTTP 200 + ChatResponse JSON
-
-    %% Frontend Rendering Phase
-    ChatInterface->>ChatInterface: Update state (loading: false)
-    ChatInterface->>ChatInterface: Add user message to messages array
-    ChatInterface->>ChatInterface: Add bot response to messages array
-    ChatInterface->>ChatInterface: Scroll to bottom (messagesEndRef)
-
-    %% Message Rendering
-    ChatInterface->>ChatInterface: Render ChatMessage component
-    Note right of ChatInterface: User message in blue bubble<br/>Bot message in gray bubble<br/>Timestamp display
-
-    %% Summary Points Rendering
-    ChatInterface->>ChatInterface: Render summary points section
-    Note right of ChatInterface: Blue background container<br/>"Key Insights:" header<br/>Bullet points with insights
-
-    %% Chart Rendering Phase
-    ChatInterface->>ChartRenderer: Pass chart_data and chart_type
-    ChartRenderer->>ChartRenderer: Determine chart type: "bar"
-    ChartRenderer->>ChartRenderer: Format data for Recharts
-    ChartRenderer->>ChartRenderer: Create ResponsiveContainer
-    ChartRenderer->>ChartRenderer: Configure BarChart properties
-    Note right of ChartRenderer: CartesianGrid, XAxis, YAxis<br/>Tooltip, Legend, Colors<br/>Data series mapping
-
-    ChartRenderer->>ChartRenderer: Render interactive bar chart
-    ChartRenderer-->>ChatInterface: Chart component mounted
-
-    %% Final User Experience
-    ChatInterface-->>User: Display complete response
-    Note left of User: ✅ Professional analysis text<br/>✅ Key insights bullets<br/>✅ Interactive bar chart<br/>✅ Ready for next query
-
-    %% Error Handling Paths (Alternative Flows)
-    alt OpenAI API Failure
-        OpenAI-->>AnalyticsService: Error response
-        AnalyticsService->>AnalyticsService: Call generate_fallback_response()
-        AnalyticsService->>AnalyticsService: Use predefined chart data
-        AnalyticsService-->>Backend: Return fallback ChatResponse
+    %% Initial Dashboard Load
+    rect rgb(240, 248, 255)
+        Note over U,DB: Dashboard Initialization
+        U->>FE: Access Application
+        FE->>API: GET /api/users
+        API->>DB: db.users.find()
+        DB-->>API: User data
+        API-->>FE: JSON response
+        
+        FE->>API: GET /api/properties
+        API->>DB: db.properties.find()
+        DB-->>API: Property data
+        API-->>FE: JSON response
+        
+        FE->>API: GET /api/auctions
+        API->>DB: db.auctions.find()
+        DB-->>API: Auction data
+        API-->>FE: JSON response
+        
+        FE->>API: GET /api/bids
+        API->>DB: db.bids.find()
+        DB-->>API: Bid data
+        API-->>FE: JSON response
+        
+        FE->>API: GET /api/investors/active
+        API->>DB: db.bids.find({timestamp: {$gte: 6_months_ago}})
+        DB-->>API: Recent bids data
+        API-->>API: Calculate unique active investors
+        API-->>FE: {count: active_investors}
+        
+        FE->>API: GET /api/investors/inactive
+        API->>DB: db.users.find() & db.bids.find()
+        DB-->>API: All users & recent bids
+        API-->>API: Calculate inactive investors
+        API-->>FE: {count: inactive_investors}
+        
+        FE-->>U: Dashboard with metrics cards displayed
     end
 
-    alt Database Connection Issues
-        MongoDB-->>AnalyticsService: Connection timeout
-        AnalyticsService->>AnalyticsService: Use empty context {}
-        AnalyticsService->>AnalyticsService: Continue with OpenAI call
+    %% Chat Interface Interaction
+    rect rgb(248, 250, 252)
+        Note over U,DB: Natural Language Query Processing
+        U->>FE: Click "Start Chat"
+        FE-->>U: Chat Interface loaded
+        
+        U->>FE: Type query: "Which regions had highest bids last month?"
+        FE->>API: POST /api/chat {message: "Which regions..."}
+        
+        API->>AS: analytics_service.analyze_query(message)
+        AS->>AS: _is_query_domain_relevant(message)
+        Note right of AS: Domain validation check
+        
+        AS->>AS: _detect_intent(message)
+        Note right of AS: Intent: "regional_analysis"
+        
+        %% Data Fetching Phase
+        AS->>DB: db.users.find()
+        DB-->>AS: Users data
+        AS->>DB: db.properties.find()
+        DB-->>AS: Properties data
+        AS->>DB: db.auctions.find()
+        DB-->>AS: Auctions data
+        AS->>DB: db.bids.find()
+        DB-->>AS: Bids data
+        
+        %% LLM Processing Phase
+        AS->>LLM: POST /v1/chat/completions
+        Note right of LLM: System Prompt + User Query + Data Context
+        Note right of LLM: Function calling for structured response
+        
+        LLM-->>AS: Structured JSON Response
+        Note left of AS: {response: "markdown", charts: [...], tables: [...], summary_points: [...]}
+        
+        AS->>AS: Parse and validate response
+        AS->>AS: Handle chart data formatting
+        AS->>AS: Process table structures
+        
+        AS-->>API: Enhanced ChatResponse object
+        API-->>FE: JSON {response, charts, tables, summary_points}
+        
+        %% Frontend Rendering
+        FE->>FE: Process multiple charts data
+        FE->>FE: Process tables data
+        FE->>FE: Render charts in 2-column grid
+        FE->>FE: Render full-width tables
+        FE->>FE: Apply typing animation to text
+        
+        FE-->>U: Interactive response with charts & tables
     end
 
-    alt JSON Parsing Error
-        AnalyticsService->>AnalyticsService: JSON parse fails
-        AnalyticsService->>AnalyticsService: Log error and use fallback
-        AnalyticsService-->>Backend: Return error ChatResponse
+    %% Sample Questions Load
+    rect rgb(245, 255, 245)
+        Note over U,DB: Sample Questions Feature
+        FE->>API: GET /api/sample-questions
+        API->>API: Return predefined questions
+        API-->>FE: Sample questions array
+        FE-->>U: Sidebar with clickable questions
+        
+        U->>FE: Click sample question
+        Note over U,FE: Triggers same chat flow as above
+    end
+
+    %% Error Handling & Fallbacks
+    rect rgb(255, 245, 245)
+        Note over U,DB: Error Handling
+        alt Domain Irrelevant Query
+            AS->>AS: _is_query_domain_relevant() returns False
+            AS-->>API: Domain-specific error message
+            API-->>FE: Error response
+            FE-->>U: "Please ask real estate related questions"
+        else LLM Processing Fails
+            AS->>AS: create_manual_response() fallback
+            AS-->>API: Manual response with basic charts
+            API-->>FE: Fallback response
+            FE-->>U: Basic response with available data
+        else Database Error
+            API-->>FE: Error response
+            FE-->>U: "Unable to fetch data" message
+        end
     end
 ```
 
-## Detailed Component Interactions
+## Key Components Breakdown
 
-### 1. **Frontend Layer Interactions**
+### 🎯 **Analytics Service (AS) - Core Logic Engine**
+- **Intent Detection**: Analyzes user queries to determine analysis type
+- **Domain Validation**: Ensures queries are real estate auction related
+- **Data Aggregation**: Combines data from multiple DB collections
+- **LLM Orchestration**: Manages OpenAI API calls with context
 
-```
-User Input → ChatInterface State Management → API Communication
-├── Input validation and sanitization
-├── Loading state management  
-├── Authentication context retrieval
-├── HTTP request formation
-└── Response handling and UI updates
-```
+### 🤖 **OpenAI LLM Integration**
+- **Model**: GPT-4 with function calling capability
+- **Input**: System prompt + user query + aggregated data context
+- **Output**: Structured JSON with multiple charts, tables, and insights
+- **Function Calling**: Used for structured response formatting
 
-### 2. **Backend API Layer**
+### 🗄️ **MongoDB Collections**
+- **users**: Investor/user profiles
+- **properties**: Real estate property data
+- **auctions**: Auction events with status tracking
+- **bids**: Bid history with timestamps and amounts
 
-```
-HTTP Request → FastAPI Routing → Service Layer → Response Formation
-├── /api/chat endpoint processing
-├── Request validation with Pydantic
-├── Analytics service delegation
-├── Error handling and logging
-└── JSON response serialization
-```
+### 🔄 **Data Processing Pipeline**
+1. **Query Reception**: User input received via React frontend
+2. **Intent Analysis**: Backend determines query type and relevance
+3. **Data Aggregation**: Multiple DB collections queried in parallel
+4. **LLM Enhancement**: OpenAI processes data with natural language context
+5. **Response Structuring**: Multiple charts and tables generated
+6. **Frontend Rendering**: React components display interactive visualizations
 
-### 3. **Analytics Service Intelligence**
+### 📊 **Chart & Table Rendering**
+- **Charts**: Recharts library with ResponsiveContainer (320px height)
+- **Layout**: 2-column grid for charts, full-width for tables
+- **Interactivity**: Sorting, pagination, CSV download for tables
+- **Loading States**: Progress bars and skeleton placeholders
 
-```
-Query Analysis → Context Gathering → AI Processing → Response Synthesis
-├── Database context aggregation
-├── Market intelligence computation
-├── OpenAI prompt engineering
-├── Response parsing and validation
-└── Fallback handling
-```
+### 🔧 **API Endpoints Overview**
+- `GET /api/users` - All registered investors
+- `GET /api/properties` - Available auction properties  
+- `GET /api/auctions` - Auction events and status
+- `GET /api/bids` - Bidding history and amounts
+- `GET /api/investors/active` - Active investors (6 months)
+- `GET /api/investors/inactive` - Inactive investors
+- `GET /api/sample-questions` - Predefined query examples
+- `POST /api/chat` - Main analytics query endpoint
 
-### 4. **Database Operations**
+### ⚡ **Performance Optimizations**
+- **Parallel API Calls**: Dashboard metrics fetched simultaneously
+- **Database Indexing**: Efficient queries on timestamp and status fields
+- **Response Caching**: LLM responses structured for quick rendering
+- **Lazy Loading**: Components render progressively
 
-```
-Multi-Collection Queries → Data Aggregation → Market Analysis
-├── users: investor classification
-├── properties: market segmentation
-├── auctions: activity metrics
-├── bids: competition analysis
-└── chat_messages: history storage
-```
-
-### 5. **AI Processing Pipeline**
-
-```
-Natural Language → Market Intelligence → Visualization Logic → Professional Response
-├── Intent recognition and entity extraction
-├── Market context application
-├── Chart type determination
-├── Data synthesis for visualization
-└── Actionable insight generation
-```
-
-### 6. **Visualization Rendering**
-
-```
-Chart Data → Component Processing → Interactive Rendering
-├── Data format validation
-├── Chart type selection (bar, line, pie, etc.)
-├── Recharts configuration
-├── Responsive design application
-└── Interactive features (tooltips, legends)
-```
-
-## Performance Metrics
-
-| Component | Typical Response Time | Error Handling |
-|-----------|----------------------|----------------|
-| User Input Validation | <50ms | Client-side validation |
-| Backend API Processing | 100-200ms | Try-catch with logging |
-| Database Context Gathering | 200-500ms | Connection timeout handling |
-| OpenAI API Call | 3-8 seconds | Fallback responses |
-| Response Processing | 50-100ms | JSON parsing error recovery |
-| Frontend Rendering | 100-300ms | Component error boundaries |
-| Chart Rendering | 200-500ms | Data validation and defaults |
-
-## Error Recovery Paths
-
-### 1. **OpenAI API Failures**
-- Network timeouts → Use cached/fallback responses
-- Rate limiting → Queue requests with retry logic
-- Invalid responses → Generate default chart data
-
-### 2. **Database Issues**
-- Connection failures → Continue with empty context
-- Query timeouts → Use basic market metrics
-- Data corruption → Validate and sanitize results
-
-### 3. **Frontend Errors**
-- Component failures → Error boundaries with retry
-- Network issues → Show offline indicators
-- Rendering problems → Fallback to text-only responses
-
-## Scalability Considerations
-
-### 1. **Concurrent User Support**
-- Async processing throughout the pipeline
-- Connection pooling for database operations
-- Rate limiting for OpenAI API calls
-
-### 2. **Caching Strategies**
-- Database context caching (Redis potential)
-- OpenAI response caching for common queries
-- Frontend component memoization
-
-### 3. **Monitoring & Analytics**
-- Request/response logging at each layer
-- Performance metrics collection
-- User interaction analytics
-- Error rate monitoring
-
-This sequence diagram illustrates the complete flow from user input to rendered analytics, showcasing the sophisticated AI agent architecture that powers the real estate auction analytics platform.
+### 🛡️ **Error Handling Strategy**
+- **Domain Validation**: Filters non-real estate queries
+- **Fallback Responses**: Manual charts when LLM fails
+- **Graceful Degradation**: Basic functionality maintained during errors
+- **User Feedback**: Clear error messages and loading states
