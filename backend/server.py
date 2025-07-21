@@ -2081,28 +2081,21 @@ async def get_sample_questions():
         "Show upcoming auctions by city in California.",
         "List top-performing cities by average winning bid in the last quarter.",
         "How many properties were auctioned in New York this year?",
-        "Which counties saw the most auction cancellations recently?",
         
         # Investor Activity
         "Who are the top 5 investors by bid amount?",
         "List all investors who won more than 2 properties last month.",
         "Which investor placed the most bids in remote auctions?",
-        "Show investment trends for UrbanEdge Ventures over the past 6 months.",
         "Which investors are most active in residential vs commercial auctions?",
         
         # Bidding Trends & Behavior
-        "Compare reserve price vs winning bid for last 10 auctions.",
-        "Show average number of bids per auction this year.",
-        "Highlight auctions where winning bid exceeded reserve by 25%+.",
         "Which auctions had the fewest bids?",
-        "How many remote vs in-person bids were placed last month?",
         
         # Auction & Property Stats
         "Show properties with most bids in July.",
         "List top 10 upcoming auctions by property value.",
         "Compare bidding activity across property types (residential, land, commercial).",
         "How many auctions were canceled due to no bidders?",
-        "Summarize auction activity for Q2 2025.",
         
         # Performance & Summary Reports
         "Generate a summary report of all completed auctions this month.",
