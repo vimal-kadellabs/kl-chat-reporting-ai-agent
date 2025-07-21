@@ -159,22 +159,95 @@ class AnalyticsService:
     async def parse_intent(self, user_query: str) -> dict:
         """Parse user intent to determine what data to fetch"""
         query_lower = user_query.lower()
-        
+
         intent_patterns = {
-            'top_bidders': ['top bidder', 'highest bidder', 'most active investor', 'biggest investor', 'leading bidder'],
-            'top_investors': ['top investor', 'best investor', 'successful investor', 'winning investor', 'investor ranking', 'top 5 investor', 'top 3 investor', 'top 10 investor', 'investors by bid amount', 'investors by total bid'],
-            'last_month_winners': ['won more than', 'winners in last month', 'investors who won', 'properties in last month', 'won in the last month', 'multiple properties last month', 'winners last month', 'won 2 properties', 'won 3 properties', 'more than 2 properties'],
-            'auction_summary': ['auction summary', 'auction overview', 'auction status', 'auction report'],
-            'property_analysis': ['property performance', 'property trend', 'property comparison', 'property market'],
-            'bidding_trends': ['bidding trend', 'bid pattern', 'bidding activity', 'bid volume', 'bidding behavior'],
-            'regional_analysis': ['region', 'city', 'location', 'geographic', 'area', 'market', 'regional analysis'],
-            'price_analysis': ['reserve price', 'winning bid', 'price trend', 'price comparison', 'price vs'],
-            'time_analysis': ['trend over time', 'monthly', 'daily', 'weekly', 'time series', 'period'],
-            'comparison': ['compare', 'vs', 'versus', 'difference between', 'contrast'],
-            'live_auctions': ['live auction', 'active auction', 'current auction', 'ongoing auction'],
-            'upcoming_auctions': ['upcoming auction', 'scheduled auction', 'future auction', 'next auction'],
-            'completed_auctions': ['completed auction', 'finished auction', 'ended auction', 'past auction']
+            'top_bidders': [
+                'top bidder', 'top bidders', 'highest bidder', 'highest bidders',
+                'most active investor', 'most active investors',
+                'biggest investor', 'biggest investors',
+                'leading bidder', 'leading bidders'
+            ],
+            'top_investors': [
+                'top investor', 'top investors',
+                'best investor', 'best investors',
+                'successful investor', 'successful investors',
+                'winning investor', 'winning investors',
+                'investor ranking', 'investor rankings',
+                'top 5 investor', 'top 5 investors',
+                'top 3 investor', 'top 3 investors',
+                'top 10 investor', 'top 10 investors',
+                'investors by bid amount', 'investors by total bid'
+            ],
+            'last_month_winners': [
+                'won more than', 'won over', 'more than x properties',
+                'winners in last month', 'winners last month',
+                'investors who won', 'investors that won',
+                'won properties in last month', 'won in the last month',
+                'multiple properties last month', 'won 2 properties',
+                'won 3 properties', 'won several properties'
+            ],
+            'auction_summary': [
+                'auction summary', 'auction overview',
+                'auction status', 'auction report',
+                'summary of auctions', 'auctions summary',
+                'auction activity summary', 'auction insights'
+            ],
+            'property_analysis': [
+                'property performance', 'property trend', 'property trends',
+                'property comparison', 'compare properties',
+                'property market', 'property data',
+                'top property', 'trending properties'
+            ],
+            'bidding_trends': [
+                'bidding trend', 'bidding trends',
+                'bid pattern', 'bid patterns',
+                'bidding activity', 'bidding volume',
+                'bid volume', 'bid behavior',
+                'bidding behavior', 'bidding stats'
+            ],
+            'regional_analysis': [
+                'region', 'regions', 'by region',
+                'city', 'cities', 'by city',
+                'location', 'locations', 'geographic',
+                'area', 'areas', 'market area',
+                'regional analysis', 'region-wise', 'location-wise'
+            ],
+            'price_analysis': [
+                'reserve price', 'reserve prices',
+                'winning bid', 'winning bids',
+                'price trend', 'price trends',
+                'price comparison', 'price vs',
+                'compare price', 'price difference'
+            ],
+            'time_analysis': [
+                'trend over time', 'over the past', 'last month',
+                'monthly', 'daily', 'weekly',
+                'time series', 'quarterly', 'period', 'trend duration'
+            ],
+            'comparison': [
+                'compare', 'comparison', 'vs', 'versus',
+                'difference between', 'contrast', 'compare across'
+            ],
+            'live_auctions': [
+                'live auction', 'live auctions',
+                'active auction', 'active auctions',
+                'current auction', 'current auctions',
+                'ongoing auction', 'ongoing auctions'
+            ],
+            'upcoming_auctions': [
+                'upcoming auction', 'upcoming auctions',
+                'scheduled auction', 'scheduled auctions',
+                'future auction', 'future auctions',
+                'next auction', 'next auctions'
+            ],
+            'completed_auctions': [
+                'completed auction', 'completed auctions',
+                'finished auction', 'finished auctions',
+                'ended auction', 'ended auctions',
+                'past auction', 'past auctions'
+            ]
         }
+
         
         detected_intents = []
         for intent, patterns in intent_patterns.items():
@@ -202,7 +275,7 @@ class AnalyticsService:
         }
         
         # Time periods
-        time_patterns = ['last month', 'this month', 'last week', 'this week', 'last year', 'past 30 days', 'past week']
+        time_patterns = ['last month', 'this month', 'last week', 'this week', 'last year', 'past 30 days', 'past week', 'last 5 days', 'last quarter']
         for pattern in time_patterns:
             if pattern in query_lower:
                 entities['time_period'].append(pattern)
