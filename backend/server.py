@@ -1557,6 +1557,8 @@ You MUST respond with ONLY this JSON structure:
             target_status = 'upcoming'
         elif status_filter == 'completed_auctions':
             target_status = 'ended'
+        elif status_filter == 'cancelled_auctions':
+            target_status = 'cancelled'
         else:
             target_status = None
         
