@@ -359,7 +359,7 @@ class AnalyticsService:
             elif primary_intent == 'price_analysis':
                 structured_data['data'] = await self.get_price_analysis_data(properties, auctions, bids, entities)
                 
-            elif primary_intent in ['live_auctions', 'upcoming_auctions', 'completed_auctions']:
+            elif primary_intent in ['live_auctions', 'upcoming_auctions', 'completed_auctions', 'cancelled_auctions']:
                 structured_data['data'] = await self.get_auction_status_data(auctions, properties, bids, primary_intent)
                 
             else:  # general_analysis
