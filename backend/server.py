@@ -615,6 +615,10 @@ class AnalyticsService:
 
     async def get_general_analysis_data(self, users, properties, auctions, bids):
         """Get general market overview data"""
+        # Calculate cancelled auctions with no bidders
+        cancelled_auctions = [a for a in auctions if a['status'] == 'cancelled']
+        cancelled_no_bidders = [a for a in cancelled_auctions if a.get('total_bids', 0) == 0]
+        
         return {
             'market_overview': {
                 'total_investors': len(users),
@@ -624,6 +628,8 @@ class AnalyticsService:
                 'live_auctions': len([a for a in auctions if a['status'] == 'live']),
                 'upcoming_auctions': len([a for a in auctions if a['status'] == 'upcoming']),
                 'completed_auctions': len([a for a in auctions if a['status'] == 'ended']),
+                'cancelled_auctions': len(cancelled_auctions),
+                'cancelled_no_bidders': len(cancelled_no_bidders),
                 'total_bids': len(bids),
                 'total_bid_value': sum([b['bid_amount'] for b in bids])
             },
@@ -631,6 +637,20 @@ class AnalyticsService:
                 'residential': len([p for p in properties if p['property_type'] == 'residential']),
                 'commercial': len([p for p in properties if p['property_type'] == 'commercial']),
                 'industrial': len([p for p in properties if p['property_type'] == 'industrial'])
+            },
+            'auction_status_analysis': {
+                'live': len([a for a in auctions if a['status'] == 'live']),
+                'upcoming': len([a for a in auctions if a['status'] == 'upcoming']),
+                'ended': len([a for a in auctions if a['status'] == 'ended']),
+                'cancelled': len(cancelled_auctions),
+                'cancelled_due_to_no_bids': len(cancelled_no_bidders)
+            },
+            'cancellation_details': {
+                'total_cancelled': len(cancelled_auctions),
+                'cancelled_no_bidders': len(cancelled_no_bidders),
+                'cancelled_with_bidders': len(cancelled_auctions) - len(cancelled_no_bidders),
+                'cancellation_rate': len(cancelled_auctions) / len(auctions) * 100 if len(auctions) > 0 else 0,
+                'no_bidder_rate': len(cancelled_no_bidders) / len(auctions) * 100 if len(auctions) > 0 else 0
             }
         }
 
