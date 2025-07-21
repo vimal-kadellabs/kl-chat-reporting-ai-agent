@@ -423,6 +423,36 @@ class AnalyticsService:
             elif primary_intent in ['live_auctions', 'upcoming_auctions', 'completed_auctions', 'cancelled_auctions']:
                 structured_data['data'] = await self.get_auction_status_data(auctions, properties, bids, primary_intent)
                 
+            elif primary_intent == 'fewest_bids_auctions':
+                structured_data['data'] = await self.get_fewest_bids_auctions_data(auctions, properties, bids, entities)
+                
+            elif primary_intent == 'investor_activity_by_property_type':
+                structured_data['data'] = await self.get_investor_activity_by_property_type_data(users, properties, auctions, bids, entities)
+                
+            elif primary_intent == 'location_based_auction_count':
+                structured_data['data'] = await self.get_location_based_auction_count_data(properties, auctions, bids, entities)
+                
+            elif primary_intent == 'properties_most_bids_timeframe':
+                structured_data['data'] = await self.get_properties_most_bids_timeframe_data(properties, auctions, bids, entities)
+                
+            elif primary_intent == 'completed_auctions_summary':
+                structured_data['data'] = await self.get_completed_auctions_summary_data(auctions, properties, bids, entities)
+                
+            elif primary_intent == 'upcoming_auctions_by_value':
+                structured_data['data'] = await self.get_upcoming_auctions_by_value_data(auctions, properties, bids, entities)
+                
+            elif primary_intent == 'bidding_activity_by_property_type':
+                structured_data['data'] = await self.get_bidding_activity_by_property_type_data(properties, auctions, bids, entities)
+                
+            elif primary_intent == 'auction_wins_by_investor_type':
+                structured_data['data'] = await self.get_auction_wins_by_investor_type_data(users, auctions, bids, entities)
+                
+            elif primary_intent == 'unsold_properties':
+                structured_data['data'] = await self.get_unsold_properties_data(properties, auctions, bids, entities)
+                
+            elif primary_intent == 'property_types_exceeding_reserve':
+                structured_data['data'] = await self.get_property_types_exceeding_reserve_data(properties, auctions, bids, entities)
+                
             else:  # general_analysis
                 structured_data['data'] = await self.get_general_analysis_data(users, properties, auctions, bids)
             
