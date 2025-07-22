@@ -877,7 +877,30 @@ class AnalyticsService:
                 
                 tables = []
                 for table in result.get("tables", []):
-                    tables.append(TableData(**table))
+                    try:
+                        # Ensure required fields exist
+                        headers = table.get("headers", [])
+                        rows = table.get("rows", [])
+                        title = table.get("title", "Data Table")
+                        description = table.get("description", "")
+                        
+                        # Validate table structure
+                        if not isinstance(headers, list) or not isinstance(rows, list):
+                            logger.warning(f"Invalid table structure. Skipping table: {table}")
+                            continue
+                        
+                        # Create TableData
+                        tables.append(TableData(
+                            headers=headers,
+                            rows=rows,
+                            title=title,
+                            description=description
+                        ))
+                        
+                    except Exception as table_error:
+                        logger.error(f"Error processing table data: {table_error}")
+                        # Skip invalid tables rather than failing the entire response
+                        continue
                 
                 return ChatResponse(
                     response=result.get("response", "Enhanced analysis complete."),
