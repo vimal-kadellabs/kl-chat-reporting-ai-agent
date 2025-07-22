@@ -119,16 +119,33 @@ const SampleQuestions = ({ questions, onQuestionClick, onClose, loading = false 
               {category.questions.map((question, questionIndex) => (
                 <button
                   key={questionIndex}
-                  onClick={() => onQuestionClick(question)}
-                  className="w-full text-left p-3 rounded-xl hover:bg-white/80 transition-all duration-200 group border border-transparent hover:border-slate-200 hover:shadow-sm"
+                  onClick={() => loading ? null : onQuestionClick(question)}
+                  disabled={loading}
+                  className={`w-full text-left p-3 rounded-xl transition-all duration-200 group border border-transparent ${
+                    loading 
+                      ? 'opacity-50 cursor-not-allowed bg-slate-50' 
+                      : 'hover:bg-white/80 hover:border-slate-200 hover:shadow-sm cursor-pointer'
+                  }`}
                 >
                   <div className="flex items-start space-x-3">
-                    <div className="w-6 h-6 bg-slate-100 rounded-lg flex items-center justify-center mt-0.5 group-hover:bg-slate-200 transition-colors">
-                      <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                      </svg>
+                    <div className={`w-6 h-6 rounded-lg flex items-center justify-center mt-0.5 transition-colors ${
+                      loading 
+                        ? 'bg-slate-200' 
+                        : 'bg-slate-100 group-hover:bg-slate-200'
+                    }`}>
+                      {loading ? (
+                        <div className="w-2 h-2 bg-slate-400 rounded-full animate-pulse"></div>
+                      ) : (
+                        <svg className="w-3 h-3 text-slate-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                        </svg>
+                      )}
                     </div>
-                    <p className="text-sm text-slate-700 group-hover:text-slate-900 leading-relaxed flex-1">
+                    <p className={`text-sm leading-relaxed flex-1 transition-colors ${
+                      loading 
+                        ? 'text-slate-400' 
+                        : 'text-slate-700 group-hover:text-slate-900'
+                    }`}>
                       {question}
                     </p>
                   </div>
