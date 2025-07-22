@@ -3225,6 +3225,9 @@ async def update_counties():
     except Exception as e:
         logger.error(f"Error updating counties: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating counties: {str(e)}")
+
+@api_router.get("/properties/counties")
+async def get_available_counties():
     """Get list of all available counties"""
     try:
         # Get distinct counties from properties
@@ -3243,7 +3246,9 @@ async def update_counties():
     except Exception as e:
         logger.error(f"Error fetching counties: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching counties: {str(e)}")
-    """Fix null values in properties with realistic data based on location"""
+
+@api_router.post("/fix-property-values")
+async def fix_property_values():
     try:
         import random
         
