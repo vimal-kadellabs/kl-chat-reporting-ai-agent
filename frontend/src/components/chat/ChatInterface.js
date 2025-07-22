@@ -281,6 +281,7 @@ const ChatInterface = () => {
             questions={sampleQuestions} 
             onQuestionClick={handleSendMessage}
             onClose={() => setSidebarOpen(false)}
+            loading={loading}
           />
         </div>
       </div>
