@@ -92,6 +92,23 @@ const SampleQuestions = ({ questions, onQuestionClick, onClose, loading = false 
         </div>
       </div>
       
+      {/* Loading Indicator */}
+      {loading && (
+        <div className="px-4 pb-4">
+          <div className="bg-blue-50 border border-blue-200 rounded-2xl p-4">
+            <div className="flex items-center space-x-3">
+              <div className="flex space-x-1">
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '0ms'}}></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '150ms'}}></div>
+                <div className="w-2 h-2 bg-blue-500 rounded-full animate-bounce" style={{animationDelay: '300ms'}}></div>
+              </div>
+              <span className="text-sm text-blue-700 font-medium">Processing query...</span>
+            </div>
+            <p className="text-xs text-blue-600 mt-2">Please wait while we analyze your request</p>
+          </div>
+        </div>
+      )}
+      
       {/* Categories */}
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {questionCategories.map((category, categoryIndex) => (
