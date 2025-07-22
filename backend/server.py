@@ -971,11 +971,26 @@ class AnalyticsService:
         except Exception as e:
             logger.error(f"Error in enhanced analysis: {e}")
             # Try manual response first if we have data
-            # if structured_data.get('data') or structured_data.get('raw_counts'):
-            #     return await self.create_enhanced_manual_response(user_query, structured_data)
-            # else:
-            #     # Show no-data message only when no data is available
-            #     return await self.create_no_data_response(user_query)
+            try:
+                if structured_data.get('data') or structured_data.get('raw_counts'):
+                    manual_response = await self.create_enhanced_manual_response(user_query, structured_data)
+                    if manual_response is not None:
+                        return manual_response
+                    else:
+                        logger.error("Manual response returned None, falling back to no-data response")
+                
+                # Show no-data message only when no data is available or manual response fails
+                return await self.create_no_data_response(user_query)
+                
+            except Exception as fallback_error:
+                logger.error(f"Error in fallback response: {fallback_error}")
+                # Ultimate fallback - return a basic response that will never be None
+                return ChatResponse(
+                    response="## ❌ Processing Error\n\nWe encountered an error processing your query. Please try again with a different question.",
+                    charts=[],
+                    tables=[],
+                    summary_points=["Error occurred during query processing", "Please try again with a simpler query"]
+                )
 
     async def create_enhanced_manual_response(self, user_query: str, structured_data: dict) -> ChatResponse:
         """Create enhanced response with multiple charts and tables when OpenAI fails"""
