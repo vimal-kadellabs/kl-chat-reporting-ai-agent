@@ -835,10 +835,45 @@ class AnalyticsService:
                 result = json.loads(response_text)
                 logger.info("Successfully parsed enhanced JSON response")
                 
-                # Convert to new format
+                # Convert to new format with flexible chart data handling
                 charts = []
                 for chart in result.get("charts", []):
-                    charts.append(ChartData(**chart))
+                    try:
+                        # Handle different chart data formats from OpenAI
+                        chart_data = chart.get("data", [])
+                        
+                        # If data is in labels/data format, convert to list of dicts
+                        if isinstance(chart_data, dict) and 'labels' in chart_data and 'data' in chart_data:
+                            labels = chart_data.get('labels', [])
+                            values = chart_data.get('data', [])
+                            
+                            # Convert to list of dictionaries
+                            converted_data = []
+                            for i, label in enumerate(labels):
+                                if i < len(values):
+                                    converted_data.append({
+                                        'name': label,
+                                        'value': values[i]
+                                    })
+                            chart_data = converted_data
+                        
+                        # Ensure chart_data is a list
+                        if not isinstance(chart_data, list):
+                            logger.warning(f"Unexpected chart data format: {type(chart_data)}. Converting to list.")
+                            chart_data = []
+                        
+                        # Create ChartData with converted data
+                        charts.append(ChartData(
+                            data=chart_data,
+                            type=chart.get("type", "bar"),
+                            title=chart.get("title", "Chart"),
+                            description=chart.get("description", "")
+                        ))
+                        
+                    except Exception as chart_error:
+                        logger.error(f"Error processing chart data: {chart_error}")
+                        # Skip invalid charts rather than failing the entire response
+                        continue
                 
                 tables = []
                 for table in result.get("tables", []):
