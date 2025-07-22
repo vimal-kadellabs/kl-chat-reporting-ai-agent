@@ -77,9 +77,9 @@ class Property(BaseModel):
     state: str
     zipcode: str
     county: Optional[str] = None
-    property_type: PropertyType
-    reserve_price: float
-    estimated_value: float
+    property_type: Optional[PropertyType] = PropertyType.RESIDENTIAL
+    reserve_price: Optional[float] = 0.0
+    estimated_value: Optional[float] = 0.0
     bedrooms: Optional[int] = None
     bathrooms: Optional[int] = None
     square_feet: Optional[int] = None
