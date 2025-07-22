@@ -3226,8 +3226,65 @@ async def update_counties():
         logger.error(f"Error updating counties: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error updating counties: {str(e)}")
 
-@api_router.get("/properties/counties")
-async def get_available_counties():
+@api_router.get("/properties/grouped-by-county")
+async def get_properties_grouped_by_county():
+    """Get all properties grouped by county"""
+    try:
+        # Get all properties
+        properties_cursor = db.properties.find()
+        properties = await properties_cursor.to_list(None)
+        
+        # Group properties by county
+        county_groups = {}
+        no_county_properties = []
+        
+        for prop in properties:
+            county = prop.get('county')
+            if county and county.strip():
+                county = county.strip()
+                if county not in county_groups:
+                    county_groups[county] = []
+                county_groups[county].append(prop)
+            else:
+                no_county_properties.append(prop)
+        
+        # Format the response
+        grouped_data = []
+        for county, props in county_groups.items():
+            # Calculate summary statistics
+            total_value = sum(prop.get('estimated_value', 0) or 0 for prop in props)
+            avg_value = total_value / len(props) if props else 0
+            
+            property_types = {}
+            for prop in props:
+                prop_type = prop.get('property_type', 'unknown')
+                property_types[prop_type] = property_types.get(prop_type, 0) + 1
+            
+            county_data = {
+                'county': county,
+                'property_count': len(props),
+                'total_estimated_value': total_value,
+                'average_estimated_value': avg_value,
+                'property_types': property_types,
+                'properties': props
+            }
+            grouped_data.append(county_data)
+        
+        # Sort by property count (descending)
+        grouped_data.sort(key=lambda x: x['property_count'], reverse=True)
+        
+        return {
+            'message': f'Properties grouped by county: {len(county_groups)} counties found',
+            'total_properties': len(properties),
+            'properties_with_county': sum(len(props) for props in county_groups.values()),
+            'properties_without_county': len(no_county_properties),
+            'county_groups': grouped_data,
+            'counties_list': list(county_groups.keys())
+        }
+        
+    except Exception as e:
+        logger.error(f"Error grouping properties by county: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error grouping properties: {str(e)}")
     """Get list of all available counties"""
     try:
         # Get distinct counties from properties
