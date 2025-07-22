@@ -668,6 +668,28 @@ class BackendTester:
         except Exception as e:
             self.log_test("Analytics - New Property Data", False, f"Exception: {str(e)}")
             return False
+    
+    def test_force_init_data_endpoint(self):
+        """Test /api/force-init-data endpoint"""
+        try:
+            response = self.session.post(f"{self.base_url}/force-init-data")
+            
+            if response.status_code != 200:
+                self.log_test("Force Init Data", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            result = response.json()
+            
+            if "message" not in result:
+                self.log_test("Force Init Data Response", False, "Missing message field in response")
+                return False
+                
+            self.log_test("Force Init Data", True, f"Data initialization: {result.get('message')}", result)
+            return True
+            
+        except Exception as e:
+            self.log_test("Force Init Data", False, f"Exception: {str(e)}")
+            return False
         """Test /api/force-init-data endpoint"""
         try:
             response = self.session.post(f"{self.base_url}/force-init-data")
