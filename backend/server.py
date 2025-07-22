@@ -3165,8 +3165,66 @@ async def get_properties_by_county(county: str):
         logger.error(f"Error fetching properties by county {county}: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error fetching properties: {str(e)}")
 
-@api_router.get("/properties/counties")
-async def get_available_counties():
+@api_router.post("/update-counties")
+async def update_counties():
+    """Update county field for existing properties by matching with JSON data"""
+    try:
+        # Load JSON data
+        json_file_path = Path("/app/updated_properties_data.json")
+        with open(json_file_path, 'r') as file:
+            properties_data = json.load(file)
+        
+        # Create a lookup dictionary by title for faster matching
+        json_lookup = {}
+        for json_prop in properties_data:
+            title = json_prop.get("title", "").strip()
+            county = json_prop.get("county", "").strip()
+            if title and county:
+                json_lookup[title] = county
+        
+        logger.info(f"Loaded {len(json_lookup)} properties with county data from JSON")
+        
+        # Get all properties from database
+        db_properties = await db.properties.find().to_list(None)
+        
+        updated_count = 0
+        matches_found = 0
+        
+        for db_prop in db_properties:
+            db_title = db_prop.get("title", "").strip()
+            
+            # Try exact match first
+            county = json_lookup.get(db_title)
+            
+            if not county:
+                # Try partial matching for similar titles
+                for json_title, json_county in json_lookup.items():
+                    if db_title.lower() in json_title.lower() or json_title.lower() in db_title.lower():
+                        county = json_county
+                        break
+            
+            if county:
+                matches_found += 1
+                # Update if county is different or None
+                if db_prop.get("county") != county:
+                    await db.properties.update_one(
+                        {"_id": db_prop["_id"]},
+                        {"$set": {"county": county}}
+                    )
+                    updated_count += 1
+                    logger.info(f"Updated property '{db_title}' with county: {county}")
+        
+        return {
+            "message": "County update completed",
+            "total_properties_in_db": len(db_properties),
+            "matches_found": matches_found,
+            "updated_count": updated_count,
+            "json_properties_with_county": len(json_lookup)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error updating counties: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating counties: {str(e)}")
     """Get list of all available counties"""
     try:
         # Get distinct counties from properties
