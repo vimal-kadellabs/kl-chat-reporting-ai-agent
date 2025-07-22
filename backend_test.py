@@ -135,7 +135,7 @@ class BackendTester:
             return False
     
     def test_properties_endpoint(self):
-        """Test /api/properties endpoint"""
+        """Test /api/properties endpoint - CRITICAL: Should have 140 properties with no null values"""
         try:
             response = self.session.get(f"{self.base_url}/properties")
             
@@ -149,20 +149,68 @@ class BackendTester:
                 self.log_test("Properties Format", False, "Response is not an array")
                 return False
                 
-            if len(properties) == 0:
-                self.log_test("Properties Count", False, "No properties returned")
+            # CRITICAL TEST: Should have exactly 140 properties (115 updated + 25 new)
+            if len(properties) != 140:
+                self.log_test("Properties Count - CRITICAL", False, f"Expected 140 properties (115 updated + 25 new), got {len(properties)}")
                 return False
                 
-            # Verify property structure
-            if properties:
-                prop = properties[0]
+            # Verify property structure and data integrity
+            null_value_issues = []
+            missing_county_count = 0
+            new_properties_count = 0
+            
+            for i, prop in enumerate(properties):
+                # Check required fields exist
                 required_fields = ["id", "title", "description", "location", "city", "state", "property_type", "reserve_price", "estimated_value"]
                 missing_fields = [field for field in required_fields if field not in prop]
                 if missing_fields:
-                    self.log_test("Properties Structure", False, f"Missing property fields: {missing_fields}")
+                    self.log_test("Properties Structure", False, f"Property {i} missing fields: {missing_fields}")
                     return False
+                
+                # CRITICAL: Check for null values in required numeric fields
+                if prop.get("reserve_price") is None:
+                    null_value_issues.append(f"Property {prop.get('id', i)} has null reserve_price")
+                if prop.get("estimated_value") is None:
+                    null_value_issues.append(f"Property {prop.get('id', i)} has null estimated_value")
+                if prop.get("property_type") is None:
+                    null_value_issues.append(f"Property {prop.get('id', i)} has null property_type")
+                
+                # Check county field (should be present for updated properties)
+                if prop.get("county") is None:
+                    missing_county_count += 1
+                
+                # Count new properties (assuming they have incremental IDs like prop_16, prop_17, etc.)
+                prop_id = prop.get("id", "")
+                if prop_id.startswith("prop_") and prop_id.replace("prop_", "").isdigit():
+                    prop_num = int(prop_id.replace("prop_", ""))
+                    if prop_num >= 16:  # New properties start from prop_16
+                        new_properties_count += 1
+            
+            # Report null value issues - CRITICAL FAILURE
+            if null_value_issues:
+                self.log_test("Properties Data Integrity - CRITICAL", False, f"Found {len(null_value_issues)} null value issues: {null_value_issues[:5]}")
+                return False
+            
+            # Report county field status
+            if missing_county_count > 25:  # Allow some new properties to not have county
+                self.log_test("Properties County Field", False, f"Too many properties missing county field: {missing_county_count}")
+                return False
+            
+            # Verify realistic value assignment
+            value_issues = []
+            for prop in properties[:10]:  # Check first 10 properties
+                reserve = prop.get("reserve_price", 0)
+                estimated = prop.get("estimated_value", 0)
+                if reserve and estimated and reserve >= estimated:
+                    value_issues.append(f"Property {prop.get('id')} has reserve_price ({reserve}) >= estimated_value ({estimated})")
+            
+            if value_issues:
+                self.log_test("Properties Value Logic", False, f"Found pricing issues: {value_issues}")
+                return False
                     
-            self.log_test("Properties Endpoint", True, f"Successfully returned {len(properties)} properties with complete data", properties[0] if properties else None)
+            self.log_test("Properties Endpoint - ENHANCED", True, 
+                         f"✅ 140 properties verified: No null values, {140-missing_county_count} have county field, ~{new_properties_count} new properties, realistic pricing", 
+                         {"total": len(properties), "missing_county": missing_county_count, "new_properties": new_properties_count})
             return True
             
         except Exception as e:
