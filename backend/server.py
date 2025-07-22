@@ -3125,8 +3125,128 @@ async def get_bids():
     bids = await db.bids.find().to_list(None)  # Remove limit to get all bids
     return [Bid(**bid) for bid in bids]
 
-@api_router.post("/update-properties")
-async def update_properties():
+@api_router.post("/fix-property-values")
+async def fix_property_values():
+    """Fix null values in properties with realistic data based on location"""
+    try:
+        import random
+        
+        # Location-based property type distribution and price ranges
+        location_config = {
+            # High-value metropolitan areas
+            'New York': {'residential': 0.75, 'commercial': 0.20, 'industrial': 0.03, 'land': 0.02, 'price_range': (800000, 5000000)},
+            'San Francisco': {'residential': 0.70, 'commercial': 0.25, 'industrial': 0.03, 'land': 0.02, 'price_range': (900000, 4500000)},
+            'Los Angeles': {'residential': 0.65, 'commercial': 0.25, 'industrial': 0.05, 'land': 0.05, 'price_range': (600000, 3500000)},
+            'Boston': {'residential': 0.70, 'commercial': 0.20, 'industrial': 0.05, 'land': 0.05, 'price_range': (500000, 2500000)},
+            'Seattle': {'residential': 0.68, 'commercial': 0.22, 'industrial': 0.05, 'land': 0.05, 'price_range': (550000, 2800000)},
+            'Washington': {'residential': 0.65, 'commercial': 0.30, 'industrial': 0.03, 'land': 0.02, 'price_range': (450000, 2200000)},
+            'Chicago': {'residential': 0.70, 'commercial': 0.20, 'industrial': 0.07, 'land': 0.03, 'price_range': (250000, 1800000)},
+            'Miami': {'residential': 0.72, 'commercial': 0.20, 'industrial': 0.05, 'land': 0.03, 'price_range': (350000, 2000000)},
+            
+            # Mid-tier cities
+            'Austin': {'residential': 0.65, 'commercial': 0.25, 'industrial': 0.07, 'land': 0.03, 'price_range': (300000, 1500000)},
+            'Denver': {'residential': 0.68, 'commercial': 0.22, 'industrial': 0.06, 'land': 0.04, 'price_range': (350000, 1400000)},
+            'Atlanta': {'residential': 0.70, 'commercial': 0.20, 'industrial': 0.07, 'land': 0.03, 'price_range': (200000, 1200000)},
+            'Phoenix': {'residential': 0.70, 'commercial': 0.18, 'industrial': 0.08, 'land': 0.04, 'price_range': (280000, 1100000)},
+            'Nashville': {'residential': 0.72, 'commercial': 0.18, 'industrial': 0.06, 'land': 0.04, 'price_range': (250000, 900000)},
+            'Portland': {'residential': 0.68, 'commercial': 0.22, 'industrial': 0.06, 'land': 0.04, 'price_range': (400000, 1300000)},
+            
+            # Default for other cities
+            'DEFAULT': {'residential': 0.65, 'commercial': 0.20, 'industrial': 0.10, 'land': 0.05, 'price_range': (150000, 800000)}
+        }
+        
+        def get_property_type_by_location(city):
+            """Get property type based on location distribution"""
+            config = location_config.get(city, location_config['DEFAULT'])
+            rand = random.random()
+            
+            if rand < config['residential']:
+                return 'residential'
+            elif rand < config['residential'] + config['commercial']:
+                return 'commercial'
+            elif rand < config['residential'] + config['commercial'] + config['industrial']:
+                return 'industrial'
+            else:
+                return 'land'
+        
+        def get_realistic_prices(city, property_type):
+            """Generate realistic prices based on location and property type"""
+            config = location_config.get(city, location_config['DEFAULT'])
+            base_min, base_max = config['price_range']
+            
+            # Adjust price ranges by property type
+            multipliers = {
+                'residential': (1.0, 1.0),
+                'commercial': (1.2, 2.5),  # Commercial typically more expensive
+                'industrial': (0.8, 1.5),  # Industrial varies widely
+                'land': (0.3, 0.8)         # Land typically cheaper per sq ft
+            }
+            
+            type_min, type_max = multipliers.get(property_type, (1.0, 1.0))
+            
+            # Calculate estimated value
+            estimated_value = random.randint(
+                int(base_min * type_min), 
+                int(base_max * type_max)
+            )
+            
+            # Reserve price is typically 85-95% of estimated value
+            reserve_multiplier = random.uniform(0.85, 0.95)
+            reserve_price = int(estimated_value * reserve_multiplier)
+            
+            return reserve_price, estimated_value
+        
+        # Get all properties with null values
+        properties_cursor = db.properties.find({
+            "$or": [
+                {"property_type": {"$in": [None, ""]}},
+                {"reserve_price": {"$in": [None, 0]}},
+                {"estimated_value": {"$in": [None, 0]}}
+            ]
+        })
+        
+        properties_to_fix = await properties_cursor.to_list(None)
+        
+        updated_count = 0
+        logger.info(f"Found {len(properties_to_fix)} properties with null values to fix")
+        
+        for prop in properties_to_fix:
+            city = prop.get('city', 'DEFAULT')
+            
+            # Determine property type if null
+            property_type = prop.get('property_type')
+            if not property_type or property_type == 'null':
+                property_type = get_property_type_by_location(city)
+            
+            # Generate realistic prices if null or zero
+            reserve_price = prop.get('reserve_price', 0)
+            estimated_value = prop.get('estimated_value', 0)
+            
+            if not reserve_price or not estimated_value or reserve_price == 0 or estimated_value == 0:
+                reserve_price, estimated_value = get_realistic_prices(city, property_type)
+            
+            # Update the property
+            await db.properties.update_one(
+                {"_id": prop["_id"]},
+                {"$set": {
+                    "property_type": property_type,
+                    "reserve_price": reserve_price,
+                    "estimated_value": estimated_value
+                }}
+            )
+            
+            updated_count += 1
+            logger.info(f"Updated property '{prop['title']}' in {city}: {property_type}, reserve: ${reserve_price:,}, estimated: ${estimated_value:,}")
+        
+        return {
+            "message": "Property values fixed successfully",
+            "updated_properties": updated_count,
+            "details": f"Fixed {updated_count} properties with realistic location-based values"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fixing property values: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fixing property values: {str(e)}")
     """Update existing properties with county field and add new properties"""
     try:
         # Load JSON data
