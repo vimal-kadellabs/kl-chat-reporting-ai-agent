@@ -23,13 +23,13 @@ const SampleQuestions = ({ questions, onQuestionClick, onClose, loading = false 
       textColor: 'text-green-700',
       questions: questions.slice(12, 18)
     },
-    {
-      title: 'Quick Analytics',
-      color: 'bg-orange-50 border-orange-100',
-      iconBg: 'bg-orange-500',
-      textColor: 'text-orange-700',
-      questions: questions.slice(18)
-    }
+    // {
+    //   title: 'Quick Analytics',
+    //   color: 'bg-orange-50 border-orange-100',
+    //   iconBg: 'bg-orange-500',
+    //   textColor: 'text-orange-700',
+    //   questions: questions.slice(18)
+    // }
   ];
 
   const renderCategoryIcon = (categoryIndex) => {
