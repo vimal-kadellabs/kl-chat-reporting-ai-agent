@@ -339,6 +339,55 @@ class AnalyticsService:
             'entities': self.extract_entities(user_query)
         }
     
+    def prioritize_intents(self, detected_intents: list, query_lower: str) -> str:
+        """Prioritize intents to choose the most specific one over generic ones"""
+        if len(detected_intents) == 1:
+            return detected_intents[0]
+        
+        # Define intent priority hierarchy (most specific first)
+        intent_priority = [
+            # Specific analysis intents (highest priority)
+            'investor_activity_by_property_type',
+            'fewest_bids_auctions', 
+            'location_based_auction_count',
+            'properties_most_bids_timeframe',
+            'completed_auctions_summary',
+            'upcoming_auctions_by_value',
+            'bidding_activity_by_property_type',
+            'auction_wins_by_investor_type',
+            'unsold_properties',
+            'property_types_exceeding_reserve',
+            'cancelled_auctions',
+            
+            # Domain-specific intents (medium priority)
+            'top_investors',
+            'top_bidders',
+            'last_month_winners',
+            'regional_analysis',
+            'price_analysis',
+            'bidding_trends',
+            'property_analysis',
+            'auction_summary',
+            
+            # Status-specific intents
+            'live_auctions',
+            'upcoming_auctions', 
+            'completed_auctions',
+            
+            # Generic intents (lowest priority)
+            'time_analysis',
+            'comparison',
+            'general_analysis'
+        ]
+        
+        # Find the highest priority intent that was detected
+        for intent in intent_priority:
+            if intent in detected_intents:
+                return intent
+        
+        # If no priority match, return first detected
+        return detected_intents[0]
+    
     def extract_entities(self, user_query: str) -> dict:
         """Extract specific entities like time periods, locations, property types"""
         query_lower = user_query.lower()
