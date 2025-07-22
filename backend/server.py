@@ -3125,8 +3125,66 @@ async def get_bids():
     bids = await db.bids.find().to_list(None)  # Remove limit to get all bids
     return [Bid(**bid) for bid in bids]
 
-@api_router.post("/fix-property-values")
-async def fix_property_values():
+@api_router.get("/properties/by-county/{county}")
+async def get_properties_by_county(county: str):
+    """Get properties filtered by county"""
+    try:
+        # Query properties by county (case-insensitive)
+        properties_cursor = db.properties.find({
+            "county": {"$regex": f"^{county}$", "$options": "i"}
+        })
+        
+        properties = await properties_cursor.to_list(None)
+        
+        if not properties:
+            return {
+                "message": f"No properties found in {county} County",
+                "county": county,
+                "properties": [],
+                "count": 0
+            }
+        
+        # Convert to Property models for proper formatting
+        formatted_properties = []
+        for prop in properties:
+            try:
+                formatted_prop = Property(**prop)
+                formatted_properties.append(formatted_prop.dict())
+            except Exception as e:
+                logger.warning(f"Skipping property {prop.get('id', 'unknown')}: {str(e)}")
+                continue
+        
+        return {
+            "message": f"Found {len(formatted_properties)} properties in {county} County",
+            "county": county,
+            "properties": formatted_properties,
+            "count": len(formatted_properties)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching properties by county {county}: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching properties: {str(e)}")
+
+@api_router.get("/properties/counties")
+async def get_available_counties():
+    """Get list of all available counties"""
+    try:
+        # Get distinct counties from properties
+        counties = await db.properties.distinct("county")
+        
+        # Filter out null/empty counties and sort
+        valid_counties = [county for county in counties if county and county.strip()]
+        valid_counties.sort()
+        
+        return {
+            "message": f"Found {len(valid_counties)} counties",
+            "counties": valid_counties,
+            "count": len(valid_counties)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fetching counties: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fetching counties: {str(e)}")
     """Fix null values in properties with realistic data based on location"""
     try:
         import random
