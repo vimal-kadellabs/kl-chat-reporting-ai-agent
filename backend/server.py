@@ -1688,22 +1688,24 @@ class AnalyticsService:
     
     async def create_no_data_response(self, user_query: str) -> ChatResponse:
         """Create a response when no relevant data is available for domain-relevant queries"""
-        response_text = "## No Data Available\n\n"
-        response_text += "Sorry, no graphs or insights available for your query. Please try rephrasing it.\n\n"
-        response_text += "**Suggestions:**\n"
-        response_text += "- Try asking about general topics like 'top investors' or 'regional analysis'\n"
+        response_text = "## ℹ️ Limited Data Available\n\n"
+        response_text += "**Relevant information is not available but there are some other insights you might like to check.**\n\n"
+        response_text += "While we couldn't find specific data for your query, our platform has comprehensive auction analytics available.\n\n"
+        response_text += "**Alternative Suggestions:**\n"
+        response_text += "- Try asking about 'top investors' or 'regional analysis'\n"
         response_text += "- Use broader time periods or geographic regions\n"
-        response_text += "- Check the sample questions in the sidebar for examples\n"
+        response_text += "- Explore different property types (residential, commercial, industrial)\n"
+        response_text += "- Check the sample questions in the sidebar for proven queries\n"
         
         return ChatResponse(
             response=response_text,
             charts=[],
             tables=[],
             summary_points=[
-                "No matching data found in our database",
-                "Try using different search terms or time periods", 
-                "Check if the requested information exists in our current dataset",
-                "Browse sample questions for inspiration"
+                "Relevant information is not available for this specific query",
+                "Consider exploring related topics with available data",
+                "Try rephrasing your question or using different search terms",
+                "Check sample questions for proven query patterns"
             ]
         )
 
