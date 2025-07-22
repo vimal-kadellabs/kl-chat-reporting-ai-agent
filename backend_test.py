@@ -691,16 +691,18 @@ class BackendTester:
     
     def run_all_tests(self):
         """Run all backend tests"""
-        print(f"🚀 Starting Backend API Tests")
+        print(f"🚀 Starting Backend API Tests - PROPERTY DATA UPDATE FOCUS")
         print(f"📍 Testing against: {self.base_url}")
         print("=" * 60)
         
-        # Test in priority order based on review request - ENHANCED TESTING
+        # Test in priority order based on review request - PROPERTY DATA UPDATE TESTING
         tests = [
             ("Health Check", self.test_health_check),
+            ("🎯 CRITICAL: Properties Data Integrity (140 properties)", self.test_properties_endpoint),
+            ("🎯 CRITICAL: Analytics with New Property Data", self.test_analytics_with_new_property_data),
+            ("🎯 Property Values Fix Endpoint", self.test_fix_property_values_endpoint),
             ("Sample Questions (PRIMARY)", self.test_sample_questions_endpoint),
             ("Users Data (17 users)", self.test_users_endpoint),
-            ("Properties Data", self.test_properties_endpoint),
             ("Auctions Data", self.test_auctions_endpoint),
             ("Bids Data", self.test_bids_endpoint),
             ("🔥 ENHANCED: Top Investors Multi-Chart", self.test_enhanced_chat_endpoint_top_investors),
@@ -728,15 +730,15 @@ class BackendTester:
             for test in failed_tests:
                 print(f"   • {test['test']}: {test['details']}")
         
-        # Show critical issues - Updated for enhanced testing
+        # Show critical issues - Updated for property data testing
         critical_failures = [
             result for result in self.test_results 
             if not result["success"] and any(keyword in result["test"].lower() 
-            for keyword in ["enhanced", "sample questions", "chat", "users", "multi-chart", "regional", "auctions", "comparison"])
+            for keyword in ["critical", "properties data integrity", "analytics with new property", "property values fix"])
         ]
         
         if critical_failures:
-            print(f"\n🚨 CRITICAL ISSUES ({len(critical_failures)}):")
+            print(f"\n🚨 CRITICAL PROPERTY DATA ISSUES ({len(critical_failures)}):")
             for test in critical_failures:
                 print(f"   • {test['test']}: {test['details']}")
         
