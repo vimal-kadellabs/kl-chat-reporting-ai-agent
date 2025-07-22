@@ -3146,7 +3146,7 @@ async def update_properties():
         
         # Step 1: Update existing properties with county field
         logger.info("Step 1: Updating existing properties with county field...")
-        for json_prop in properties_data[:2186]:  # Properties before line 2187
+        for json_prop in properties_data[:115]:  # Properties before the new ones
             # Find matching property in database by title
             existing_prop = await db.properties.find_one({"title": json_prop["title"]})
             if existing_prop:
@@ -3160,9 +3160,9 @@ async def update_properties():
                     updated_count += 1
                     logger.info(f"Updated property '{json_prop['title']}' with county: {county_value}")
         
-        # Step 2: Insert new properties starting from line 2187
+        # Step 2: Insert new properties starting from index 115
         logger.info("Step 2: Inserting new properties...")
-        for i, json_prop in enumerate(properties_data[2186:], 1):  # Starting from index 2186 (line 2187)
+        for i, json_prop in enumerate(properties_data[115:], 1):  # Starting from index 115
             new_prop_id = max_prop_id + i
             
             # Create new property with incremental ID
