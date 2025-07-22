@@ -769,37 +769,37 @@ class AnalyticsService:
             
             system_prompt = f"""You are a real estate auction analytics expert. Analyze the query and create comprehensive insights with multiple visualizations.
 
-AVAILABLE DATA:
-{json.dumps(structured_data.get('data', {}), indent=2, default=str)}
+        AVAILABLE DATA:
+        {json.dumps(structured_data.get('data', {}), indent=2, default=str)}
 
-### OBJECTIVE
-Use the data above to directly address the user's query. DO NOT include information that is not explicitly relevant to the query. If a chart or table does not help answer the query, do not include it.
+        ### OBJECTIVE
+        Use the data above to directly address the user's query. DO NOT include information that is not explicitly relevant to the query. If a chart or table does not help answer the query, do not include it.
 
-### GUIDELINES
-1. Analyze ONLY the relevant portions of the dataset that relate to the user's query.
-2. Use clear markdown formatting: headings (##), bold key points, and bullet insights.
-3. Generate a MAXIMUM of:
-   - 2 relevant charts (choose from bar, donut, line) — only if they support the insight.
-   - 1 structured table — only if detailed rows are required.
-4. Remove redundant or overly general information.
-5. Ensure all summaries, chart titles, and descriptions directly connect to the user's intent.
-6. DO NOT make up or infer data that’s not present. Stay within the given dataset.
-7. DO NOT generate additional summaries beyond the structured response.
-8. Keep your response tightly scoped, focused, and insight-driven.
+        ### GUIDELINES
+        1. Analyze ONLY the relevant portions of the dataset that relate to the user's query.
+        2. Use clear markdown formatting: headings (##), bold key points, and bullet insights.
+        3. Generate a MAXIMUM of:
+        - 2 relevant charts (choose from bar, donut, line) — only if they support the insight.
+        - 1 structured table — only if detailed rows are required.
+        4. Remove redundant or overly general information.
+        5. Ensure all summaries, chart titles, and descriptions directly connect to the user's intent.
+        6. DO NOT make up or infer data that’s not present. Stay within the given dataset.
+        7. DO NOT generate additional summaries beyond the structured response.
+        8. Keep your response tightly scoped, focused, and insight-driven.
 
-You MUST respond with ONLY this JSON structure:
-{{
-  "response": "## Analysis Title\\n\\n**Key Findings:**\\n- Specific insight\\n- Another insight",
-  "charts": [
-    {{"data": [chart data], "type": "bar", "title": "Chart Title", "description": "Brief description"}},
-    {{"data": [chart data], "type": "donut", "title": "Distribution Chart", "description": "Brief description"}},
-    {{"data": [chart data], "type": "line", "title": "Trend Chart", "description": "Brief description"}}
-  ],
-  "tables": [
-    {{"headers": ["Column1", "Column2", "Column3"], "rows": [["data1", "data2", "data3"]], "title": "Detailed Analysis", "description": "Table description"}}
-  ],
-  "summary_points": ["Insight 1", "Insight 2", "Insight 3", "Recommendation"]
-}}"""
+        You MUST respond with ONLY this JSON structure:
+        {{
+        "response": "## Analysis Title\\n\\n**Key Findings:**\\n- Specific insight\\n- Another insight",
+        "charts": [
+            {{"data": [chart data], "type": "bar", "title": "Chart Title", "description": "Brief description"}},
+            {{"data": [chart data], "type": "donut", "title": "Distribution Chart", "description": "Brief description"}},
+            {{"data": [chart data], "type": "line", "title": "Trend Chart", "description": "Brief description"}}
+        ],
+        "tables": [
+            {{"headers": ["Column1", "Column2", "Column3"], "rows": [["data1", "data2", "data3"]], "title": "Detailed Analysis", "description": "Table description"}}
+        ],
+        "summary_points": ["Insight 1", "Insight 2", "Insight 3", "Recommendation"]
+        }}"""
 
             messages = [
                 {"role": "system", "content": system_prompt},
@@ -854,18 +854,18 @@ You MUST respond with ONLY this JSON structure:
             except (json.JSONDecodeError, AttributeError, Exception) as e:
                 logger.error(f"Enhanced JSON parsing failed: {e}")
                 # Try no-data response first if no meaningful data available
-                if not structured_data.get('data') and not structured_data.get('raw_counts'):
-                    return await self.create_no_data_response(user_query)
-                return await self.create_enhanced_manual_response(user_query, structured_data)
+                # if not structured_data.get('data') and not structured_data.get('raw_counts'):
+                #     return await self.create_no_data_response(user_query)
+                # return await self.create_enhanced_manual_response(user_query, structured_data)
                 
         except Exception as e:
             logger.error(f"Error in enhanced analysis: {e}")
             # Try manual response first if we have data
-            if structured_data.get('data') or structured_data.get('raw_counts'):
-                return await self.create_enhanced_manual_response(user_query, structured_data)
-            else:
-                # Show no-data message only when no data is available
-                return await self.create_no_data_response(user_query)
+            # if structured_data.get('data') or structured_data.get('raw_counts'):
+            #     return await self.create_enhanced_manual_response(user_query, structured_data)
+            # else:
+            #     # Show no-data message only when no data is available
+            #     return await self.create_no_data_response(user_query)
 
     async def create_enhanced_manual_response(self, user_query: str, structured_data: dict) -> ChatResponse:
         """Create enhanced response with multiple charts and tables when OpenAI fails"""
