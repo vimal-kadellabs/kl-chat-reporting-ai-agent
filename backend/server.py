@@ -744,8 +744,8 @@ class AnalyticsService:
                 }
             
             regional_data[city]['properties'] += 1
-            regional_data[city]['total_value'] += prop['reserve_price']
-            regional_data[city]['property_types'].add(prop['property_type'])
+            regional_data[city]['total_value'] += prop.get('reserve_price', 0) or 0
+            regional_data[city]['property_types'].add(prop.get('property_type', 'residential') or 'residential')
             
             # Check if property has auction
             if prop['id'] in auction_lookup:
