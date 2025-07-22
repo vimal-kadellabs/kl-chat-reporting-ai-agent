@@ -3289,24 +3289,141 @@ async def get_properties_grouped_by_county():
     except Exception as e:
         logger.error(f"Error grouping properties by county: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error grouping properties: {str(e)}")
-    """Get list of all available counties"""
+@api_router.post("/fix-city-state-county")
+async def fix_city_state_county():
+    """Fix incorrect city/state combinations and add county information"""
     try:
-        # Get distinct counties from properties
-        counties = await db.properties.distinct("county")
+        # Comprehensive city-to-state-county mapping based on provided data + extensions
+        city_mappings = {
+            # Provided mappings
+            'Phoenix': {'state': 'AZ', 'county': 'Maricopa'},
+            'Tucson': {'state': 'AZ', 'county': 'Pima'},
+            'Los Angeles': {'state': 'CA', 'county': 'Los Angeles'},
+            'San Diego': {'state': 'CA', 'county': 'San Diego'},
+            'San Francisco': {'state': 'CA', 'county': 'San Francisco'},
+            'Denver': {'state': 'CO', 'county': 'Denver'},
+            'Aurora': {'state': 'CO', 'county': 'Arapahoe'},
+            'Miami': {'state': 'FL', 'county': 'Miami-Dade'},
+            'Orlando': {'state': 'FL', 'county': 'Orange'},
+            'Atlanta': {'state': 'GA', 'county': 'Fulton'},
+            'Savannah': {'state': 'GA', 'county': 'Chatham'},
+            'Chicago': {'state': 'IL', 'county': 'Cook'},
+            'Naperville': {'state': 'IL', 'county': 'DuPage'},
+            'Indianapolis': {'state': 'IN', 'county': 'Marion'},
+            'Des Moines': {'state': 'IA', 'county': 'Polk'},
+            'Wichita': {'state': 'KS', 'county': 'Sedgwick'},
+            'Louisville': {'state': 'KY', 'county': 'Jefferson'},
+            'New Orleans': {'state': 'LA', 'county': 'Orleans'},
+            'Boston': {'state': 'MA', 'county': 'Suffolk'},
+            'Baltimore': {'state': 'MD', 'county': 'Baltimore City'},
+            'Detroit': {'state': 'MI', 'county': 'Wayne'},
+            'Minneapolis': {'state': 'MN', 'county': 'Hennepin'},
+            'St. Louis': {'state': 'MO', 'county': 'St. Louis City'},
+            'Jackson': {'state': 'MS', 'county': 'Hinds'},
+            'Las Vegas': {'state': 'NV', 'county': 'Clark'},
+            'Reno': {'state': 'NV', 'county': 'Washoe'},
+            'Albuquerque': {'state': 'NM', 'county': 'Bernalillo'},
+            'New York': {'state': 'NY', 'county': 'New York'},
+            'Charlotte': {'state': 'NC', 'county': 'Mecklenburg'},
+            'Cleveland': {'state': 'OH', 'county': 'Cuyahoga'},
+            'Columbus': {'state': 'OH', 'county': 'Franklin'},
+            'Tulsa': {'state': 'OK', 'county': 'Tulsa'},
+            'Portland': {'state': 'OR', 'county': 'Multnomah'},
+            'Philadelphia': {'state': 'PA', 'county': 'Philadelphia'},
+            'Pittsburgh': {'state': 'PA', 'county': 'Allegheny'},
+            'Nashville': {'state': 'TN', 'county': 'Davidson'},
+            'Memphis': {'state': 'TN', 'county': 'Shelby'},
+            'Austin': {'state': 'TX', 'county': 'Travis'},
+            'Dallas': {'state': 'TX', 'county': 'Dallas'},
+            'Houston': {'state': 'TX', 'county': 'Harris'},
+            'Salt Lake City': {'state': 'UT', 'county': 'Salt Lake'},
+            'Seattle': {'state': 'WA', 'county': 'King'},
+            'Spokane': {'state': 'WA', 'county': 'Spokane'},
+            'Milwaukee': {'state': 'WI', 'county': 'Milwaukee'},
+            
+            # Additional major cities to handle the data we found
+            'Fresno': {'state': 'CA', 'county': 'Fresno'},
+            'Sacramento': {'state': 'CA', 'county': 'Sacramento'},
+            'San Jose': {'state': 'CA', 'county': 'Santa Clara'},
+            'Oakland': {'state': 'CA', 'county': 'Alameda'},
+            'San Antonio': {'state': 'TX', 'county': 'Bexar'},
+            'Fort Worth': {'state': 'TX', 'county': 'Tarrant'},
+            'Jacksonville': {'state': 'FL', 'county': 'Duval'},
+            'Oklahoma City': {'state': 'OK', 'county': 'Oklahoma'},
+            'Kansas City': {'state': 'MO', 'county': 'Jackson'},  # Primary Kansas City
+            'Omaha': {'state': 'NE', 'county': 'Douglas'},
+            'Colorado Springs': {'state': 'CO', 'county': 'El Paso'},
+            'Raleigh': {'state': 'NC', 'county': 'Wake'},
+            'Mesa': {'state': 'AZ', 'county': 'Maricopa'},
+            'Virginia Beach': {'state': 'VA', 'county': 'Virginia Beach'},
+            'Arlington': {'state': 'VA', 'county': 'Arlington'},
+            'Bakersfield': {'state': 'CA', 'county': 'Kern'},
+            'Washington': {'state': 'DC', 'county': 'District of Columbia'},
+        }
         
-        # Filter out null/empty counties and sort
-        valid_counties = [county for county in counties if county and county.strip()]
-        valid_counties.sort()
+        # Get all properties without county
+        properties_cursor = db.properties.find({
+            "$or": [
+                {"county": {"$in": [None, ""]}},
+                {"county": {"$exists": False}}
+            ]
+        })
+        properties_to_fix = await properties_cursor.to_list(None)
+        
+        fixed_count = 0
+        state_corrections = 0
+        county_additions = 0
+        unmatched_cities = []
+        
+        logger.info(f"Found {len(properties_to_fix)} properties to fix")
+        
+        for prop in properties_to_fix:
+            city = prop.get('city', '').strip()
+            current_state = prop.get('state', '').strip()
+            
+            # Try to find city in mapping
+            if city in city_mappings:
+                correct_mapping = city_mappings[city]
+                correct_state = correct_mapping['state']
+                county = correct_mapping['county']
+                
+                updates = {}
+                
+                # Fix state if incorrect
+                if current_state != correct_state:
+                    updates['state'] = correct_state
+                    state_corrections += 1
+                    logger.info(f"Correcting state for {city}: {current_state} -> {correct_state}")
+                
+                # Add county
+                updates['county'] = county
+                county_additions += 1
+                
+                # Update the property
+                await db.properties.update_one(
+                    {"_id": prop["_id"]},
+                    {"$set": updates}
+                )
+                
+                fixed_count += 1
+                logger.info(f"Fixed property '{prop.get('title', 'Unknown')}' in {city}: State={correct_state}, County={county}")
+                
+            else:
+                unmatched_cities.append(f"{city}, {current_state}")
         
         return {
-            "message": f"Found {len(valid_counties)} counties",
-            "counties": valid_counties,
-            "count": len(valid_counties)
+            "message": "City/State/County fix completed",
+            "total_properties_processed": len(properties_to_fix),
+            "properties_fixed": fixed_count,
+            "state_corrections": state_corrections,
+            "county_additions": county_additions,
+            "unmatched_cities": unmatched_cities[:10],  # Show first 10 unmatched
+            "total_unmatched": len(unmatched_cities)
         }
         
     except Exception as e:
-        logger.error(f"Error fetching counties: {str(e)}")
-        raise HTTPException(status_code=500, detail=f"Error fetching counties: {str(e)}")
+        logger.error(f"Error fixing city/state/county: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fixing data: {str(e)}")
 
 @api_router.post("/fix-property-values")
 async def fix_property_values():
