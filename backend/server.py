@@ -75,6 +75,7 @@ class Property(BaseModel):
     city: str
     state: str
     zipcode: str
+    county: Optional[str] = None
     property_type: PropertyType
     reserve_price: float
     estimated_value: float
