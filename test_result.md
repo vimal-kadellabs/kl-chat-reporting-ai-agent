@@ -205,8 +205,24 @@ metadata:
         agent: "deep_testing_backend_v2"
         comment: "Enhanced mock data successfully force-initialized. 17 users, 15 properties, 15 auctions, 33 bids all verified and accessible via API endpoints."
 
+  - task: "Property data update with county field and new properties"
+    implemented: true
+    working: false
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Need to update existing properties with county field and insert new properties from JSON file starting from line 2187"
+      - working: false
+        agent: "main"
+        comment: "Successfully updated 115 existing properties with county field and inserted 20 new properties (total 140). However, analytics queries failing with 'unsupported operand type(s) for +=: int and NoneType' error when processing properties with null numeric values. Need to fix analytics code to handle null values in reserve_price, estimated_value, etc."
+
 test_plan:
-  current_focus: []
+  current_focus:
+    - "Property data update with county field and new properties"
   stuck_tasks: []
   test_all: false
   test_priority: "high_first"
