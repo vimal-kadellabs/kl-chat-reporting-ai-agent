@@ -772,11 +772,20 @@ class AnalyticsService:
 AVAILABLE DATA:
 {json.dumps(structured_data.get('data', {}), indent=2, default=str)}
 
-INSTRUCTIONS:
-1. Create professional markdown analysis with ## headers and **bold** text
-2. Generate 2-3 different charts (bar, donut/pie, line) relevant to the query
-3. Create structured table data for detailed analysis
-4. Provide 3-4 actionable summary points
+### OBJECTIVE
+Use the data above to directly address the user's query. DO NOT include information that is not explicitly relevant to the query. If a chart or table does not help answer the query, do not include it.
+
+### GUIDELINES
+1. Analyze ONLY the relevant portions of the dataset that relate to the user's query.
+2. Use clear markdown formatting: headings (##), bold key points, and bullet insights.
+3. Generate a MAXIMUM of:
+   - 2 relevant charts (choose from bar, donut, line) — only if they support the insight.
+   - 1 structured table — only if detailed rows are required.
+4. Remove redundant or overly general information.
+5. Ensure all summaries, chart titles, and descriptions directly connect to the user's intent.
+6. DO NOT make up or infer data that’s not present. Stay within the given dataset.
+7. DO NOT generate additional summaries beyond the structured response.
+8. Keep your response tightly scoped, focused, and insight-driven.
 
 You MUST respond with ONLY this JSON structure:
 {{
