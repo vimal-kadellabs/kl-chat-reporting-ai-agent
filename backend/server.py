@@ -3124,6 +3124,84 @@ async def get_bids():
     bids = await db.bids.find().to_list(None)  # Remove limit to get all bids
     return [Bid(**bid) for bid in bids]
 
+@api_router.post("/update-properties")
+async def update_properties():
+    """Update existing properties with county field and add new properties"""
+    try:
+        # Load JSON data
+        json_file_path = Path("/app/updated_properties_data.json")
+        with open(json_file_path, 'r') as file:
+            properties_data = json.load(file)
+        
+        updated_count = 0
+        inserted_count = 0
+        
+        # Get current max property ID for new properties
+        existing_properties = await db.properties.find().to_list(None)
+        max_prop_id = 0
+        for prop in existing_properties:
+            prop_id_num = int(prop['id'].split('_')[1]) if 'prop_' in prop['id'] else 0
+            max_prop_id = max(max_prop_id, prop_id_num)
+        
+        # Step 1: Update existing properties with county field
+        logger.info("Step 1: Updating existing properties with county field...")
+        for json_prop in properties_data[:2186]:  # Properties before line 2187
+            # Find matching property in database by title
+            existing_prop = await db.properties.find_one({"title": json_prop["title"]})
+            if existing_prop:
+                # Update with county field
+                county_value = json_prop.get("county")
+                if county_value:
+                    await db.properties.update_one(
+                        {"_id": existing_prop["_id"]},
+                        {"$set": {"county": county_value}}
+                    )
+                    updated_count += 1
+                    logger.info(f"Updated property '{json_prop['title']}' with county: {county_value}")
+        
+        # Step 2: Insert new properties starting from line 2187
+        logger.info("Step 2: Inserting new properties...")
+        for i, json_prop in enumerate(properties_data[2186:], 1):  # Starting from index 2186 (line 2187)
+            new_prop_id = max_prop_id + i
+            
+            # Create new property with incremental ID
+            new_property = {
+                "id": f"prop_{new_prop_id}",
+                "title": json_prop["title"],
+                "description": json_prop.get("description", ""),
+                "location": json_prop.get("location", ""),
+                "city": json_prop.get("city", ""),
+                "state": json_prop.get("state", ""),
+                "zipcode": json_prop.get("zipcode", ""),
+                "county": json_prop.get("county", ""),
+                "property_type": json_prop.get("property_type", "residential"),
+                "reserve_price": json_prop.get("reserve_price", 0),
+                "estimated_value": json_prop.get("estimated_value", 0),
+                "bedrooms": json_prop.get("bedrooms"),
+                "bathrooms": json_prop.get("bathrooms"),
+                "square_feet": json_prop.get("square_feet"),
+                "lot_size": json_prop.get("lot_size"),
+                "year_built": json_prop.get("year_built"),
+                "images": json_prop.get("images", []),
+                "created_at": datetime.utcnow()
+            }
+            
+            # Insert new property
+            await db.properties.insert_one(new_property)
+            inserted_count += 1
+            logger.info(f"Inserted new property '{json_prop['title']}' with ID: prop_{new_prop_id}")
+        
+        return {
+            "message": "Property update completed successfully",
+            "updated_existing": updated_count,
+            "inserted_new": inserted_count,
+            "total_processed": updated_count + inserted_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error updating properties: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error updating properties: {str(e)}")
+
 @api_router.get("/investors/active")
 async def get_active_investors():
     """Get count of investors who have placed at least one bid in the past 6 months"""
