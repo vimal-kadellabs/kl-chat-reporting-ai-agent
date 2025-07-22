@@ -578,7 +578,96 @@ class BackendTester:
             self.log_test("Enhanced Chat - Property Comparison", False, f"Exception: {str(e)}")
             return False
     
-    def test_force_init_data_endpoint(self):
+    def test_fix_property_values_endpoint(self):
+        """Test /api/fix-property-values endpoint - Location-based value assignment"""
+        try:
+            response = self.session.post(f"{self.base_url}/fix-property-values")
+            
+            if response.status_code != 200:
+                self.log_test("Fix Property Values", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            result = response.json()
+            
+            # Verify response structure
+            if "message" not in result:
+                self.log_test("Fix Property Values Response", False, "Missing message field in response")
+                return False
+            
+            # Check if any properties were actually fixed
+            message = result.get("message", "")
+            if "fixed" not in message.lower() and "updated" not in message.lower():
+                self.log_test("Fix Property Values Action", False, f"Unclear if properties were fixed: {message}")
+                return False
+                
+            self.log_test("Fix Property Values", True, f"Property values fixed: {message}", result)
+            return True
+            
+        except Exception as e:
+            self.log_test("Fix Property Values", False, f"Exception: {str(e)}")
+            return False
+    
+    def test_analytics_with_new_property_data(self):
+        """Test analytics functionality with new property data - CRITICAL: Should not have null value errors"""
+        try:
+            # Test the specific query that was previously failing
+            test_query = "Which regions had the highest number of bids last month?"
+            
+            payload = {
+                "message": test_query,
+                "user_id": "test_user"
+            }
+            
+            response = self.session.post(
+                f"{self.base_url}/chat",
+                json=payload,
+                headers={"Content-Type": "application/json"}
+            )
+            
+            if response.status_code != 200:
+                self.log_test("Analytics - Regional Query", False, f"HTTP {response.status_code}: {response.text}")
+                return False
+                
+            chat_response = response.json()
+            
+            # Verify no error in response
+            response_text = chat_response.get("response", "").lower()
+            error_indicators = ["error", "unsupported operand", "nonetype", "null", "exception", "failed"]
+            has_errors = any(indicator in response_text for indicator in error_indicators)
+            
+            if has_errors:
+                self.log_test("Analytics - No Null Errors", False, f"Analytics query contains error indicators: {response_text[:200]}")
+                return False
+            
+            # Verify meaningful response with charts/tables
+            charts = chat_response.get("charts", [])
+            tables = chat_response.get("tables", [])
+            summary_points = chat_response.get("summary_points", [])
+            
+            if len(charts) == 0 and len(tables) == 0:
+                self.log_test("Analytics - Visualizations", False, "No charts or tables generated for regional query")
+                return False
+            
+            if len(summary_points) < 2:
+                self.log_test("Analytics - Summary Points", False, f"Insufficient summary points: {len(summary_points)}")
+                return False
+            
+            # Check for regional content
+            regional_keywords = ["region", "city", "location", "market", "tucson", "mesa", "austin"]
+            has_regional_content = any(keyword in response_text for keyword in regional_keywords)
+            
+            if not has_regional_content:
+                self.log_test("Analytics - Regional Content", False, "Response doesn't contain regional analysis content")
+                return False
+                
+            self.log_test("Analytics - New Property Data", True, 
+                         f"✅ Regional analytics working with new property data: {len(charts)} charts, {len(tables)} tables, no null errors", 
+                         {"query_success": True, "charts": len(charts), "tables": len(tables), "summary_points": len(summary_points)})
+            return True
+            
+        except Exception as e:
+            self.log_test("Analytics - New Property Data", False, f"Exception: {str(e)}")
+            return False
         """Test /api/force-init-data endpoint"""
         try:
             response = self.session.post(f"{self.base_url}/force-init-data")
