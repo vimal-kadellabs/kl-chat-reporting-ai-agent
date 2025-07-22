@@ -3239,6 +3239,10 @@ async def get_properties_grouped_by_county():
         no_county_properties = []
         
         for prop in properties:
+            # Remove MongoDB ObjectId for JSON serialization
+            if '_id' in prop:
+                del prop['_id']
+                
             county = prop.get('county')
             if county and county.strip():
                 county = county.strip()
@@ -3266,7 +3270,7 @@ async def get_properties_grouped_by_county():
                 'total_estimated_value': total_value,
                 'average_estimated_value': avg_value,
                 'property_types': property_types,
-                'properties': props
+                'sample_properties': props[:3]  # Only include first 3 properties as samples
             }
             grouped_data.append(county_data)
         
@@ -3279,7 +3283,7 @@ async def get_properties_grouped_by_county():
             'properties_with_county': sum(len(props) for props in county_groups.values()),
             'properties_without_county': len(no_county_properties),
             'county_groups': grouped_data,
-            'counties_list': list(county_groups.keys())
+            'counties_list': sorted(list(county_groups.keys()))
         }
         
     except Exception as e:
