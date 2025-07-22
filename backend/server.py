@@ -329,9 +329,12 @@ class AnalyticsService:
         # Default to general analysis if no specific intent detected
         if not detected_intents:
             detected_intents = ['general_analysis']
+        
+        # Smart intent prioritization - choose most specific intent over generic ones
+        prioritized_intent = self.prioritize_intents(detected_intents, query_lower)
             
         return {
-            'primary_intent': detected_intents[0] if detected_intents else 'general_analysis',
+            'primary_intent': prioritized_intent,
             'all_intents': detected_intents,
             'entities': self.extract_entities(user_query)
         }
