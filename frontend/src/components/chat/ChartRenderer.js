@@ -20,7 +20,6 @@ import LoadingProgressBar from './LoadingProgressBar';
 const COLORS = ['#6366f1', '#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899', '#84cc16'];
 
 const ChartRenderer = ({ data, type, title, description }) => {
-  const [isDownloading, setIsDownloading] = useState(false);
   const [isLoading, setIsLoading] = useState(true);
   const [loadingProgress, setLoadingProgress] = useState(0);
 
