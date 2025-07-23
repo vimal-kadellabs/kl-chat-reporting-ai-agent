@@ -2678,7 +2678,41 @@ class AnalyticsService:
                     summary_points=["Database query failed", "Please retry your request"]
                 )
             
-            # Step 3: Enhanced OpenAI analysis with real data
+            # Step 3: Check if we have a dedicated enhanced response function for this intent
+            intent = intent_info.get('primary_intent', '')
+            data = structured_data.get('data', {})
+            
+            # List of intents that have dedicated enhanced response functions with proper visualizations
+            enhanced_response_intents = [
+                'cancelled_auctions',
+                'top_investors', 
+                'fewest_bids_auctions',
+                'investor_activity_by_property_type',
+                'location_based_auction_count',
+                'group_by_location',
+                'properties_most_bids_timeframe',
+                'completed_auctions_summary',
+                'upcoming_auctions_by_value',
+                'bidding_activity_by_property_type',
+                'auction_wins_by_investor_type',
+                'unsold_properties',
+                'property_types_exceeding_reserve',
+                'last_month_winners',
+                'regional_analysis',
+                'bidding_trends'
+            ]
+            
+            # Use enhanced response function directly if available
+            if intent in enhanced_response_intents:
+                try:
+                    response = await self.create_enhanced_manual_response(user_query, structured_data)
+                    logger.info(f"Generated enhanced response with intent: {intent}")
+                    return response
+                except Exception as e:
+                    logger.warning(f"Enhanced response failed for {intent}: {e}, falling back to OpenAI")
+                    # Fall through to OpenAI analysis
+            
+            # Step 4: Enhanced OpenAI analysis with real data (for general queries or fallback)
             response = await self.analyze_query_with_data(user_query, structured_data)
             
             logger.info(f"Generated enhanced response with intent: {intent_info['primary_intent']}")
