@@ -1,7 +1,7 @@
 import React from 'react';
 import ChartRenderer from './ChartRenderer';
 import TableRenderer from './TableRenderer';
-import TypingAnimation from './TypingAnimation';
+import CoordinatedTyping from './CoordinatedTyping';
 
 const ChatMessage = ({ message }) => {
   const isUser = message.type === 'user';
