@@ -5019,6 +5019,91 @@ async def chat_query(query: ChatQuery):
             ]
         )
 
+@api_router.post("/fix-county-data")
+async def fix_county_data():
+    """Fix None county values by mapping cities to counties"""
+    try:
+        # City to county mapping for major US cities
+        city_to_county = {
+            'New York': 'New York County',
+            'Los Angeles': 'Los Angeles County', 
+            'San Francisco': 'San Francisco County',
+            'Chicago': 'Cook County',
+            'Houston': 'Harris County',
+            'Philadelphia': 'Philadelphia County',
+            'Phoenix': 'Maricopa County',
+            'San Antonio': 'Bexar County',
+            'San Diego': 'San Diego County',
+            'Dallas': 'Dallas County',
+            'San Jose': 'Santa Clara County',
+            'Austin': 'Travis County',
+            'Jacksonville': 'Duval County',
+            'Fort Worth': 'Tarrant County',
+            'Columbus': 'Franklin County',
+            'Charlotte': 'Mecklenburg County',
+            'Indianapolis': 'Marion County',
+            'San Francisco': 'San Francisco County',
+            'Seattle': 'King County',
+            'Denver': 'Denver County',
+            'Boston': 'Suffolk County',
+            'El Paso': 'El Paso County',
+            'Detroit': 'Wayne County',
+            'Nashville': 'Davidson County',
+            'Portland': 'Multnomah County',
+            'Memphis': 'Shelby County',
+            'Oklahoma City': 'Oklahoma County',
+            'Las Vegas': 'Clark County',
+            'Louisville': 'Jefferson County',
+            'Baltimore': 'Baltimore County',
+            'Milwaukee': 'Milwaukee County',
+            'Albuquerque': 'Bernalillo County',
+            'Tucson': 'Pima County',
+            'Fresno': 'Fresno County',
+            'Sacramento': 'Sacramento County',
+            'Kansas City': 'Jackson County',
+            'Mesa': 'Maricopa County',
+            'Atlanta': 'Fulton County',
+            'Colorado Springs': 'El Paso County',
+            'Virginia Beach': 'Virginia Beach County',
+            'Raleigh': 'Wake County',
+            'Omaha': 'Douglas County',
+            'Miami': 'Miami-Dade County',
+            'Oakland': 'Alameda County',
+            'Minneapolis': 'Hennepin County',
+            'Tulsa': 'Tulsa County',
+            'Wichita': 'Sedgwick County',
+            'New Orleans': 'Orleans Parish'
+        }
+        
+        # Get all properties
+        properties = await db.properties.find().to_list(None)
+        updated_count = 0
+        
+        for prop in properties:
+            city = prop.get('city', '').strip()
+            current_county = prop.get('county')
+            
+            # Update if county is None/empty and we have a mapping for the city
+            if (not current_county or str(current_county).lower() in ['none', 'null', '']) and city in city_to_county:
+                new_county = city_to_county[city]
+                await db.properties.update_one(
+                    {"_id": prop["_id"]},
+                    {"$set": {"county": new_county}}
+                )
+                updated_count += 1
+                logger.info(f"Updated property in {city} with county: {new_county}")
+        
+        return {
+            "message": "County data fix completed",
+            "properties_updated": updated_count,
+            "total_properties": len(properties),
+            "city_mappings_available": len(city_to_county)
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fixing county data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fixing county data: {str(e)}")
+
 @api_router.post("/remove-sample-questions")
 async def remove_specific_sample_questions():
     """Remove 4 specific sample questions from the hardcoded list"""
