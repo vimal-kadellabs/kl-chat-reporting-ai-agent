@@ -5054,6 +5054,11 @@ async def remove_specific_sample_questions():
 async def get_sample_questions():
     """Get curated sample questions for the sidebar"""
     sample_questions = [
+        # System Overview & Top Performance
+        "Give me overview of properties and auction bids of the system?",
+        "Top 3 Total Highest bid per state?",
+        "Give top county by bids of California?",
+        
         # Location & Regional Insights
         "Which regions had the highest number of bids last month?",
         "Show upcoming auctions by city in California.",
