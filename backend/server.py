@@ -293,6 +293,17 @@ class AnalyticsService:
                 'group the auctions by', 'group all auctions by', 'group the bids by',
                 'group all bids by', 'group all bids by county', 'group all bids by state', 'group all bids by city',
 
+                # Ranking and Top performers by location
+                'top county by bids', 'top counties by bids', 'top state by bids', 'top city by bids',
+                'top county by auctions', 'top counties by auctions', 'top state by auctions', 'top city by auctions',
+                'highest county by bids', 'highest counties by bids', 'best county by bids', 'best counties by bids',
+                'which county has most bids', 'which state has most bids', 'which city has most bids',
+                'county with most bids', 'state with most bids', 'city with most bids',
+                'give top county by', 'show top county by', 'find top county by', 'get top county by',
+                'give top counties by', 'show top counties by', 'find top counties by', 'get top counties by',
+                'county by bids for', 'counties by bids for', 'state by bids for', 'city by bids for',
+                'ranking by county', 'ranking by state', 'ranking by city', 'rank by county', 'rank by state',
+
                 # Added patterns with filter + grouping
                 'group open auctions by county', 'group live auctions by state', 'group closed bids by city',
                 'group active auctions by city', 'group ended auctions by county',
