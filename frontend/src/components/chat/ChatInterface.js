@@ -282,6 +282,7 @@ const ChatInterface = ({ isOnline = true }) => {
             onQuestionClick={handleSendMessage}
             onClose={() => setSidebarOpen(false)}
             loading={loading}
+            isOnline={isOnline}
           />
         </div>
       </div>
