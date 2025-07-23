@@ -1,6 +1,6 @@
 import React from 'react';
 
-const SampleQuestions = ({ questions, onQuestionClick, onClose, loading = false }) => {
+const SampleQuestions = ({ questions, onQuestionClick, onClose, loading = false, isOnline = true }) => {
   const questionCategories = [
     {
       title: 'Market Analysis',
