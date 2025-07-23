@@ -2192,7 +2192,7 @@ class AnalyticsService:
         # Table: Detailed investor breakdown
         table = TableData(
             headers=["Investor", "Location", "Total Bids", "Won Auctions", "Success Rate", "Total Amount"],
-            rows=[[inv['name'], inv['location'], inv['total_bids'], inv['won_auctions'], 
+            rows=[[inv['name'], inv['location'], inv['total_bids'], inv['winning_bids'], 
                    f"{inv['success_rate']:.1f}%", f"${inv['total_amount']:,.0f}"] for inv in investors],
             title="Top Investors Detailed Analysis",
             description="Comprehensive performance metrics for leading auction participants"
