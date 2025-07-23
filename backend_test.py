@@ -748,6 +748,9 @@ class BackendTester:
             critical_step_names = ["Fix Property Values", "Fix Bid Fields"]  # These should not fail
             critical_errors = [s for s in error_steps if s["name"] in critical_step_names]
             
+            # Step 5 (Maricopa data) can fail due to data issues - not critical
+            non_critical_errors = [s for s in error_steps if s["name"] not in critical_step_names]
+            
             if critical_errors:
                 error_details = [f"{s['name']}: {s['details']}" for s in critical_errors]
                 self.log_test("Production Data Critical Errors", False, f"Critical step failures: {error_details}")
