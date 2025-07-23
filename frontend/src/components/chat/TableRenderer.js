@@ -131,34 +131,6 @@ const TableRenderer = ({ data, title, description }) => {
     setCurrentPage(1); // Reset to first page when sorting
   };
 
-  const downloadTable = async () => {
-    setIsDownloading(true);
-    try {
-      // Create CSV content
-      const csvContent = [
-        headers.join(','),
-        ...sortedRows.map(row => 
-          row.map(cell => `"${String(cell).replace(/"/g, '""')}"`).join(',')
-        )
-      ].join('\n');
-
-      // Create blob and download
-      const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${(title || 'table-data').replace(/\s+/g, '-').toLowerCase()}.csv`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Download failed:', error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   const getSortIcon = (header) => {
     if (sortConfig.key !== header) {
       return (
