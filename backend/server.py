@@ -3276,14 +3276,33 @@ class AnalyticsService:
         current_date = datetime.now()
         current_month_auctions = []
         
-        # Simulate current month filter (for demo purposes)
+        # Filter auctions for current month with proper error handling
         for auction in completed_auctions:
-            # Assume auctions completed in current month
-            auction_date = datetime.fromisoformat(auction.get('created_at', current_date.isoformat()))
-            if auction_date.month == current_date.month:
-                current_month_auctions.append(auction)
+            try:
+                # Handle various date field possibilities
+                date_str = None
+                if auction.get('end_time'):
+                    date_str = auction['end_time']
+                elif auction.get('created_at'):
+                    date_str = auction['created_at']
+                else:
+                    continue  # Skip auctions without valid dates
+                
+                # Ensure we have a string for fromisoformat
+                if isinstance(date_str, str):
+                    auction_date = datetime.fromisoformat(date_str.replace('Z', '+00:00'))
+                    if auction_date.month == current_date.month and auction_date.year == current_date.year:
+                        current_month_auctions.append(auction)
+                else:
+                    # Skip auctions with invalid date format
+                    continue
+                    
+            except (ValueError, TypeError) as e:
+                # Skip auctions with invalid date format
+                logger.warning(f"Skipping auction {auction.get('id', 'unknown')} due to invalid date: {str(e)}")
+                continue
         
-        # If no current month data, use all completed for demo
+        # If no current month data, use recent completed auctions for demo
         if not current_month_auctions:
             current_month_auctions = completed_auctions[:15]  # Sample for demo
         
@@ -3322,7 +3341,7 @@ class AnalyticsService:
                 'total_bid_value': total_bid_value,
                 'average_bids_per_auction': round(avg_bids_per_auction, 2),
                 'average_winning_bid': round(avg_winning_bid, 2),
-                'success_rate': (total_properties_sold / total_completed * 100) if total_completed > 0 else 0,
+                'success_rate': round((total_properties_sold / total_completed * 100), 2) if total_completed > 0 else 0,
                 'property_type_breakdown': property_type_breakdown,
                 'timeframe': f"{current_date.strftime('%B %Y')}"
             }
