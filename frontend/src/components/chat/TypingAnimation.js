@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import ReactMarkdown from 'react-markdown';
 
-const TypingAnimation = ({ text, speed = 30, startDelay = 0 }) => {
+const TypingAnimation = ({ text, speed = 25, startDelay = 0, showCursor = true, onComplete }) => {
   const [displayedText, setDisplayedText] = useState('');
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isComplete, setIsComplete] = useState(false);
@@ -30,8 +30,11 @@ const TypingAnimation = ({ text, speed = 30, startDelay = 0 }) => {
       return () => clearTimeout(timer);
     } else {
       setIsComplete(true);
+      if (onComplete) {
+        onComplete();
+      }
     }
-  }, [text, currentIndex, speed, hasStarted, isComplete]);
+  }, [text, currentIndex, speed, hasStarted, isComplete, onComplete]);
 
   // Reset when text changes
   useEffect(() => {
@@ -80,19 +83,19 @@ const TypingAnimation = ({ text, speed = 30, startDelay = 0 }) => {
         {displayedText}
       </ReactMarkdown>
       
-      {/* Typing cursor */}
-      {!isComplete && hasStarted && (
-        <span className="inline-block w-2 h-5 bg-indigo-600 ml-1 animate-pulse typing-cursor" />
+      {/* Improved typing cursor - only show if explicitly enabled and not complete */}
+      {showCursor && !isComplete && hasStarted && (
+        <span className="inline-block w-0.5 h-4 bg-blue-600 ml-1 typing-cursor" />
       )}
       
       <style jsx>{`
         .typing-cursor {
-          animation: blink 1s infinite;
+          animation: smoothBlink 1.2s ease-in-out infinite;
         }
         
-        @keyframes blink {
-          0%, 50% { opacity: 1; }
-          51%, 100% { opacity: 0; }
+        @keyframes smoothBlink {
+          0%, 45% { opacity: 1; }
+          55%, 100% { opacity: 0; }
         }
       `}</style>
     </div>
