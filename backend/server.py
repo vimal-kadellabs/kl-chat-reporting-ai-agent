@@ -965,10 +965,14 @@ class AnalyticsService:
                 
             except (json.JSONDecodeError, AttributeError, Exception) as e:
                 logger.error(f"Enhanced JSON parsing failed: {e}")
-                # Try no-data response first if no meaningful data available
-                # if not structured_data.get('data') and not structured_data.get('raw_counts'):
-                #     return await self.create_no_data_response(user_query)
-                # return await self.create_enhanced_manual_response(user_query, structured_data)
+                # Try manual response first if we have data
+                if structured_data.get('data') or structured_data.get('raw_counts'):
+                    manual_response = await self.create_enhanced_manual_response(user_query, structured_data)
+                    if manual_response is not None:
+                        return manual_response
+                
+                # Fall back to no-data response
+                return await self.create_no_data_response(user_query)
                 
         except Exception as e:
             logger.error(f"Error in enhanced analysis: {e}")
