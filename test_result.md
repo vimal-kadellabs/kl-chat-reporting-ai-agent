@@ -102,7 +102,20 @@
 # Testing Data - Main Agent and testing sub agent both should log testing data below this section
 #====================================================================================================
 
-user_problem_statement: "Sample questions are missing from the sidebar. User provided curated sample questions that need to be implemented."
+user_problem_statement: "Implement the `/api/update-production-data` endpoint to consolidate all necessary data update operations for production deployment synchronization."
+
+backend:
+  - task: "Implement consolidated production data sync endpoint"
+    implemented: true
+    working: "NA"
+    file: "/app/backend/server.py"
+    stuck_count: 0
+    priority: "high"
+    needs_retesting: true
+    status_history:
+      - working: "NA"
+        agent: "main"
+        comment: "Enhanced existing /api/update-production-data endpoint to include missing 'Insert New Properties' step. Endpoint now consolidates all 5 data operations: 1) Fix property null values, 2) Update counties, 3) Insert new properties from JSON, 4) Fix bid field names, 5) Add Maricopa bidding data. Ready for testing."
 
 backend:
   - task: "Create /api/sample-questions endpoint"
