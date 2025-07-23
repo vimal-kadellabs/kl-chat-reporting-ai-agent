@@ -2413,17 +2413,17 @@ class AnalyticsService:
             description="Market share by property category"
         )
         
-        # Table: Platform summary
+        # Table: Platform summary (GROWTH column removed per Task 6)
         table = TableData(
-            headers=["Metric", "Current Count", "Status", "Growth"],
+            headers=["Metric", "Current Count", "Status"],  # Removed "Growth" column
             rows=[
-                ["Properties Listed", raw_counts.get('total_properties', 0), "Active", "+12%"],
-                ["Live Auctions", raw_counts.get('total_auctions', 0), "Running", "+8%"],
-                ["Registered Users", raw_counts.get('total_users', 0), "Active", "+15%"],
-                ["Total Bids", raw_counts.get('total_bids', 0), "Processed", "+22%"]
+                ["Properties Listed", raw_counts.get('total_properties', 0), "Active"],  # Removed "+12%"
+                ["Live Auctions", raw_counts.get('total_auctions', 0), "Running"],  # Removed "+8%"
+                ["Registered Users", raw_counts.get('total_users', 0), "Active"],  # Removed "+15%"
+                ["Total Bids", raw_counts.get('total_bids', 0), "Processed"]  # Removed "+22%"
             ],
             title="Platform Performance Summary",
-            description="Key metrics and growth indicators for the auction platform"
+            description="Key metrics and performance indicators for the auction platform"
         )
         
         return ChatResponse(
