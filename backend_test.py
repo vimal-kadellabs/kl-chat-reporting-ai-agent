@@ -809,7 +809,10 @@ class BackendTester:
                 status_icon = "✅" if step["status"] == "success" else "⚠️" if step["status"] == "skipped" else "❌"
                 step_summary.append(f"{status_icon} {step['name']}: {step['details']}")
             
-            success_message = (f"All 5 steps executed - {len(successful_steps)} successful, {len(error_steps)} errors, {len(skipped_steps)} skipped. "
+            # Include non-critical error info in success message
+            non_critical_info = f" (Non-critical errors: {len(non_critical_errors)})" if non_critical_errors else ""
+            
+            success_message = (f"All 5 steps executed - {len(successful_steps)} successful, {len(error_steps)} errors, {len(skipped_steps)} skipped{non_critical_info}. "
                              f"Properties: +{property_count_change}, Bids: +{bid_count_change}, No null values, Correct bid fields. "
                              f"Steps: {'; '.join(step_summary)}")
             
@@ -818,6 +821,7 @@ class BackendTester:
                 "successful_steps": len(successful_steps),
                 "error_steps": len(error_steps),
                 "skipped_steps": len(skipped_steps),
+                "non_critical_errors": len(non_critical_errors),
                 "property_change": property_count_change,
                 "bid_change": bid_count_change,
                 "overall_status": summary.get("overall_status")
