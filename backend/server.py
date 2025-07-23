@@ -3564,7 +3564,7 @@ class AnalyticsService:
                     reason = 'No bids received' if current_bid == 0 else 'Reserve price not met'
                     
                     unsold_properties.append({
-                        'property_id': property_id,
+                        # 'property_id': property_id,  # Removed as per Task 2 requirement
                         'title': prop_info['title'],
                         'property_type': prop_info.get('property_type', 'unknown'),
                         'location': f"{prop_info.get('city', 'N/A')}, {prop_info.get('state', 'N/A')}",
