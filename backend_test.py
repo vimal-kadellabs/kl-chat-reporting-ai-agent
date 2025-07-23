@@ -848,13 +848,14 @@ class BackendTester:
     
     def run_all_tests(self):
         """Run all backend tests"""
-        print(f"🚀 Starting Backend API Tests - PROPERTY DATA UPDATE FOCUS")
+        print(f"🚀 Starting Backend API Tests - PRODUCTION DATA SYNC FOCUS")
         print(f"📍 Testing against: {self.base_url}")
         print("=" * 60)
         
-        # Test in priority order based on review request - PROPERTY DATA UPDATE TESTING
+        # Test in priority order based on review request - PRODUCTION DATA SYNC TESTING
         tests = [
             ("Health Check", self.test_health_check),
+            ("🎯 CRITICAL: Update Production Data Endpoint (5 Steps)", self.test_update_production_data_endpoint),
             ("🎯 CRITICAL: Properties Data Integrity (140 properties)", self.test_properties_endpoint),
             ("🎯 CRITICAL: Analytics with New Property Data", self.test_analytics_with_new_property_data),
             ("🎯 Property Values Fix Endpoint", self.test_fix_property_values_endpoint),
@@ -887,15 +888,15 @@ class BackendTester:
             for test in failed_tests:
                 print(f"   • {test['test']}: {test['details']}")
         
-        # Show critical issues - Updated for property data testing
+        # Show critical issues - Updated for production data sync testing
         critical_failures = [
             result for result in self.test_results 
             if not result["success"] and any(keyword in result["test"].lower() 
-            for keyword in ["critical", "properties data integrity", "analytics with new property", "property values fix"])
+            for keyword in ["critical", "update production data", "properties data integrity", "analytics with new property", "property values fix"])
         ]
         
         if critical_failures:
-            print(f"\n🚨 CRITICAL PROPERTY DATA ISSUES ({len(critical_failures)}):")
+            print(f"\n🚨 CRITICAL PRODUCTION DATA SYNC ISSUES ({len(critical_failures)}):")
             for test in critical_failures:
                 print(f"   • {test['test']}: {test['details']}")
         
