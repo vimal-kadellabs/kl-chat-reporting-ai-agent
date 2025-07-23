@@ -2691,7 +2691,7 @@ class AnalyticsService:
                 'location_based_auction_count',
                 'group_by_location',
                 'properties_most_bids_timeframe',
-                'completed_auctions_summary',
+                # 'completed_auctions_summary',  # Function doesn't exist yet
                 'upcoming_auctions_by_value',
                 'bidding_activity_by_property_type',
                 'auction_wins_by_investor_type',
