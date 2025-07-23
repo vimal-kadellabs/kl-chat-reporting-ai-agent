@@ -3841,8 +3841,11 @@ async def add_maricopa_bidding_data():
             bid_id_num = int(bid['id'].split('_')[1]) if 'bid_' in bid['id'] else 0
             max_bid_id = max(max_bid_id, bid_id_num)
         
-        # Select random investors for bidding
-        available_investors = [user for user in users if user.get('user_type') in ['individual', 'institutional']]
+        # Select all available users for bidding (no filtering by user_type since it doesn't exist)
+        available_investors = users
+        
+        if not available_investors:
+            return {"message": "No investors found", "added_bids": 0}
         
         # Generate 10-15 new bids
         total_bids_to_add = random.randint(10, 15)
