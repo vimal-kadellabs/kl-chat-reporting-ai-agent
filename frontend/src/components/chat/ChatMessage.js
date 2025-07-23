@@ -44,18 +44,11 @@ const ChatMessage = ({ message }) => {
                       <h4 className="font-semibold text-blue-900 text-sm">Key Insights</h4>
                     </div>
                     <div className="space-y-2">
-                      {message.summaryPoints.map((point, index) => (
-                        <div key={index} className="text-sm text-blue-800 flex items-start">
-                          <div className="w-1.5 h-1.5 bg-blue-500 rounded-full mt-2 mr-3 flex-shrink-0"></div>
-                          <div className="leading-relaxed flex-1">
-                            <TypingAnimation 
-                              text={point} 
-                              speed={20}
-                              startDelay={index * 1000 + 1000} // Stagger each point
-                            />
-                          </div>
-                        </div>
-                      ))}
+                      <CoordinatedTyping 
+                        summaryPoints={message.summaryPoints}
+                        speed={20}
+                        initialDelay={800}
+                      />
                     </div>
                   </div>
                 </div>
