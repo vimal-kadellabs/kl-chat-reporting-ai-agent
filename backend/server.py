@@ -2161,7 +2161,7 @@ class AnalyticsService:
             response_text += f"**{i}. {inv['name']}** ({inv['location']})\n"
             response_text += f"   - Total Investment: **${inv['total_amount']:,.0f}**\n"
             response_text += f"   - Success Rate: **{inv['success_rate']:.1f}%**\n"
-            response_text += f"   - Portfolio: **{inv['won_auctions']} properties won**\n\n"
+            response_text += f"   - Portfolio: **{inv['winning_bids']} properties won**\n\n"
         
         # Chart 1: Bar chart for total amounts
         chart1 = ChartData(
