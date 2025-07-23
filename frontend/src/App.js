@@ -7,6 +7,8 @@ import './App.css';
 import LoginPage from './components/auth/LoginPage';
 import Dashboard from './components/dashboard/Dashboard';
 import ChatInterface from './components/chat/ChatInterface';
+import OfflineWarning from './components/common/OfflineWarning';
+import useOnlineStatus from './hooks/useOnlineStatus';
 import AuthProvider, { useAuth } from './contexts/AuthContext';
 
 const BACKEND_URL = process.env.REACT_APP_BACKEND_URL;
