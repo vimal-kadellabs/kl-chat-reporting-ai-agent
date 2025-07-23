@@ -1059,12 +1059,15 @@ class AnalyticsService:
             auctions = structured_data.get('data', {}).get('auctions', [])
             bids = structured_data.get('data', {}).get('bids', [])
             
+            logger.info(f"State analysis - Properties: {len(properties)}, Auctions: {len(auctions)}, Bids: {len(bids)}")
+            
             # Create property lookup
             property_lookup = {prop['id']: prop for prop in properties}
             auction_lookup = {auction['property_id']: auction for auction in auctions}
             
             # Aggregate bid data by state
             state_data = {}
+            processed_bids = 0
             
             for bid in bids:
                 # Get property through auction
@@ -1073,6 +1076,7 @@ class AnalyticsService:
                     property_info = property_lookup.get(auction['property_id'])
                     if property_info:
                         state = property_info.get('state', 'Unknown')
+                        processed_bids += 1
                         
                         if state not in state_data:
                             state_data[state] = {
@@ -1089,6 +1093,8 @@ class AnalyticsService:
                         state_data[state]['active_auctions'].add(auction['id'])
                         state_data[state]['properties'].add(property_info['id'])
             
+            logger.info(f"State analysis - Processed {processed_bids} bids, found {len(state_data)} states")
+            
             # Convert sets to counts and calculate averages
             state_list = []
             for state, data in state_data.items():
@@ -1100,8 +1106,13 @@ class AnalyticsService:
             # Sort by total bids (descending)
             state_list.sort(key=lambda x: x['total_bids'], reverse=True)
             
+            logger.info(f"State analysis - Final results: {len(state_list)} states with data")
+            if state_list:
+                logger.info(f"Top state: {state_list[0]['state']} with {state_list[0]['total_bids']} bids")
+            
             # Create response
             if not state_list:
+                logger.warning("No state data found, returning no-data response") 
                 return await self.create_no_data_response("state bid analysis")
             
             top_state = state_list[0]
@@ -1169,6 +1180,8 @@ class AnalyticsService:
                 f"Average bid amount varies from ${min(s['avg_bid_amount'] for s in state_list):,.0f} to ${max(s['avg_bid_amount'] for s in state_list):,.0f}",
                 f"{len(state_list)} states have active bidding activity"
             ]
+            
+            logger.info(f"State analysis complete - returning {len(charts)} charts and {len(tables)} tables")
             
             return ChatResponse(
                 response=response_text,
