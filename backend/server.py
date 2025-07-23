@@ -414,7 +414,8 @@ class AnalyticsService:
             'time_period': [],
             'locations': [],
             'property_types': [],
-            'numbers': []
+            'numbers': [],
+            'raw_query': [query_lower]  # Include raw query for context
         }
         
         # Time periods
