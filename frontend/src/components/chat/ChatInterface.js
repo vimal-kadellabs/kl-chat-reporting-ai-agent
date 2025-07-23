@@ -5,7 +5,7 @@ import axios from 'axios';
 import ChatMessage from './ChatMessage';
 import SampleQuestions from './SampleQuestions';
 
-const ChatInterface = () => {
+const ChatInterface = ({ isOnline = true }) => {
   const { user, logout } = useAuth();
   const navigate = useNavigate();
   const [messages, setMessages] = useState([]);
