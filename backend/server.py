@@ -5019,6 +5019,46 @@ async def chat_query(query: ChatQuery):
             ]
         )
 
+@api_router.post("/add-priority-sample-questions")
+async def add_priority_sample_questions():
+    """Add 3 priority sample questions to the top of the hardcoded list for production"""
+    try:
+        new_questions = [
+            "Give me overview of properties and auction bids of the system?",
+            "Top 3 Total Highest bid per state?", 
+            "Give top county by bids of California?"
+        ]
+        
+        # This endpoint provides the questions to be manually added to production
+        # For production use: update the server.py sample_questions list by adding
+        # these 3 questions at the top of the array (after the comment "# System Overview & Top Performance")
+        
+        return {
+            "message": "Priority sample questions ready for production addition",
+            "questions_to_add": new_questions,
+            "action_required": "Add these 3 questions to the top of sample_questions array in server.py",
+            "insertion_point": "Add at the beginning after '# System Overview & Top Performance' comment",
+            "expected_new_total": "Current total + 3 questions",
+            "status": "endpoint_ready",
+            "code_example": '''
+# Add this to the beginning of sample_questions array:
+sample_questions = [
+    # System Overview & Top Performance
+    "Give me overview of properties and auction bids of the system?",
+    "Top 3 Total Highest bid per state?", 
+    "Give top county by bids of California?",
+    
+    # Location & Regional Insights
+    "Which regions had the highest number of bids last month?",
+    # ... rest of existing questions
+]
+            '''
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in add priority sample questions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error adding priority sample questions: {str(e)}")
+
 @api_router.post("/fix-county-data")
 async def fix_county_data():
     """Fix None county values by mapping cities to counties"""
