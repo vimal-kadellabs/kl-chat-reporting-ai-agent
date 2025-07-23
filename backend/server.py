@@ -1678,8 +1678,9 @@ class AnalyticsService:
                 "description": f"Complete breakdown with applied filters by {grouping_type}"
             }]
             
-            # Create enhanced summary points
-            top_location = grouped_data[0] if grouped_data else {}
+            # Create enhanced summary points (filter out None counties)
+            valid_locations = [loc for loc in grouped_data if loc.get('location') and str(loc['location']).lower() != 'none']
+            top_location = valid_locations[0] if valid_locations else {}
             summary_points = [
                 f"{top_location.get('location', 'N/A')} leads with {top_location.get('total_bids', 0)} total bids"
             ]
