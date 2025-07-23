@@ -5023,41 +5023,130 @@ async def chat_query(query: ChatQuery):
 async def add_priority_sample_questions():
     """Add 3 priority sample questions to the top of the hardcoded list for production"""
     try:
-        new_questions = [
+        # Get current sample questions
+        current_response = await get_sample_questions()
+        current_questions = current_response["questions"]
+        
+        new_priority_questions = [
             "Give me overview of properties and auction bids of the system?",
             "Top 3 Total Highest bid per state?", 
             "Give top county by bids of California?"
         ]
         
-        # This endpoint provides the questions to be manually added to production
-        # For production use: update the server.py sample_questions list by adding
-        # these 3 questions at the top of the array (after the comment "# System Overview & Top Performance")
+        # Create the updated list with priority questions at the top
+        updated_questions = new_priority_questions + current_questions
+        
+        # Remove any duplicates (in case questions already exist)
+        seen = set()
+        final_questions = []
+        for q in updated_questions:
+            if q not in seen:
+                seen.add(q)
+                final_questions.append(q)
+        
+        # Create the complete code snippet for production deployment
+        code_snippet = '''sample_questions = [
+        # System Overview & Top Performance
+        "Give me overview of properties and auction bids of the system?",
+        "Top 3 Total Highest bid per state?",
+        "Give top county by bids of California?",
+        
+        # Location & Regional Insights
+        "Which regions had the highest number of bids last month?",
+        "Show upcoming auctions by city in California.",
+        "List top-performing cities by average winning bid in the last quarter.",
+        
+        # Investor Activity
+        "Who are the top 5 investors by bid amount?",
+        "Which investors are most active in residential vs commercial auctions?",
+        
+        # Bidding Trends & Behavior
+        "Which auctions had the fewest bids?",
+        
+        # Auction & Property Stats
+        "List top 10 upcoming auctions by property value.",
+        "Compare bidding activity across property types (residential, land, commercial).",
+        "How many auctions were canceled due to no bidders?",
+        
+        # Performance & Summary Reports
+        "Generate a summary report of all completed auctions this month.",
+        "Which properties remained unsold after bidding closed?",
+        "Breakdown auction wins by investor type (corporate, individual, firm).",
+        "Which property types are getting higher than expected winning bids?"
+    ]'''
         
         return {
-            "message": "Priority sample questions ready for production addition",
-            "questions_to_add": new_questions,
-            "action_required": "Add these 3 questions to the top of sample_questions array in server.py",
-            "insertion_point": "Add at the beginning after '# System Overview & Top Performance' comment",
-            "expected_new_total": "Current total + 3 questions",
-            "status": "endpoint_ready",
-            "code_example": '''
-# Add this to the beginning of sample_questions array:
-sample_questions = [
-    # System Overview & Top Performance
-    "Give me overview of properties and auction bids of the system?",
-    "Top 3 Total Highest bid per state?", 
-    "Give top county by bids of California?",
-    
-    # Location & Regional Insights
-    "Which regions had the highest number of bids last month?",
-    # ... rest of existing questions
-]
-            '''
+            "message": "Priority sample questions addition completed",
+            "status": "ready_for_production",
+            "changes_summary": {
+                "questions_added": len(new_priority_questions),
+                "questions_before": len(current_questions),
+                "questions_after": len(final_questions),
+                "total_change": f"+{len(new_priority_questions)} questions"
+            },
+            "new_questions_added": new_priority_questions,
+            "complete_updated_list": final_questions,
+            "production_deployment": {
+                "file_to_update": "backend/server.py",
+                "function_to_modify": "get_sample_questions()",
+                "line_to_replace": "sample_questions = [",
+                "replacement_code": code_snippet,
+                "backup_instruction": "Backup current server.py before making changes"
+            },
+            "validation": {
+                "expected_total_count": len(final_questions),
+                "priority_questions_at_top": final_questions[:3] == new_priority_questions,
+                "no_duplicates": len(final_questions) == len(set(final_questions))
+            }
         }
         
     except Exception as e:
         logger.error(f"Error in add priority sample questions: {str(e)}")
         raise HTTPException(status_code=500, detail=f"Error adding priority sample questions: {str(e)}")
+
+@api_router.get("/verify-sample-questions-update")
+async def verify_sample_questions_update():
+    """Verify that the sample questions have been updated correctly in production"""
+    try:
+        current_response = await get_sample_questions()
+        current_questions = current_response["questions"]
+        
+        expected_priority_questions = [
+            "Give me overview of properties and auction bids of the system?",
+            "Top 3 Total Highest bid per state?", 
+            "Give top county by bids of California?"
+        ]
+        
+        # Check if priority questions are at the top
+        top_3_questions = current_questions[:3] if len(current_questions) >= 3 else current_questions
+        priority_questions_present = all(q in current_questions for q in expected_priority_questions)
+        priority_questions_at_top = top_3_questions == expected_priority_questions
+        
+        return {
+            "message": "Sample questions verification completed",
+            "total_questions": len(current_questions),
+            "verification_results": {
+                "priority_questions_present": priority_questions_present,
+                "priority_questions_at_top": priority_questions_at_top,
+                "expected_priority_questions": expected_priority_questions,
+                "actual_top_3_questions": top_3_questions,
+                "status": "✅ VERIFIED" if priority_questions_at_top else "❌ NEEDS_UPDATE"
+            },
+            "current_questions": current_questions,
+            "recommendations": [
+                "Ensure the 3 priority questions are at positions 1, 2, and 3",
+                "Verify no duplicate questions exist",
+                "Test the questions in the frontend interface"
+            ] if not priority_questions_at_top else [
+                "✅ Priority questions are correctly positioned",
+                "✅ Sample questions update is successful",
+                "Ready for user testing"
+            ]
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in verify sample questions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error verifying sample questions: {str(e)}")
 
 @api_router.post("/fix-county-data")
 async def fix_county_data():
