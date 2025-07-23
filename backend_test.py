@@ -669,27 +669,162 @@ class BackendTester:
             self.log_test("Analytics - New Property Data", False, f"Exception: {str(e)}")
             return False
     
-    def test_force_init_data_endpoint(self):
-        """Test /api/force-init-data endpoint"""
+    def test_update_production_data_endpoint(self):
+        """Test /api/update-production-data endpoint - CRITICAL: All 5 steps consolidation"""
         try:
-            response = self.session.post(f"{self.base_url}/force-init-data")
+            # Get initial state for comparison
+            initial_properties = self.session.get(f"{self.base_url}/properties").json()
+            initial_bids = self.session.get(f"{self.base_url}/bids").json()
+            initial_property_count = len(initial_properties)
+            initial_bid_count = len(initial_bids)
+            
+            # Execute the consolidated endpoint
+            response = self.session.post(f"{self.base_url}/update-production-data")
             
             if response.status_code != 200:
-                self.log_test("Force Init Data", False, f"HTTP {response.status_code}: {response.text}")
+                self.log_test("Update Production Data - CRITICAL", False, f"HTTP {response.status_code}: {response.text}")
                 return False
                 
             result = response.json()
             
-            if "message" not in result:
-                self.log_test("Force Init Data Response", False, "Missing message field in response")
+            # Verify response structure
+            required_fields = ["message", "timestamp", "steps", "summary"]
+            missing_fields = [field for field in required_fields if field not in result]
+            if missing_fields:
+                self.log_test("Production Data Response Structure", False, f"Missing fields: {missing_fields}")
                 return False
+            
+            # Verify all 5 steps are present
+            steps = result.get("steps", [])
+            if len(steps) != 5:
+                self.log_test("Production Data Steps Count", False, f"Expected 5 steps, got {len(steps)}")
+                return False
+            
+            # Verify step structure and names
+            expected_step_names = [
+                "Fix Property Values",
+                "Update Counties", 
+                "Insert New Properties",
+                "Fix Bid Fields",
+                "Add Maricopa Bidding Data"
+            ]
+            
+            step_validation_errors = []
+            for i, step in enumerate(steps):
+                # Check step structure
+                step_required_fields = ["step", "name", "status", "details"]
+                step_missing = [field for field in step_required_fields if field not in step]
+                if step_missing:
+                    step_validation_errors.append(f"Step {i+1} missing fields: {step_missing}")
+                    continue
                 
-            self.log_test("Force Init Data", True, f"Data initialization: {result.get('message')}", result)
+                # Check step number
+                if step.get("step") != i + 1:
+                    step_validation_errors.append(f"Step {i+1} has incorrect step number: {step.get('step')}")
+                
+                # Check step name
+                if step.get("name") != expected_step_names[i]:
+                    step_validation_errors.append(f"Step {i+1} has incorrect name: {step.get('name')} (expected: {expected_step_names[i]})")
+                
+                # Check status is valid
+                valid_statuses = ["success", "error", "skipped"]
+                if step.get("status") not in valid_statuses:
+                    step_validation_errors.append(f"Step {i+1} has invalid status: {step.get('status')}")
+            
+            if step_validation_errors:
+                self.log_test("Production Data Steps Validation", False, f"Step validation errors: {step_validation_errors}")
+                return False
+            
+            # Verify summary structure
+            summary = result.get("summary", {})
+            summary_required_fields = ["total_steps", "successful", "errors", "skipped", "overall_status"]
+            summary_missing = [field for field in summary_required_fields if field not in summary]
+            if summary_missing:
+                self.log_test("Production Data Summary", False, f"Summary missing fields: {summary_missing}")
+                return False
+            
+            # Check if any critical errors occurred
+            error_steps = [s for s in steps if s["status"] == "error"]
+            critical_step_names = ["Fix Property Values", "Fix Bid Fields"]  # These should not fail
+            critical_errors = [s for s in error_steps if s["name"] in critical_step_names]
+            
+            if critical_errors:
+                error_details = [f"{s['name']}: {s['details']}" for s in critical_errors]
+                self.log_test("Production Data Critical Errors", False, f"Critical step failures: {error_details}")
+                return False
+            
+            # Verify data changes occurred (get updated state)
+            updated_properties = self.session.get(f"{self.base_url}/properties").json()
+            updated_bids = self.session.get(f"{self.base_url}/bids").json()
+            
+            # Check if properties were added (Step 3)
+            property_count_change = len(updated_properties) - initial_property_count
+            if property_count_change < 0:
+                self.log_test("Production Data Property Changes", False, f"Properties decreased by {abs(property_count_change)}")
+                return False
+            
+            # Check if bids were added (Step 5 - Maricopa data)
+            bid_count_change = len(updated_bids) - initial_bid_count
+            if bid_count_change < 0:
+                self.log_test("Production Data Bid Changes", False, f"Bids decreased by {abs(bid_count_change)}")
+                return False
+            
+            # Verify no null values in critical fields (Step 1 validation)
+            null_value_issues = []
+            for prop in updated_properties:
+                if prop.get("reserve_price") is None or prop.get("reserve_price") == 0:
+                    null_value_issues.append(f"Property {prop.get('id')} has null/zero reserve_price")
+                if prop.get("estimated_value") is None or prop.get("estimated_value") == 0:
+                    null_value_issues.append(f"Property {prop.get('id')} has null/zero estimated_value")
+                if prop.get("property_type") is None or prop.get("property_type") == "":
+                    null_value_issues.append(f"Property {prop.get('id')} has null property_type")
+            
+            if null_value_issues:
+                self.log_test("Production Data Null Values Check", False, f"Found {len(null_value_issues)} null value issues after fix")
+                return False
+            
+            # Verify bid field names are correct (Step 4 validation)
+            bad_bid_fields = []
+            for bid in updated_bids:
+                if "bidder_id" in bid:
+                    bad_bid_fields.append(f"Bid {bid.get('id')} still has bidder_id field")
+                if "investor_id" not in bid:
+                    bad_bid_fields.append(f"Bid {bid.get('id')} missing investor_id field")
+            
+            if bad_bid_fields:
+                self.log_test("Production Data Bid Fields Check", False, f"Found {len(bad_bid_fields)} bid field issues after fix")
+                return False
+            
+            # Count successful vs failed/skipped steps
+            successful_steps = [s for s in steps if s["status"] == "success"]
+            skipped_steps = [s for s in steps if s["status"] == "skipped"]
+            
+            # Generate detailed success message
+            step_summary = []
+            for step in steps:
+                status_icon = "✅" if step["status"] == "success" else "⚠️" if step["status"] == "skipped" else "❌"
+                step_summary.append(f"{status_icon} {step['name']}: {step['details']}")
+            
+            success_message = (f"All 5 steps executed - {len(successful_steps)} successful, {len(error_steps)} errors, {len(skipped_steps)} skipped. "
+                             f"Properties: +{property_count_change}, Bids: +{bid_count_change}, No null values, Correct bid fields. "
+                             f"Steps: {'; '.join(step_summary)}")
+            
+            self.log_test("Update Production Data - CRITICAL", True, success_message, {
+                "steps_executed": len(steps),
+                "successful_steps": len(successful_steps),
+                "error_steps": len(error_steps),
+                "skipped_steps": len(skipped_steps),
+                "property_change": property_count_change,
+                "bid_change": bid_count_change,
+                "overall_status": summary.get("overall_status")
+            })
             return True
             
         except Exception as e:
-            self.log_test("Force Init Data", False, f"Exception: {str(e)}")
+            self.log_test("Update Production Data - CRITICAL", False, f"Exception: {str(e)}")
             return False
+    
+    def test_force_init_data_endpoint(self):
         """Test /api/force-init-data endpoint"""
         try:
             response = self.session.post(f"{self.base_url}/force-init-data")
