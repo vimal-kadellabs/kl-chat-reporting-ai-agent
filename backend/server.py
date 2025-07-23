@@ -1884,20 +1884,9 @@ class AnalyticsService:
         else:
             response_text += "- **No auction data available** for analysis\n"
         
-        # Create charts
+        # Create charts - REMOVED as per Task 4 requirement (zero values don't work well in bar charts)
         charts = []
-        if fewest_bids_auctions:
-            # Bar chart of bid counts
-            charts.append(ChartData(
-                data=[{
-                    "auction": f"{auction.get('auction_title', 'N/A')[:20]}...",
-                    "bid_count": auction['bid_count'],
-                    "location": auction.get('location', 'N/A')
-                } for auction in fewest_bids_auctions],
-                type="bar",
-                title="Bottom 10 Auctions by Bid Count",
-                description="Auctions that received the fewest bids"
-            ))
+        # Chart removed: Bar chart would not display zero values properly
         
         # Create table
         tables = []
