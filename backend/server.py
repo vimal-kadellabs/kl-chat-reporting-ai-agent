@@ -3796,6 +3796,257 @@ async def login(request: LoginRequest):
     # Dummy authentication
     return {"token": "dummy_token", "user": {"id": "demo_user", "email": request.email, "name": "John Doe"}}
 
+@api_router.post("/update-production-data")
+async def update_production_data():
+    """Consolidated endpoint to update all production data in correct sequence"""
+    try:
+        import random
+        from datetime import datetime, timedelta
+        
+        results = {
+            "message": "Production data update completed",
+            "timestamp": datetime.utcnow().isoformat(),
+            "steps": [],
+            "summary": {}
+        }
+        
+        # STEP 1: Fix property null values with realistic data
+        logger.info("Step 1: Fixing property null values...")
+        try:
+            # Get all properties with null values
+            properties_cursor = db.properties.find({
+                "$or": [
+                    {"property_type": {"$in": [None, ""]}},
+                    {"reserve_price": {"$in": [None, 0]}},
+                    {"estimated_value": {"$in": [None, 0]}}
+                ]
+            })
+            properties_to_fix = await properties_cursor.to_list(None)
+            
+            fixed_properties = 0
+            for prop in properties_to_fix:
+                city = prop.get('city', 'DEFAULT')
+                
+                # Determine property type if null
+                property_type = prop.get('property_type')
+                if not property_type or property_type == 'null':
+                    property_type = random.choice(['residential', 'commercial', 'industrial', 'land'])
+                
+                # Generate realistic prices if null or zero
+                reserve_price = prop.get('reserve_price', 0)
+                estimated_value = prop.get('estimated_value', 0)
+                
+                if not reserve_price or not estimated_value or reserve_price == 0 or estimated_value == 0:
+                    estimated_value = random.randint(200000, 3000000)
+                    reserve_price = int(estimated_value * random.uniform(0.85, 0.95))
+                
+                # Update the property
+                await db.properties.update_one(
+                    {"_id": prop["_id"]},
+                    {"$set": {
+                        "property_type": property_type,
+                        "reserve_price": reserve_price,
+                        "estimated_value": estimated_value
+                    }}
+                )
+                fixed_properties += 1
+            
+            results["steps"].append({
+                "step": 1,
+                "name": "Fix Property Values",
+                "status": "success",
+                "details": f"Fixed {fixed_properties} properties with null values"
+            })
+            
+        except Exception as e:
+            results["steps"].append({
+                "step": 1,
+                "name": "Fix Property Values", 
+                "status": "error",
+                "details": str(e)
+            })
+        
+        # STEP 2: Update properties with county information
+        logger.info("Step 2: Updating counties...")
+        try:
+            # Load JSON data for county updates
+            json_file_path = Path("/app/updated_properties_data.json")
+            if json_file_path.exists():
+                with open(json_file_path, 'r') as file:
+                    properties_data = json.load(file)
+                
+                # Create lookup by title
+                json_lookup = {}
+                for json_prop in properties_data:
+                    title = json_prop.get("title", "").strip()
+                    county = json_prop.get("county", "").strip()
+                    if title and county:
+                        json_lookup[title] = county
+                
+                # Update properties
+                db_properties = await db.properties.find().to_list(None)
+                updated_counties = 0
+                
+                for db_prop in db_properties:
+                    db_title = db_prop.get("title", "").strip()
+                    county = json_lookup.get(db_title)
+                    
+                    if county and db_prop.get("county") != county:
+                        await db.properties.update_one(
+                            {"_id": db_prop["_id"]},
+                            {"$set": {"county": county}}
+                        )
+                        updated_counties += 1
+                
+                results["steps"].append({
+                    "step": 2,
+                    "name": "Update Counties",
+                    "status": "success", 
+                    "details": f"Updated {updated_counties} properties with county information"
+                })
+            else:
+                results["steps"].append({
+                    "step": 2,
+                    "name": "Update Counties",
+                    "status": "skipped",
+                    "details": "JSON data file not found, skipping county updates"
+                })
+                
+        except Exception as e:
+            results["steps"].append({
+                "step": 2,
+                "name": "Update Counties",
+                "status": "error", 
+                "details": str(e)
+            })
+        
+        # STEP 3: Fix bid field names (bidder_id → investor_id)
+        logger.info("Step 3: Fixing bid field names...")
+        try:
+            bad_bids = await db.bids.find({"bidder_id": {"$exists": True}}).to_list(None)
+            fixed_bids = 0
+            
+            for bid in bad_bids:
+                await db.bids.update_one(
+                    {"_id": bid["_id"]},
+                    {
+                        "$set": {"investor_id": bid["bidder_id"]},
+                        "$unset": {"bidder_id": ""}
+                    }
+                )
+                fixed_bids += 1
+            
+            results["steps"].append({
+                "step": 3,
+                "name": "Fix Bid Fields",
+                "status": "success",
+                "details": f"Fixed {fixed_bids} bid records with incorrect field names"
+            })
+            
+        except Exception as e:
+            results["steps"].append({
+                "step": 3,
+                "name": "Fix Bid Fields",
+                "status": "error",
+                "details": str(e)
+            })
+        
+        # STEP 4: Add Maricopa County bidding data
+        logger.info("Step 4: Adding Maricopa bidding data...")
+        try:
+            # Get existing data
+            properties = await db.properties.find().to_list(None)
+            auctions = await db.auctions.find().to_list(None)
+            users = await db.users.find().to_list(None)
+            existing_bids = await db.bids.find().to_list(None)
+            
+            # Find Maricopa County properties and auctions
+            maricopa_prop_ids = [p['id'] for p in properties if p.get('county', '').lower() == 'maricopa']
+            target_auctions = [a for a in auctions if a.get('property_id') in maricopa_prop_ids and a.get('status') in ['live', 'ended']]
+            
+            if target_auctions and users:
+                # Get current max bid ID
+                max_bid_id = max([int(bid['id'].split('_')[1]) for bid in existing_bids if 'bid_' in bid['id']], default=0)
+                
+                # Generate new bids
+                property_lookup = {p['id']: p for p in properties}
+                total_bids_to_add = random.randint(10, 15)
+                new_bids = []
+                
+                for i in range(total_bids_to_add):
+                    auction = random.choice(target_auctions)
+                    investor = random.choice(users)
+                    property_info = property_lookup[auction['property_id']]
+                    
+                    # Generate realistic bid amount
+                    estimated_value = property_info.get('estimated_value', 1000000)
+                    bid_amount = random.randint(int(estimated_value * 0.7), int(estimated_value * 1.2))
+                    
+                    new_bid_id = max_bid_id + i + 1
+                    bid_time = datetime.utcnow() - timedelta(hours=random.randint(1, 168))
+                    
+                    new_bid = {
+                        'id': f'bid_{new_bid_id}',
+                        'auction_id': auction['id'],
+                        'property_id': auction['property_id'],
+                        'investor_id': investor['id'],
+                        'bid_amount': bid_amount,
+                        'bid_time': bid_time,
+                        'status': random.choice(['winning', 'outbid', 'won']),
+                        'is_auto_bid': random.choice([True, False])
+                    }
+                    new_bids.append(new_bid)
+                
+                # Insert new bids
+                if new_bids:
+                    await db.bids.insert_many(new_bids)
+                
+                results["steps"].append({
+                    "step": 4,
+                    "name": "Add Maricopa Bidding Data",
+                    "status": "success",
+                    "details": f"Added {len(new_bids)} bids for {len(set(b['auction_id'] for b in new_bids))} Maricopa County auctions"
+                })
+            else:
+                results["steps"].append({
+                    "step": 4,
+                    "name": "Add Maricopa Bidding Data",
+                    "status": "skipped",
+                    "details": "No suitable Maricopa auctions or users found"
+                })
+                
+        except Exception as e:
+            results["steps"].append({
+                "step": 4,
+                "name": "Add Maricopa Bidding Data",
+                "status": "error",
+                "details": str(e)
+            })
+        
+        # Generate summary
+        successful_steps = [s for s in results["steps"] if s["status"] == "success"]
+        error_steps = [s for s in results["steps"] if s["status"] == "error"]
+        skipped_steps = [s for s in results["steps"] if s["status"] == "skipped"]
+        
+        results["summary"] = {
+            "total_steps": len(results["steps"]),
+            "successful": len(successful_steps),
+            "errors": len(error_steps),
+            "skipped": len(skipped_steps),
+            "overall_status": "success" if len(error_steps) == 0 else "partial_success"
+        }
+        
+        logger.info(f"Production data update completed: {results['summary']}")
+        return results
+        
+    except Exception as e:
+        logger.error(f"Critical error in production data update: {str(e)}")
+        return {
+            "message": "Production data update failed",
+            "error": str(e),
+            "timestamp": datetime.utcnow().isoformat()
+        }
+
 @api_router.post("/fix-bid-field-names")
 async def fix_bid_field_names():
     """Fix bidder_id to investor_id in existing bid records"""
