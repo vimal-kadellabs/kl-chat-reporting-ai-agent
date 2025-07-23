@@ -3034,7 +3034,6 @@ class AnalyticsService:
             # Create auction data with property title as primary identifier
             enhanced_auctions.append({
                 'auction_title': property_info.get('title', 'N/A'),  # Use property title as main identifier
-                'auction_id': auction['id'],  # Keep auction ID for reference but not primary
                 'bid_count': bid_count,
                 'property_type': property_info.get('property_type', 'unknown'),
                 'location': property_info.get('city', 'N/A'),
