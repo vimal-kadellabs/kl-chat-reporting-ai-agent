@@ -3247,7 +3247,6 @@ class AnalyticsService:
             auction_info = data['auction_info']
             
             top_properties.append({
-                'property_id': prop_id,
                 'title': prop_info['title'],
                 'location': f"{prop_info['city']}, {prop_info['state']}",
                 'property_type': prop_info['property_type'],
