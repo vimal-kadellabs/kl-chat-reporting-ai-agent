@@ -1037,11 +1037,13 @@ class AnalyticsService:
             elif intent == 'general_analysis':
                 # Check if query is about state-level analysis
                 if 'state' in user_query.lower() and ('bid' in user_query.lower() or 'auction' in user_query.lower()):
+                    logger.info(f"State-level query detected. Data structure: {list(structured_data.keys())}")
                     return await self.create_state_level_analysis_response(structured_data)
                 elif structured_data.get('raw_counts') and sum(structured_data.get('raw_counts', {}).values()) > 0:
                     return await self.create_general_enhanced_response(structured_data)
                 else:
                     # Use no-data response when no specific data is available
+                    logger.info(f"No specific data available for general analysis. Data keys: {list(structured_data.keys())}")
                     return await self.create_no_data_response(user_query)
                 
         except Exception as e:
