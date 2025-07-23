@@ -2183,7 +2183,7 @@ class AnalyticsService:
         # Chart 3: Line chart for bid activity
         chart3 = ChartData(
             data=[{"investor": inv['name'][:15], "total_bids": inv['total_bids'], 
-                   "won_auctions": inv['won_auctions']} for inv in investors],
+                   "winning_bids": inv['winning_bids']} for inv in investors],
             type="line",
             title="Bidding Activity vs Success",
             description="Relationship between bidding volume and auction wins"
