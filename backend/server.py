@@ -2692,7 +2692,7 @@ class AnalyticsService:
                 'group_by_location',
                 'properties_most_bids_timeframe',
                 # 'completed_auctions_summary',  # Function doesn't exist yet
-                'upcoming_auctions_by_value',
+                # 'upcoming_auctions_by_value',  # Function doesn't exist yet
                 'bidding_activity_by_property_type',
                 'auction_wins_by_investor_type',
                 # 'unsold_properties',  # Function doesn't exist yet
