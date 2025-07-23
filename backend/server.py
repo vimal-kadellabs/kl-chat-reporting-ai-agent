@@ -2678,22 +2678,27 @@ class AnalyticsService:
             
             # List of intents that have dedicated enhanced response functions with proper visualizations
             enhanced_response_intents = [
-                'cancelled_auctions',
-                'top_investors', 
-                'fewest_bids_auctions',
-                'investor_activity_by_property_type',
-                'location_based_auction_count',
-                'group_by_location',
-                'properties_most_bids_timeframe',
-                # 'completed_auctions_summary',  # Function doesn't exist yet
-                # 'upcoming_auctions_by_value',  # Function doesn't exist yet
-                'bidding_activity_by_property_type',
-                'auction_wins_by_investor_type',
-                # 'unsold_properties',  # Function doesn't exist yet
-                'property_types_exceeding_reserve',
-                'last_month_winners',
-                'regional_analysis',
-                'bidding_trends'
+                # ✅ VERIFIED EXISTING FUNCTIONS
+                'cancelled_auctions',                    # ✅ create_cancelled_auctions_enhanced_response EXISTS
+                'top_investors',                         # ✅ create_top_investors_enhanced_response EXISTS  
+                'fewest_bids_auctions',                  # ✅ create_fewest_bids_enhanced_response EXISTS
+                'group_by_location',                     # ✅ create_group_by_location_enhanced_response EXISTS
+                'last_month_winners',                    # ✅ create_last_month_winners_enhanced_response EXISTS
+                'regional_analysis',                     # ✅ create_regional_enhanced_response EXISTS
+                
+                # ❌ REMOVED - FUNCTIONS DON'T EXIST YET
+                # 'investor_activity_by_property_type',    # ❌ create_investor_activity_by_property_type_enhanced_response MISSING
+                # 'location_based_auction_count',          # ❌ create_location_based_auction_count_enhanced_response MISSING  
+                # 'properties_most_bids_timeframe',        # ❌ create_properties_most_bids_timeframe_enhanced_response MISSING
+                # 'bidding_activity_by_property_type',     # ❌ create_bidding_activity_by_property_type_enhanced_response MISSING
+                # 'auction_wins_by_investor_type',         # ❌ create_auction_wins_by_investor_type_enhanced_response MISSING
+                # 'property_types_exceeding_reserve',      # ❌ create_property_types_exceeding_reserve_enhanced_response MISSING
+                # 'bidding_trends',                        # ❌ create_bidding_trends_enhanced_response MISSING
+                
+                # ❌ ALREADY COMMENTED OUT
+                # 'completed_auctions_summary',            # ❌ Function doesn't exist yet
+                # 'upcoming_auctions_by_value',            # ❌ Function doesn't exist yet  
+                # 'unsold_properties',                     # ❌ Function doesn't exist yet
             ]
             
             # Use enhanced response function directly if available
