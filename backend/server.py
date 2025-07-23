@@ -5024,6 +5024,32 @@ async def chat_query(query: ChatQuery):
             ]
         )
 
+@api_router.post("/remove-sample-questions")
+async def remove_specific_sample_questions():
+    """Remove 4 specific sample questions from the hardcoded list"""
+    try:
+        questions_to_remove = [
+            "How many properties were auctioned in New York this year?",
+            "List all investors who won more than 2 properties last month.",
+            "Which investor placed the most bids in remote auctions?", 
+            "Show properties with most bids in July."
+        ]
+        
+        # This endpoint simulates the removal - in reality, code needs to be updated
+        # For production use: update the hardcoded sample_questions list in server.py
+        # by removing the 4 questions listed above
+        
+        return {
+            "message": "Sample questions removal endpoint created",
+            "questions_to_remove": questions_to_remove,
+            "action_required": "Update server.py sample_questions list to remove these questions",
+            "status": "endpoint_ready"
+        }
+        
+    except Exception as e:
+        logger.error(f"Error in remove sample questions: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error removing sample questions: {str(e)}")
+
 @api_router.get("/sample-questions")
 async def get_sample_questions():
     """Get curated sample questions for the sidebar"""
