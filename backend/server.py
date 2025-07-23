@@ -3796,6 +3796,36 @@ async def login(request: LoginRequest):
     # Dummy authentication
     return {"token": "dummy_token", "user": {"id": "demo_user", "email": request.email, "name": "John Doe"}}
 
+@api_router.post("/fix-bid-field-names")
+async def fix_bid_field_names():
+    """Fix bidder_id to investor_id in existing bid records"""
+    try:
+        # Find all bids with bidder_id field
+        bad_bids = await db.bids.find({"bidder_id": {"$exists": True}}).to_list(None)
+        
+        logger.info(f"Found {len(bad_bids)} bids with bidder_id field to fix")
+        
+        fixed_count = 0
+        for bid in bad_bids:
+            # Update the field name
+            await db.bids.update_one(
+                {"_id": bid["_id"]},
+                {
+                    "$set": {"investor_id": bid["bidder_id"]},
+                    "$unset": {"bidder_id": ""}
+                }
+            )
+            fixed_count += 1
+        
+        return {
+            "message": f"Fixed {fixed_count} bid records",
+            "fixed_count": fixed_count
+        }
+        
+    except Exception as e:
+        logger.error(f"Error fixing bid field names: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error fixing bids: {str(e)}")
+
 @api_router.post("/add-maricopa-bidding-data")
 async def add_maricopa_bidding_data():
     """Add 10-15 additional bids for Maricopa County auctions (LIVE priority, then ENDED)"""
