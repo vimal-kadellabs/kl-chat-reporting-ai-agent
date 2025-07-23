@@ -1475,19 +1475,30 @@ class AnalyticsService:
             return await self.create_no_data_response("state bid analysis")
 
     async def create_group_by_location_enhanced_response(self, data: dict) -> ChatResponse:
-        """Create enhanced response for group by location queries"""
+        """Create enhanced response for group by location queries with filter awareness"""
         try:
             grouped_data = data.get('group_by_location', [])
             grouping_type = data.get('grouping_type', 'location')
             summary = data.get('summary', {})
+            applied_filters = data.get('applied_filters', {})
             
             if not grouped_data:
                 return await self.create_no_data_response("location grouping")
             
-            # Create response text
-            response_text = f"## 📍 Data Grouped by {grouping_type.title()}\n\n"
-            response_text += f"**Comprehensive breakdown across {len(grouped_data)} {grouping_type}s**\n\n"
+            # Create filter description
+            filter_desc = self._create_filter_description(applied_filters)
             
+            # Create response text
+            response_text = f"## 📍 {filter_desc} Grouped by {grouping_type.title()}\n\n"
+            
+            # Show filter impact if filters were applied
+            if applied_filters.get('status_filters') or applied_filters.get('location_filters'):
+                before_total = applied_filters.get('total_before_filter', {})
+                after_total = applied_filters.get('total_after_filter', {})
+                response_text += f"**Filtered Results**: {after_total.get('auctions', 0)} auctions (from {before_total.get('auctions', 0)} total) "
+                response_text += f"and {after_total.get('bids', 0)} bids (from {before_total.get('bids', 0)} total)\n\n"
+            
+            response_text += f"**Comprehensive breakdown across {len(grouped_data)} {grouping_type}s**\n\n"
             response_text += f"### 🏆 Top Performing {grouping_type.title()}s:\n\n"
             
             for i, location_data in enumerate(grouped_data[:10], 1):
@@ -1496,11 +1507,42 @@ class AnalyticsService:
                 total_auctions = location_data['total_auctions']
                 avg_bid = location_data['avg_bid_amount']
                 properties = location_data['properties']
+                won_auctions = location_data.get('won_auctions', 0)
                 
                 response_text += f"**{i}. {location}**\n"
                 response_text += f"   - **{total_bids}** total bids across **{total_auctions}** auctions\n"
-                response_text += f"   - **{properties}** properties, Average bid: **${avg_bid:,.0f}**\n"
-                response_text += f"   - Ended: {location_data['ended_auctions']}, Won: {location_data['won_auctions']}, Active: {location_data['active_auctions']}\n\n"
+                response_text += f"   - **{properties}** properties"
+                if won_auctions > 0:
+                    response_text += f", **{won_auctions}** wins"
+                response_text += f", Average bid: **${avg_bid:,.0f}**\n"
+                
+                # Status breakdown with enhanced info
+                status_info = []
+                if location_data.get('ended_auctions', 0) > 0:
+                    status_info.append(f"Ended: {location_data['ended_auctions']}")
+                if location_data.get('active_auctions', 0) > 0:
+                    status_info.append(f"Active: {location_data['active_auctions']}")
+                if location_data.get('upcoming_auctions', 0) > 0:
+                    status_info.append(f"Upcoming: {location_data['upcoming_auctions']}")
+                if location_data.get('cancelled_auctions', 0) > 0:
+                    status_info.append(f"Cancelled: {location_data['cancelled_auctions']}")
+                
+                if status_info:
+                    response_text += f"   - Status: {', '.join(status_info)}\n"
+                
+                # Bid status breakdown
+                bid_info = []
+                if location_data.get('winning_bids', 0) > 0:
+                    bid_info.append(f"Winning: {location_data['winning_bids']}")
+                if location_data.get('won_bids', 0) > 0:
+                    bid_info.append(f"Won: {location_data['won_bids']}")
+                if location_data.get('outbid_count', 0) > 0:
+                    bid_info.append(f"Outbid: {location_data['outbid_count']}")
+                
+                if bid_info:
+                    response_text += f"   - Bids: {', '.join(bid_info)}\n"
+                
+                response_text += "\n"
             
             # Create charts
             charts = []
@@ -1511,7 +1553,8 @@ class AnalyticsService:
                     "location": loc['location'],
                     "total_bids": loc['total_bids'],
                     "auctions": loc['total_auctions'],
-                    "avg_bid": loc['avg_bid_amount']
+                    "avg_bid": loc['avg_bid_amount'],
+                    "won_auctions": loc.get('won_auctions', 0)
                 }
                 for loc in grouped_data[:12]
             ]
@@ -1519,8 +1562,8 @@ class AnalyticsService:
             charts.append({
                 "data": bid_chart_data,
                 "type": "bar",
-                "title": f"Bidding Activity by {grouping_type.title()}",
-                "description": f"Total bids and auction counts across different {grouping_type}s"
+                "title": f"{filter_desc} Activity by {grouping_type.title()}",
+                "description": f"Bidding activity across different {grouping_type}s with applied filters"
             })
             
             # Chart 2: Bid volume distribution
@@ -1529,17 +1572,18 @@ class AnalyticsService:
                     "location": loc['location'],
                     "volume": loc['total_bid_amount']
                 }
-                for loc in grouped_data[:8]
+                for loc in grouped_data[:8] if loc['total_bid_amount'] > 0
             ]
             
-            charts.append({
-                "data": volume_chart_data,
-                "type": "donut",
-                "title": f"Bid Volume Distribution by {grouping_type.title()}",
-                "description": f"Market share of total bidding volume by {grouping_type}"
-            })
+            if volume_chart_data:
+                charts.append({
+                    "data": volume_chart_data,
+                    "type": "donut",
+                    "title": f"Bid Volume Distribution by {grouping_type.title()}",
+                    "description": f"Market share of total bidding volume by {grouping_type}"
+                })
             
-            # Create comprehensive table
+            # Create comprehensive table with enhanced columns
             table_headers = [
                 grouping_type.title(),
                 "Total Bids",
@@ -1552,35 +1596,64 @@ class AnalyticsService:
                 "Upcoming"
             ]
             
+            # Add bid status columns if relevant
+            has_bid_status = any(loc.get('winning_bids', 0) > 0 or loc.get('won_bids', 0) > 0 for loc in grouped_data)
+            if has_bid_status:
+                table_headers.extend(["Winning", "Won Bids", "Outbid"])
+            
             table_rows = []
             for loc in grouped_data[:15]:
-                table_rows.append([
+                row = [
                     loc['location'],
                     str(loc['total_bids']),
                     str(loc['total_auctions']),
                     str(loc['properties']),
                     f"${loc['avg_bid_amount']:,.0f}",
                     f"${loc['total_bid_amount']:,.0f}",
-                    str(loc['won_auctions']),
-                    str(loc['active_auctions']),
-                    str(loc['upcoming_auctions'])
-                ])
+                    str(loc.get('won_auctions', 0)),
+                    str(loc.get('active_auctions', 0)),
+                    str(loc.get('upcoming_auctions', 0))
+                ]
+                
+                if has_bid_status:
+                    row.extend([
+                        str(loc.get('winning_bids', 0)),
+                        str(loc.get('won_bids', 0)),
+                        str(loc.get('outbid_count', 0))
+                    ])
+                
+                table_rows.append(row)
             
             tables = [{
                 "headers": table_headers,
                 "rows": table_rows,
-                "title": f"Comprehensive {grouping_type.title()} Analysis",
-                "description": f"Complete breakdown of auction and bidding activity by {grouping_type}"
+                "title": f"Comprehensive {filter_desc} Analysis by {grouping_type.title()}",
+                "description": f"Complete breakdown with applied filters by {grouping_type}"
             }]
             
-            # Create summary points
+            # Create enhanced summary points
             top_location = grouped_data[0] if grouped_data else {}
             summary_points = [
-                f"{top_location.get('location', 'N/A')} leads with {top_location.get('total_bids', 0)} total bids",
-                f"Data covers {len(grouped_data)} different {grouping_type}s with {summary.get('total_auctions', 0)} auctions",
-                f"Total bidding volume: ${summary.get('total_bid_amount', 0):,.0f} across {summary.get('total_bids', 0)} bids",
-                f"Top 5 {grouping_type}s account for {sum(loc['total_bids'] for loc in grouped_data[:5])} bids ({sum(loc['total_bids'] for loc in grouped_data[:5])/summary.get('total_bids', 1)*100:.1f}%)"
+                f"{top_location.get('location', 'N/A')} leads with {top_location.get('total_bids', 0)} total bids"
             ]
+            
+            # Add filter-specific insights
+            if applied_filters.get('status_filters'):
+                status_str = ', '.join(applied_filters['status_filters'])
+                summary_points.append(f"Filtered by status: {status_str}")
+            
+            if applied_filters.get('location_filters'):
+                location_str = ', '.join([f"{lf['value']} {lf['type']}" for lf in applied_filters['location_filters']])
+                summary_points.append(f"Filtered by location: {location_str}")
+            
+            summary_points.extend([
+                f"Data covers {len(grouped_data)} different {grouping_type}s with {summary.get('total_auctions', 0)} auctions",
+                f"Total bidding volume: ${summary.get('total_bid_amount', 0):,.0f} across {summary.get('total_bids', 0)} bids"
+            ])
+            
+            if len(grouped_data) >= 5:
+                top_percentage = sum(loc['total_bids'] for loc in grouped_data[:5])/summary.get('total_bids', 1)*100
+                summary_points.append(f"Top 5 {grouping_type}s account for {sum(loc['total_bids'] for loc in grouped_data[:5])} bids ({top_percentage:.1f}%)")
             
             return ChatResponse(
                 response=response_text,
@@ -1590,8 +1663,29 @@ class AnalyticsService:
             )
             
         except Exception as e:
-            logger.error(f"Error creating group by location response: {e}")
+            logger.error(f"Error creating enhanced group by location response: {e}")
             return await self.create_no_data_response("location grouping")
+    
+    def _create_filter_description(self, applied_filters: dict) -> str:
+        """Create a description of applied filters for display"""
+        parts = []
+        
+        if applied_filters.get('dataset_types'):
+            dataset_str = ', '.join(applied_filters['dataset_types'])
+            parts.append(dataset_str.title())
+        
+        if applied_filters.get('status_filters'):
+            status_str = ', '.join(applied_filters['status_filters'])
+            parts.append(f"({status_str.title()})")
+        
+        if applied_filters.get('location_filters'):
+            location_parts = []
+            for lf in applied_filters['location_filters']:
+                location_parts.append(f"{lf['value']} {lf['type'].title()}")
+            if location_parts:
+                parts.append(f"from {', '.join(location_parts)}")
+        
+        return ' '.join(parts) if parts else "Data"
 
     async def create_cancelled_auctions_enhanced_response(self, data: dict) -> ChatResponse:
         """Create enhanced response for cancelled auctions query"""
