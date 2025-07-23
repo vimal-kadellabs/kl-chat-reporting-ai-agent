@@ -283,6 +283,17 @@ class AnalyticsService:
                 'bidding activity in', 'compare bids in', 'auction stats for',
                 'auction data for', 'bid volume in', 'bids across', 'auction wins across'
             ],
+            'group_by_location': [
+                'group by city', 'group by county', 'group by state',
+                'group auctions by city', 'group auctions by state', 'group auctions by county',
+                'group wins by city', 'group wins by county', 'group wins by state',
+                'group bids by city', 'group bids by state', 'group bids by county',
+                'bids grouped by state', 'wins grouped by county', 'auctions grouped by city',
+                'group data by location', 'grouped by location', 'location-wise breakdown',
+                'breakdown by location', 'city-wise bids', 'county-wise wins', 'state-wise auctions',
+                'show breakdown by', 'breakdown by state', 'breakdown by city', 'breakdown by county',
+                'categorize by location', 'organize by location', 'sort by location'
+            ],
             'properties_most_bids_timeframe': [
                 'properties with most bids', 'most bids in', 'highest bid count',
                 'properties with highest bids', 'top bid properties',
