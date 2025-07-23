@@ -3031,13 +3031,18 @@ class AnalyticsService:
             bid_count = auction_bid_counts.get(auction['id'], 0)
             property_info = property_lookup.get(auction['property_id'], {})
             
+            # Create auction data with property title as primary identifier
             enhanced_auctions.append({
-                **auction,
+                'auction_title': property_info.get('title', 'N/A'),  # Use property title as main identifier
+                'auction_id': auction['id'],  # Keep auction ID for reference but not primary
                 'bid_count': bid_count,
                 'property_type': property_info.get('property_type', 'unknown'),
-                'property_title': property_info.get('title', 'N/A'),
                 'location': property_info.get('city', 'N/A'),
-                'state': property_info.get('state', 'N/A')
+                'state': property_info.get('state', 'N/A'),
+                'status': auction.get('status', 'unknown'),
+                'start_time': auction.get('start_time'),
+                'end_time': auction.get('end_time'),
+                'starting_bid': auction.get('starting_bid', 0)
             })
         
         # Sort by bid count (ascending - fewest first)
