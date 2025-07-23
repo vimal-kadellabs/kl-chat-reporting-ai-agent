@@ -1626,7 +1626,7 @@ class AnalyticsService:
                     "description": f"Market share of total bidding volume by {grouping_type}"
                 })
             
-            # Create comprehensive table with enhanced columns
+            # Create comprehensive table with enhanced columns (WON and WON BIDS removed per Task 5)
             table_headers = [
                 grouping_type.title(),
                 "Total Bids",
@@ -1634,15 +1634,15 @@ class AnalyticsService:
                 "Properties",
                 "Avg Bid",
                 "Total Volume",
-                "Won",
+                # "Won",  # Removed per Task 5 requirement
                 "Active",
                 "Upcoming"
             ]
             
-            # Add bid status columns if relevant
-            has_bid_status = any(loc.get('winning_bids', 0) > 0 or loc.get('won_bids', 0) > 0 for loc in grouped_data)
+            # Add bid status columns if relevant (but exclude WON BIDS per Task 5)
+            has_bid_status = any(loc.get('winning_bids', 0) > 0 or loc.get('outbid_count', 0) > 0 for loc in grouped_data)
             if has_bid_status:
-                table_headers.extend(["Winning", "Won Bids", "Outbid"])
+                table_headers.extend(["Winning", "Outbid"])  # Removed "Won Bids" per Task 5
             
             table_rows = []
             for loc in grouped_data[:15]:
