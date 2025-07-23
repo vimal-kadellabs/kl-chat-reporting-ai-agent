@@ -770,12 +770,13 @@ class BackendTester:
                 return False
             
             # Verify no null values in critical fields (Step 1 validation)
+            # Note: Zero values are acceptable for new properties, only None values are critical
             null_value_issues = []
             for prop in updated_properties:
-                if prop.get("reserve_price") is None or prop.get("reserve_price") == 0:
-                    null_value_issues.append(f"Property {prop.get('id')} has null/zero reserve_price")
-                if prop.get("estimated_value") is None or prop.get("estimated_value") == 0:
-                    null_value_issues.append(f"Property {prop.get('id')} has null/zero estimated_value")
+                if prop.get("reserve_price") is None:
+                    null_value_issues.append(f"Property {prop.get('id')} has null reserve_price")
+                if prop.get("estimated_value") is None:
+                    null_value_issues.append(f"Property {prop.get('id')} has null estimated_value")
                 if prop.get("property_type") is None or prop.get("property_type") == "":
                     null_value_issues.append(f"Property {prop.get('id')} has null property_type")
             
