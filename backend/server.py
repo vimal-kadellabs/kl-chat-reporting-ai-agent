@@ -1890,7 +1890,7 @@ class AnalyticsService:
             # Bar chart of bid counts
             charts.append(ChartData(
                 data=[{
-                    "auction": f"{auction.get('property_title', 'N/A')[:20]}...",
+                    "auction": f"{auction.get('auction_title', 'N/A')[:20]}...",
                     "bid_count": auction['bid_count'],
                     "location": auction.get('location', 'N/A')
                 } for auction in fewest_bids_auctions],
@@ -1907,7 +1907,7 @@ class AnalyticsService:
             
             for auction in fewest_bids_auctions:
                 rows.append([
-                    auction.get('property_title', 'N/A'),
+                    auction.get('auction_title', 'N/A'),
                     f"{auction.get('location', 'N/A')}, {auction.get('state', 'N/A')}",
                     auction.get('property_type', 'unknown').capitalize(),
                     auction['bid_count'],
