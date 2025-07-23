@@ -3891,7 +3891,7 @@ async def add_maricopa_bidding_data():
                 'id': f'bid_{new_bid_id}',
                 'auction_id': auction['id'],
                 'property_id': auction['property_id'],
-                'bidder_id': investor['id'],
+                'investor_id': investor['id'],  # Fixed: was bidder_id, should be investor_id
                 'bid_amount': bid_amount,
                 'bid_time': bid_time,
                 'status': bid_status,
