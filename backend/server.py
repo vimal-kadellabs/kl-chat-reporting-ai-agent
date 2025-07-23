@@ -275,8 +275,13 @@ class AnalyticsService:
             'location_based_auction_count': [
                 'auctions in', 'properties auctioned in', 'how many auctions',
                 'auction count in', 'auctions by location', 'auctions by city',
-                'auctions by state', 'properties in new york', 'auctions in california',
-                'how many properties were auctioned', 'property count by location'
+                'auctions by state', 'properties in', 'how many properties were auctioned',
+                'property count by location', 'bids in', 'bid count in', 'number of bids in',
+                'total bids in', 'bids placed in', 'bids by city', 'bids by state',
+                'bids by county', 'auction wins in', 'auction wins by location',
+                'most bids in', 'most auction wins in', 'county with most wins',
+                'bidding activity in', 'compare bids in', 'auction stats for',
+                'auction data for', 'bid volume in', 'bids across', 'auction wins across'
             ],
             'properties_most_bids_timeframe': [
                 'properties with most bids', 'most bids in', 'highest bid count',
