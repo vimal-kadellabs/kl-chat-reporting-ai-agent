@@ -3394,7 +3394,8 @@ class AnalyticsService:
             prop_info = property_lookup.get(auction['property_id'], {})
             
             enhanced_upcoming.append({
-                'auction_id': auction['id'],
+                # 'auction_id': auction['id'],  # Removed as per Task 3 requirement
+                'property_name': prop_info.get('title', 'N/A'),  # Renamed for clarity in graphs
                 'title': prop_info.get('title', 'N/A'),
                 'property_type': prop_info.get('property_type', 'unknown'),
                 'location': f"{prop_info.get('city', 'N/A')}, {prop_info.get('state', 'N/A')}",
