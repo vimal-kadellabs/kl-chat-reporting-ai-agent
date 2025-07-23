@@ -502,6 +502,9 @@ class AnalyticsService:
             elif primary_intent == 'location_based_auction_count':
                 structured_data['data'] = await self.get_location_based_auction_count_data(properties, auctions, bids, entities)
                 
+            elif primary_intent == 'group_by_location':
+                structured_data['data'] = await self.get_group_by_location_data(properties, auctions, bids, entities)
+                
             elif primary_intent == 'properties_most_bids_timeframe':
                 structured_data['data'] = await self.get_properties_most_bids_timeframe_data(properties, auctions, bids, entities)
                 
