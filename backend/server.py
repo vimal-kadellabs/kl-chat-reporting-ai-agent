@@ -3097,7 +3097,6 @@ class AnalyticsService:
             dominant_type = max(property_types, key=lambda pt: activity.get(pt, 0))
             
             investor_list.append({
-                'investor_id': investor_id,
                 'investor_name': activity['investor_name'],
                 'total_bids': activity['total_bids'],
                 'residential_bids': activity['residential'],
