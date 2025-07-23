@@ -62,11 +62,19 @@ const ChatMessage = ({ message }) => {
               )}
 
               {/* Multiple Charts - Compact Layout */}
-              {message.charts && message.charts.length > 0 && (
+              {message.charts && message.charts.length > 0 && message.charts.some(chart => {
+                // Check if chart has valid data
+                const chartData = Array.isArray(chart.data) ? chart.data : chart.data?.data;
+                return Array.isArray(chartData) && chartData.length > 0;
+              }) && (
                 <div className="mb-6">
                   {/* Charts Grid - Enhanced Two Column Layout with Responsive Breakpoints */}
                   <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-2 gap-4 md:gap-6 auto-rows-fr">
-                    {message.charts.map((chart, index) => (
+                    {message.charts.filter(chart => {
+                      // Only render charts with valid data
+                      const chartData = Array.isArray(chart.data) ? chart.data : chart.data?.data;
+                      return Array.isArray(chartData) && chartData.length > 0;
+                    }).map((chart, index) => (
                       <div 
                         key={index} 
                         className={`bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20 overflow-hidden flex flex-col ${
