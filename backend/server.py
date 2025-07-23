@@ -1049,6 +1049,136 @@ class AnalyticsService:
             # Even in error cases, provide no-data response
             return await self.create_no_data_response(user_query)
     
+    async def create_state_level_analysis_response(self, structured_data: dict) -> ChatResponse:
+        """Create enhanced response for state-level bid analysis"""
+        try:
+            # Get all data
+            properties = structured_data.get('data', {}).get('properties', [])
+            auctions = structured_data.get('data', {}).get('auctions', [])
+            bids = structured_data.get('data', {}).get('bids', [])
+            
+            # Create property lookup
+            property_lookup = {prop['id']: prop for prop in properties}
+            auction_lookup = {auction['property_id']: auction for auction in auctions}
+            
+            # Aggregate bid data by state
+            state_data = {}
+            
+            for bid in bids:
+                # Get property through auction
+                auction = auction_lookup.get(bid.get('property_id'))
+                if auction:
+                    property_info = property_lookup.get(auction['property_id'])
+                    if property_info:
+                        state = property_info.get('state', 'Unknown')
+                        
+                        if state not in state_data:
+                            state_data[state] = {
+                                'state': state,
+                                'total_bids': 0,
+                                'total_bid_amount': 0,
+                                'active_auctions': set(),
+                                'properties': set(),
+                                'avg_bid_amount': 0
+                            }
+                        
+                        state_data[state]['total_bids'] += 1
+                        state_data[state]['total_bid_amount'] += bid.get('bid_amount', 0)
+                        state_data[state]['active_auctions'].add(auction['id'])
+                        state_data[state]['properties'].add(property_info['id'])
+            
+            # Convert sets to counts and calculate averages
+            state_list = []
+            for state, data in state_data.items():
+                data['active_auctions'] = len(data['active_auctions'])
+                data['properties'] = len(data['properties'])
+                data['avg_bid_amount'] = data['total_bid_amount'] / data['total_bids'] if data['total_bids'] > 0 else 0
+                state_list.append(data)
+            
+            # Sort by total bids (descending)
+            state_list.sort(key=lambda x: x['total_bids'], reverse=True)
+            
+            # Create response
+            if not state_list:
+                return await self.create_no_data_response("state bid analysis")
+            
+            top_state = state_list[0]
+            
+            response_text = "## 🗺️ State-Level Bidding Analysis\n\n"
+            response_text += f"**{top_state['state']} leads with the highest bidding activity**\n\n"
+            
+            response_text += "### 📊 Top Performing States:\n\n"
+            for i, state in enumerate(state_list[:5], 1):
+                response_text += f"{i}. **{state['state']}**: {state['total_bids']} bids across {state['active_auctions']} auctions\n"
+                response_text += f"   - Average bid: ${state['avg_bid_amount']:,.0f}\n"
+                response_text += f"   - Properties: {state['properties']}\n\n"
+            
+            # Create chart data
+            chart_data = [
+                {
+                    "state": state['state'],
+                    "total_bids": state['total_bids'],
+                    "avg_bid_amount": state['avg_bid_amount'],
+                    "auctions": state['active_auctions']
+                }
+                for state in state_list[:10]
+            ]
+            
+            # Create table data
+            table_rows = [
+                [
+                    state['state'],
+                    str(state['total_bids']),
+                    str(state['active_auctions']),
+                    str(state['properties']),
+                    f"${state['avg_bid_amount']:,.0f}",
+                    f"${state['total_bid_amount']:,.0f}"
+                ]
+                for state in state_list[:10]
+            ]
+            
+            charts = [
+                {
+                    "data": chart_data,
+                    "type": "bar",
+                    "title": "Total Bids by State",
+                    "description": "Comparison of bidding activity across different states"
+                },
+                {
+                    "data": [{"state": s['state'], "amount": s['total_bid_amount']} for s in state_list[:8]],
+                    "type": "donut", 
+                    "title": "Total Bid Volume by State",
+                    "description": "Market share of total bidding volume by state"
+                }
+            ]
+            
+            tables = [
+                {
+                    "headers": ["State", "Total Bids", "Auctions", "Properties", "Avg Bid", "Total Volume"],
+                    "rows": table_rows,
+                    "title": "State Bidding Performance",
+                    "description": "Comprehensive bidding metrics by state"
+                }
+            ]
+            
+            summary_points = [
+                f"{top_state['state']} leads with {top_state['total_bids']} total bids",
+                f"Top 3 states account for {sum(s['total_bids'] for s in state_list[:3])} bids",
+                f"Average bid amount varies from ${min(s['avg_bid_amount'] for s in state_list):,.0f} to ${max(s['avg_bid_amount'] for s in state_list):,.0f}",
+                f"{len(state_list)} states have active bidding activity"
+            ]
+            
+            return ChatResponse(
+                response=response_text,
+                charts=charts,
+                tables=tables,
+                summary_points=summary_points
+            )
+            
+        except Exception as e:
+            logger.error(f"Error creating state-level analysis: {e}")
+            return await self.create_no_data_response("state bid analysis")
+
     async def create_cancelled_auctions_enhanced_response(self, data: dict) -> ChatResponse:
         """Create enhanced response for cancelled auctions query"""
         cancellation_analysis = data.get('cancellation_analysis', {})
