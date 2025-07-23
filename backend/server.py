@@ -1646,6 +1646,10 @@ class AnalyticsService:
             
             table_rows = []
             for loc in grouped_data[:15]:
+                # Filter out None county values per Task 5 requirement
+                if loc['location'] is None or str(loc['location']).lower() == 'none':
+                    continue
+                    
                 row = [
                     loc['location'],
                     str(loc['total_bids']),
@@ -1653,7 +1657,7 @@ class AnalyticsService:
                     str(loc['properties']),
                     f"${loc['avg_bid_amount']:,.0f}",
                     f"${loc['total_bid_amount']:,.0f}",
-                    str(loc.get('won_auctions', 0)),
+                    # str(loc.get('won_auctions', 0)),  # Removed per Task 5 requirement
                     str(loc.get('active_auctions', 0)),
                     str(loc.get('upcoming_auctions', 0))
                 ]
@@ -1661,7 +1665,7 @@ class AnalyticsService:
                 if has_bid_status:
                     row.extend([
                         str(loc.get('winning_bids', 0)),
-                        str(loc.get('won_bids', 0)),
+                        # str(loc.get('won_bids', 0)),  # Removed per Task 5 requirement
                         str(loc.get('outbid_count', 0))
                     ])
                 
