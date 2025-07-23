@@ -497,7 +497,15 @@ class AnalyticsService:
         for pattern_name, regex in location_patterns.items():
             matches = re.findall(regex, query_lower)
             if matches:
-                location_type = pattern_name.split('_')[1]  # county, city, state
+                if 'state' in pattern_name:
+                    location_type = 'state'
+                elif 'county' in pattern_name:
+                    location_type = 'county'
+                elif 'city' in pattern_name:
+                    location_type = 'city'
+                else:
+                    location_type = 'state'  # default
+                    
                 for match in matches:
                     entities['location_filters'].append({
                         'type': location_type,
