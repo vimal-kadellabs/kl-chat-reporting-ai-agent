@@ -509,6 +509,10 @@ class AnalyticsService:
                 
             else:  # general_analysis
                 structured_data['data'] = await self.get_general_analysis_data(users, properties, auctions, bids)
+                # For state-level analysis, also include raw data
+                structured_data['data']['properties'] = properties
+                structured_data['data']['auctions'] = auctions
+                structured_data['data']['bids'] = bids
             
             return structured_data
             
