@@ -280,6 +280,7 @@ class AnalyticsService:
                 'regional auctions', 'regional bids'
             ],
             'group_by_location': [
+                # Direct grouping patterns
                 'group by city', 'group by county', 'group by state', 'group by location',
                 'group auctions by city', 'group auctions by state', 'group auctions by county',
                 'group wins by city', 'group wins by county', 'group wins by state',
@@ -289,7 +290,18 @@ class AnalyticsService:
                 'breakdown by location', 'city-wise bids', 'county-wise wins', 'state-wise auctions',
                 'show breakdown by', 'breakdown by state', 'breakdown by city', 'breakdown by county',
                 'categorize by location', 'organize by location', 'sort by location',
-                'group the auctions by', 'group all auctions by', 'group the bids by'
+                'group the auctions by', 'group all auctions by', 'group the bids by',
+
+                # Added patterns with filter + grouping
+                'group open auctions by county', 'group live auctions by state', 'group closed bids by city',
+                'group active auctions by city', 'group ended auctions by county',
+                'group upcoming auctions by state', 'group cancelled bids by city',
+                'can you group open auctions by county', 'can you group auctions by state',
+                'group only live auctions by', 'group finished auctions by county',
+                'group auctions that are open by county', 'group ongoing auctions by state',
+                'filter open auctions and group by county', 'filter by live auctions then group by city',
+                'group current auctions by state', 'show open auctions grouped by county',
+                'group won auctions by', 'group winning bids by', 'group outbid auctions by'
             ],
             'properties_most_bids_timeframe': [
                 'properties with most bids', 'most bids in', 'highest bid count',
