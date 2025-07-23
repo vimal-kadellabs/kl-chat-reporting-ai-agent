@@ -3799,6 +3799,11 @@ async def login(request: LoginRequest):
     # Dummy authentication
     return {"token": "dummy_token", "user": {"id": "demo_user", "email": request.email, "name": "John Doe"}}
 
+@api_router.get("/health")
+async def health_check():
+    """Simple health check endpoint for connectivity testing"""
+    return {"status": "ok", "timestamp": datetime.utcnow().isoformat()}
+
 @api_router.get("/users", response_model=List[User])
 async def get_users():
     users = await db.users.find().to_list(None)  # Remove limit to get all users
