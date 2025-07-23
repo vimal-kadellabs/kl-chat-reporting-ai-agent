@@ -96,9 +96,17 @@ const ChatMessage = ({ message }) => {
               )}
 
               {/* Tables - Full Width with Enhanced Horizontal Scroll */}
-              {message.tables && message.tables.length > 0 && (
+              {message.tables && message.tables.length > 0 && message.tables.some(table => {
+                // Check if table has valid data
+                return table.headers && Array.isArray(table.headers) && table.headers.length > 0 &&
+                       table.rows && Array.isArray(table.rows) && table.rows.length > 0;
+              }) && (
                 <div className="mb-6">
-                  {message.tables.map((table, index) => (
+                  {message.tables.filter(table => {
+                    // Only render tables with valid data
+                    return table.headers && Array.isArray(table.headers) && table.headers.length > 0 &&
+                           table.rows && Array.isArray(table.rows) && table.rows.length > 0;
+                  }).map((table, index) => (
                     <div 
                       key={index} 
                       className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20 overflow-hidden mb-4 last:mb-0"
