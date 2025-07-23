@@ -4023,8 +4023,8 @@ async def update_production_data():
                 "details": str(e)
             })
         
-        # STEP 4: Add Maricopa County bidding data
-        logger.info("Step 4: Adding Maricopa bidding data...")
+        # STEP 5: Add Maricopa County bidding data
+        logger.info("Step 5: Adding Maricopa bidding data...")
         try:
             # Get existing data
             properties = await db.properties.find().to_list(None)
@@ -4074,14 +4074,14 @@ async def update_production_data():
                     await db.bids.insert_many(new_bids)
                 
                 results["steps"].append({
-                    "step": 4,
+                    "step": 5,
                     "name": "Add Maricopa Bidding Data",
                     "status": "success",
                     "details": f"Added {len(new_bids)} bids for {len(set(b['auction_id'] for b in new_bids))} Maricopa County auctions"
                 })
             else:
                 results["steps"].append({
-                    "step": 4,
+                    "step": 5,
                     "name": "Add Maricopa Bidding Data",
                     "status": "skipped",
                     "details": "No suitable Maricopa auctions or users found"
@@ -4089,7 +4089,7 @@ async def update_production_data():
                 
         except Exception as e:
             results["steps"].append({
-                "step": 4,
+                "step": 5,
                 "name": "Add Maricopa Bidding Data",
                 "status": "error",
                 "details": str(e)
