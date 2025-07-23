@@ -368,6 +368,7 @@ class AnalyticsService:
             'investor_activity_by_property_type',
             'fewest_bids_auctions', 
             'location_based_auction_count',
+            'group_by_location',
             'properties_most_bids_timeframe',
             'completed_auctions_summary',
             'upcoming_auctions_by_value',
