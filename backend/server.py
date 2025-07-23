@@ -951,10 +951,25 @@ class AnalyticsService:
                     property_info = property_lookup.get(auction['property_id'])
                     if property_info:
                         for location_filter in location_filters:
-                            property_location = property_info.get(location_filter['type'], '').lower()
-                            if location_filter['value'].lower() in property_location:
-                                location_filtered_auctions.append(auction)
-                                break
+                            filter_value = location_filter['value'].lower()
+                            filter_type = location_filter['type']
+                            
+                            # Get property location value
+                            if filter_type == 'state':
+                                property_location = property_info.get('state', '').lower()
+                                # Handle state name vs abbreviation matching
+                                if (filter_value == 'california' and property_location == 'ca') or \
+                                   (filter_value == 'texas' and property_location == 'tx') or \
+                                   (filter_value == 'new york' and property_location == 'ny') or \
+                                   (filter_value == 'florida' and property_location == 'fl') or \
+                                   (filter_value == property_location):
+                                    location_filtered_auctions.append(auction)
+                                    break
+                            else:
+                                property_location = property_info.get(filter_type, '').lower()
+                                if filter_value in property_location or property_location in filter_value:
+                                    location_filtered_auctions.append(auction)
+                                    break
                 filtered_auctions = location_filtered_auctions
             
             # Filter for won auctions if wins dataset is requested
