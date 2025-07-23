@@ -19,27 +19,31 @@ axios.defaults.baseURL = API;
 
 function AppContent() {
   const { isAuthenticated, user } = useAuth();
+  const isOnline = useOnlineStatus();
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Routes>
-        <Route 
-          path="/login" 
-          element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} 
-        />
-        <Route 
-          path="/dashboard" 
-          element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} 
-        />
-        <Route 
-          path="/chat" 
-          element={isAuthenticated ? <ChatInterface /> : <Navigate to="/login" />} 
-        />
-        <Route 
-          path="/" 
-          element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} 
-        />
-      </Routes>
+      <OfflineWarning isVisible={!isOnline} />
+      <div className={`transition-all duration-300 ${!isOnline ? 'pt-16' : ''}`}>
+        <Routes>
+          <Route 
+            path="/login" 
+            element={isAuthenticated ? <Navigate to="/dashboard" /> : <LoginPage />} 
+          />
+          <Route 
+            path="/dashboard" 
+            element={isAuthenticated ? <Dashboard /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/chat" 
+            element={isAuthenticated ? <ChatInterface isOnline={isOnline} /> : <Navigate to="/login" />} 
+          />
+          <Route 
+            path="/" 
+            element={<Navigate to={isAuthenticated ? "/dashboard" : "/login"} />} 
+          />
+        </Routes>
+      </div>
     </div>
   );
 }
