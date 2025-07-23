@@ -416,6 +416,92 @@ class AnalyticsService:
         # If no priority match, return first detected
         return detected_intents[0]
     
+    def extract_grouping_entities(self, user_query: str) -> dict:
+        """Extract advanced grouping entities including dataset type, status filters, location filters, and grouping type"""
+        query_lower = user_query.lower()
+        
+        entities = {
+            'dataset_type': [],
+            'status_filters': [],
+            'location_filters': [],
+            'grouping_type': 'state',  # default
+            'action_type': 'group',
+            'raw_query': query_lower
+        }
+        
+        # Dataset Type Detection
+        dataset_patterns = {
+            'auctions': ['auction', 'auctions'],
+            'bids': ['bid', 'bids', 'bidding'],
+            'wins': ['win', 'wins', 'won', 'winner', 'winners'],
+            'properties': ['property', 'properties']
+        }
+        
+        for dataset, patterns in dataset_patterns.items():
+            for pattern in patterns:
+                if pattern in query_lower:
+                    entities['dataset_type'].append(dataset)
+                    break
+        
+        # Status Filter Detection with comprehensive mapping
+        status_mappings = {
+            # Auction statuses
+            'live': ['live', 'active', 'current', 'open', 'ongoing'],
+            'ended': ['ended', 'finished', 'closed', 'completed', 'done'],
+            'upcoming': ['upcoming', 'future', 'scheduled', 'pending'],
+            'cancelled': ['cancelled', 'canceled', 'stopped', 'terminated'],
+            
+            # Bid statuses  
+            'winning': ['winning', 'leading', 'top', 'highest'],
+            'won': ['won', 'successful', 'victorious'],
+            'outbid': ['outbid', 'lost', 'unsuccessful', 'beaten']
+        }
+        
+        for status, keywords in status_mappings.items():
+            for keyword in keywords:
+                if keyword in query_lower:
+                    entities['status_filters'].append(status)
+                    break
+        
+        # Location Filter Detection (specific locations mentioned)
+        location_patterns = {
+            'from_county': r'from (\w+) county',
+            'in_county': r'in (\w+) county', 
+            'from_city': r'from (\w+) city',
+            'in_city': r'in (\w+) city',
+            'from_state': r'from (\w+) state',
+            'in_state': r'in (\w+) state'
+        }
+        
+        import re
+        for pattern_name, regex in location_patterns.items():
+            matches = re.findall(regex, query_lower)
+            if matches:
+                location_type = pattern_name.split('_')[1]  # county, city, state
+                for match in matches:
+                    entities['location_filters'].append({
+                        'type': location_type,
+                        'value': match.title()
+                    })
+        
+        # Grouping Type Detection
+        if 'county' in query_lower:
+            entities['grouping_type'] = 'county'
+        elif 'city' in query_lower:
+            entities['grouping_type'] = 'city'
+        elif 'state' in query_lower:
+            entities['grouping_type'] = 'state'
+        
+        # Action Type Detection
+        if 'sort' in query_lower:
+            entities['action_type'] = 'sort'
+        elif 'breakdown' in query_lower:
+            entities['action_type'] = 'breakdown'
+        else:
+            entities['action_type'] = 'group'
+        
+        return entities
+
     def extract_entities(self, user_query: str) -> dict:
         """Extract specific entities like time periods, locations, property types"""
         query_lower = user_query.lower()
