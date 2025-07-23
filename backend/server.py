@@ -486,7 +486,11 @@ class AnalyticsService:
             'from_city': r'from (\w+) city',
             'in_city': r'in (\w+) city',
             'from_state': r'from (\w+) state',
-            'in_state': r'in (\w+) state'
+            'in_state': r'in (\w+) state',
+            'for_state': r'for (\w+)$',  # "for California"
+            'for_state_2': r'for (\w+)\s',  # "for California "
+            'in_state_name': r'in (california|texas|new york|florida|arizona|washington|illinois|georgia|nevada|colorado|oregon|north carolina|michigan|ohio|pennsylvania|virginia|maryland|wisconsin|minnesota|tennessee|missouri|indiana|massachusetts|louisiana|south carolina|alabama|oklahoma|arkansas|utah|iowa|kansas|mississippi|nebraska|west virginia|idaho|new mexico|maine|new hampshire|hawaii|delaware|vermont|alaska|north dakota|south dakota|montana|wyoming|connecticut|rhode island)',
+            'for_state_name': r'for (california|texas|new york|florida|arizona|washington|illinois|georgia|nevada|colorado|oregon|north carolina|michigan|ohio|pennsylvania|virginia|maryland|wisconsin|minnesota|tennessee|missouri|indiana|massachusetts|louisiana|south carolina|alabama|oklahoma|arkansas|utah|iowa|kansas|mississippi|nebraska|west virginia|idaho|new mexico|maine|new hampshire|hawaii|delaware|vermont|alaska|north dakota|south dakota|montana|wyoming|connecticut|rhode island)'
         }
         
         import re
