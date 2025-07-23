@@ -890,40 +890,60 @@ class AnalyticsService:
         }
 
     async def get_group_by_location_data(self, properties: list, auctions: list, bids: list, entities: dict) -> dict:
-        """Get data grouped by location (city, county, or state)"""
+        """Get data grouped by location with advanced filtering"""
         try:
-            # Determine grouping level based on query
-            group_by = 'state'  # default
-            for entity_type, entity_list in entities.items():
-                if entity_type == 'locations':
-                    for location in entity_list:
-                        if 'city' in location.lower():
-                            group_by = 'city'
-                        elif 'county' in location.lower():
-                            group_by = 'county'
-                        elif 'state' in location.lower():
-                            group_by = 'state'
+            # Use enhanced entity extraction
+            grouping_entities = self.extract_grouping_entities(entities.get('raw_query', [''])[0] if entities.get('raw_query') else '')
             
-            # Also check if query explicitly mentions grouping type
-            query_lower = ' '.join(entities.get('raw_query', ['']))
-            if 'county' in query_lower:
-                group_by = 'county'
-            elif 'city' in query_lower:
-                group_by = 'city'
-            elif 'state' in query_lower:
-                group_by = 'state'
+            group_by = grouping_entities['grouping_type']
+            dataset_types = grouping_entities['dataset_type'] or ['auctions']  # default to auctions
+            status_filters = grouping_entities['status_filters']
+            location_filters = grouping_entities['location_filters']
             
-            logger.info(f"Grouping data by: {group_by}")
+            logger.info(f"Enhanced grouping - Type: {group_by}, Dataset: {dataset_types}, Status: {status_filters}, Location filters: {location_filters}")
             
             # Create lookup dictionaries
             property_lookup = {prop['id']: prop for prop in properties}
             auction_lookup = {auction['property_id']: auction for auction in auctions}
             
+            # Apply filters to datasets
+            filtered_auctions = auctions.copy()
+            filtered_bids = bids.copy()
+            
+            # Filter auctions by status if specified
+            if status_filters:
+                auction_status_filters = [s for s in status_filters if s in ['live', 'ended', 'upcoming', 'cancelled']]
+                if auction_status_filters:
+                    filtered_auctions = [a for a in filtered_auctions if a.get('status') in auction_status_filters]
+            
+            # Filter auctions by location if specified
+            if location_filters:
+                location_filtered_auctions = []
+                for auction in filtered_auctions:
+                    property_info = property_lookup.get(auction['property_id'])
+                    if property_info:
+                        for location_filter in location_filters:
+                            property_location = property_info.get(location_filter['type'], '').lower()
+                            if location_filter['value'].lower() in property_location:
+                                location_filtered_auctions.append(auction)
+                                break
+                filtered_auctions = location_filtered_auctions
+            
+            # Filter for won auctions if wins dataset is requested
+            if 'wins' in dataset_types:
+                filtered_auctions = [a for a in filtered_auctions if a.get('winner_id')]
+            
+            # Filter bids by status if specified
+            if status_filters:
+                bid_status_filters = [s for s in status_filters if s in ['winning', 'won', 'outbid']]
+                if bid_status_filters:
+                    filtered_bids = [b for b in filtered_bids if b.get('status') in bid_status_filters]
+            
             # Group data by location
             location_groups = {}
             
-            # Process auctions
-            for auction in auctions:
+            # Process filtered auctions
+            for auction in filtered_auctions:
                 property_info = property_lookup.get(auction['property_id'])
                 if property_info:
                     location_key = property_info.get(group_by, 'Unknown')
@@ -939,7 +959,11 @@ class AnalyticsService:
                             'active_auctions': 0,
                             'upcoming_auctions': 0,
                             'ended_auctions': 0,
-                            'property_types': set()
+                            'cancelled_auctions': 0,
+                            'property_types': set(),
+                            'winning_bids': 0,
+                            'won_bids': 0,
+                            'outbid_count': 0
                         }
                     
                     location_groups[location_key]['auctions'].append(auction)
@@ -955,11 +979,13 @@ class AnalyticsService:
                         location_groups[location_key]['active_auctions'] += 1
                     elif auction['status'] == 'upcoming':
                         location_groups[location_key]['upcoming_auctions'] += 1
+                    elif auction['status'] == 'cancelled':
+                        location_groups[location_key]['cancelled_auctions'] += 1
             
-            # Process bids
-            for bid in bids:
+            # Process filtered bids
+            for bid in filtered_bids:
                 auction = auction_lookup.get(bid.get('property_id'))
-                if auction:
+                if auction and auction in filtered_auctions:
                     property_info = property_lookup.get(auction['property_id'])
                     if property_info:
                         location_key = property_info.get(group_by, 'Unknown')
@@ -967,6 +993,14 @@ class AnalyticsService:
                         if location_key in location_groups:
                             location_groups[location_key]['total_bids'] += 1
                             location_groups[location_key]['total_bid_amount'] += bid.get('bid_amount', 0)
+                            
+                            # Count bid statuses
+                            if bid.get('status') == 'winning':
+                                location_groups[location_key]['winning_bids'] += 1
+                            elif bid.get('status') == 'won':
+                                location_groups[location_key]['won_bids'] += 1
+                            elif bid.get('status') == 'outbid':
+                                location_groups[location_key]['outbid_count'] += 1
             
             # Convert to list and calculate averages
             grouped_data = []
@@ -984,20 +1018,33 @@ class AnalyticsService:
             # Sort by total bids (descending)
             grouped_data.sort(key=lambda x: x['total_bids'], reverse=True)
             
+            # Create filter summary
+            applied_filters = {
+                'dataset_types': dataset_types,
+                'status_filters': status_filters,
+                'location_filters': location_filters,
+                'total_before_filter': {'auctions': len(auctions), 'bids': len(bids)},
+                'total_after_filter': {'auctions': len(filtered_auctions), 'bids': len(filtered_bids)}
+            }
+            
             return {
                 'group_by_location': grouped_data,
                 'grouping_type': group_by,
                 'total_locations': len(grouped_data),
+                'applied_filters': applied_filters,
                 'summary': {
                     'total_auctions': sum(g['total_auctions'] for g in grouped_data),
                     'total_bids': sum(g['total_bids'] for g in grouped_data),
                     'total_properties': sum(g['properties'] for g in grouped_data),
-                    'total_bid_amount': sum(g['total_bid_amount'] for g in grouped_data)
+                    'total_bid_amount': sum(g['total_bid_amount'] for g in grouped_data),
+                    'total_won_auctions': sum(g['won_auctions'] for g in grouped_data)
                 }
             }
             
         except Exception as e:
-            logger.error(f"Error in group_by_location_data: {e}")
+            logger.error(f"Error in enhanced group_by_location_data: {e}")
+            import traceback
+            logger.error(f"Traceback: {traceback.format_exc()}")
             return {'error': str(e)}
 
     async def get_general_analysis_data(self, users, properties, auctions, bids):
