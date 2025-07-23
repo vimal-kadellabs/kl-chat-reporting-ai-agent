@@ -3796,6 +3796,143 @@ async def login(request: LoginRequest):
     # Dummy authentication
     return {"token": "dummy_token", "user": {"id": "demo_user", "email": request.email, "name": "John Doe"}}
 
+@api_router.post("/add-maricopa-bidding-data")
+async def add_maricopa_bidding_data():
+    """Add 10-15 additional bids for Maricopa County auctions (LIVE priority, then ENDED)"""
+    try:
+        import random
+        from datetime import datetime, timedelta
+        
+        # Get existing data
+        properties = await db.properties.find().to_list(None)
+        auctions = await db.auctions.find().to_list(None)
+        users = await db.users.find().to_list(None)
+        existing_bids = await db.bids.find().to_list(None)
+        
+        # Find Maricopa County properties
+        maricopa_prop_ids = []
+        property_lookup = {}
+        for prop in properties:
+            if prop.get('county', '').lower() == 'maricopa':
+                maricopa_prop_ids.append(prop['id'])
+                property_lookup[prop['id']] = prop
+        
+        logger.info(f"Found {len(maricopa_prop_ids)} Maricopa County properties")
+        
+        # Find auctions for Maricopa properties (LIVE priority, then ENDED)
+        target_auctions = []
+        auction_lookup = {auction['id']: auction for auction in auctions}
+        
+        for auction in auctions:
+            if auction.get('property_id') in maricopa_prop_ids:
+                if auction.get('status') == 'live':
+                    target_auctions.insert(0, auction)  # Priority to LIVE
+                elif auction.get('status') == 'ended':
+                    target_auctions.append(auction)
+        
+        if not target_auctions:
+            return {"message": "No suitable Maricopa County auctions found", "added_bids": 0}
+        
+        logger.info(f"Found {len(target_auctions)} target auctions: {[a['id'] for a in target_auctions]}")
+        
+        # Get current max bid ID
+        max_bid_id = 0
+        for bid in existing_bids:
+            bid_id_num = int(bid['id'].split('_')[1]) if 'bid_' in bid['id'] else 0
+            max_bid_id = max(max_bid_id, bid_id_num)
+        
+        # Select random investors for bidding
+        available_investors = [user for user in users if user.get('user_type') in ['individual', 'institutional']]
+        
+        # Generate 10-15 new bids
+        total_bids_to_add = random.randint(10, 15)
+        new_bids = []
+        
+        for i in range(total_bids_to_add):
+            # Select auction (more weight to LIVE auctions)
+            if target_auctions[0].get('status') == 'live':
+                # 60% chance for LIVE auction, 40% for others
+                if random.random() < 0.6 and len(target_auctions) > 0:
+                    auction = target_auctions[0]
+                else:
+                    auction = random.choice(target_auctions)
+            else:
+                auction = random.choice(target_auctions)
+            
+            # Select random investor
+            investor = random.choice(available_investors)
+            
+            # Get property info for realistic bid amount
+            property_info = property_lookup[auction['property_id']]
+            estimated_value = property_info.get('estimated_value', 1000000)
+            reserve_price = property_info.get('reserve_price', estimated_value * 0.8)
+            
+            # Generate realistic bid amount (between reserve and 120% of estimated value)
+            min_bid = max(reserve_price * 0.9, estimated_value * 0.7)
+            max_bid = estimated_value * 1.2
+            bid_amount = random.randint(int(min_bid), int(max_bid))
+            
+            # Generate bid timestamp
+            if auction.get('status') == 'live':
+                # Recent bids for live auctions
+                bid_time = datetime.utcnow() - timedelta(hours=random.randint(1, 48))
+                bid_status = random.choice(['winning', 'outbid'])
+            else:
+                # Older bids for ended auctions
+                bid_time = datetime.utcnow() - timedelta(days=random.randint(1, 30))
+                bid_status = random.choice(['won', 'outbid'])
+            
+            new_bid_id = max_bid_id + i + 1
+            
+            new_bid = {
+                'id': f'bid_{new_bid_id}',
+                'auction_id': auction['id'],
+                'property_id': auction['property_id'],
+                'bidder_id': investor['id'],
+                'bid_amount': bid_amount,
+                'bid_time': bid_time,
+                'status': bid_status,
+                'is_auto_bid': random.choice([True, False])
+            }
+            
+            new_bids.append(new_bid)
+            logger.info(f"Generated bid: {new_bid['id']} - {investor['name']} bids ${bid_amount:,} on {property_info['title']}")
+        
+        # Insert new bids into database
+        if new_bids:
+            await db.bids.insert_many(new_bids)
+        
+        # Create summary
+        auction_distribution = {}
+        for bid in new_bids:
+            auction_id = bid['auction_id']
+            if auction_id not in auction_distribution:
+                auction_distribution[auction_id] = []
+            auction_distribution[auction_id].append(bid)
+        
+        summary = []
+        for auction_id, bids in auction_distribution.items():
+            auction_info = auction_lookup[auction_id]
+            property_info = property_lookup[auction_info['property_id']]
+            summary.append({
+                'auction_id': auction_id,
+                'property_title': property_info['title'],
+                'status': auction_info['status'],
+                'bids_added': len(bids),
+                'total_bid_amount': sum(bid['bid_amount'] for bid in bids)
+            })
+        
+        return {
+            'message': f'Successfully added {len(new_bids)} bids for Maricopa County auctions',
+            'total_bids_added': len(new_bids),
+            'auctions_affected': len(auction_distribution),
+            'distribution_summary': summary
+        }
+        
+    except Exception as e:
+        logger.error(f"Error adding Maricopa bidding data: {str(e)}")
+        raise HTTPException(status_code=500, detail=f"Error adding bidding data: {str(e)}")
+
 @api_router.get("/health")
 async def health_check():
     """Simple health check endpoint for connectivity testing"""
