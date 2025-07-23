@@ -125,7 +125,11 @@ const ChatMessage = ({ message }) => {
               )}
 
               {/* Backward compatibility for single chart */}
-              {!message.charts && message.chartData && message.chartType && (
+              {!message.charts && message.chartData && message.chartType && (() => {
+                // Check if single chart has valid data
+                const chartData = Array.isArray(message.chartData) ? message.chartData : message.chartData?.data;
+                return Array.isArray(chartData) && chartData.length > 0;
+              })() && (
                 <div className="mb-4">
                   <div className="bg-white/60 backdrop-blur-sm rounded-2xl shadow-sm border border-white/20 overflow-hidden">
                     <div className="bg-gradient-to-r from-slate-50 to-blue-50 px-4 py-3 border-b border-slate-200">
