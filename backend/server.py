@@ -1148,6 +1148,8 @@ class AnalyticsService:
                 return await self.create_investor_activity_by_type_enhanced_response(data)
             elif intent == 'location_based_auction_count' and 'location_analysis' in data:
                 return await self.create_location_analysis_enhanced_response(data)
+            elif intent == 'group_by_location' and 'group_by_location' in data:
+                return await self.create_group_by_location_enhanced_response(data)
             elif intent == 'properties_most_bids_timeframe' and 'properties_most_bids' in data:
                 return await self.create_properties_most_bids_enhanced_response(data)
             elif intent == 'completed_auctions_summary' and 'completed_auctions_summary' in data:
