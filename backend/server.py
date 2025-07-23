@@ -792,6 +792,117 @@ class AnalyticsService:
             'total_markets': len(regional_list)
         }
 
+    async def get_group_by_location_data(self, properties: list, auctions: list, bids: list, entities: dict) -> dict:
+        """Get data grouped by location (city, county, or state)"""
+        try:
+            # Determine grouping level based on query
+            group_by = 'state'  # default
+            for entity_type, entity_list in entities.items():
+                if entity_type == 'locations':
+                    for location in entity_list:
+                        if 'city' in location.lower():
+                            group_by = 'city'
+                        elif 'county' in location.lower():
+                            group_by = 'county'
+                        elif 'state' in location.lower():
+                            group_by = 'state'
+            
+            # Also check if query explicitly mentions grouping type
+            query_lower = ' '.join(entities.get('raw_query', ['']))
+            if 'county' in query_lower:
+                group_by = 'county'
+            elif 'city' in query_lower:
+                group_by = 'city'
+            elif 'state' in query_lower:
+                group_by = 'state'
+            
+            logger.info(f"Grouping data by: {group_by}")
+            
+            # Create lookup dictionaries
+            property_lookup = {prop['id']: prop for prop in properties}
+            auction_lookup = {auction['property_id']: auction for auction in auctions}
+            
+            # Group data by location
+            location_groups = {}
+            
+            # Process auctions
+            for auction in auctions:
+                property_info = property_lookup.get(auction['property_id'])
+                if property_info:
+                    location_key = property_info.get(group_by, 'Unknown')
+                    
+                    if location_key not in location_groups:
+                        location_groups[location_key] = {
+                            'location': location_key,
+                            'auctions': [],
+                            'properties': set(),
+                            'total_bids': 0,
+                            'total_bid_amount': 0,
+                            'won_auctions': 0,
+                            'active_auctions': 0,
+                            'upcoming_auctions': 0,
+                            'ended_auctions': 0,
+                            'property_types': set()
+                        }
+                    
+                    location_groups[location_key]['auctions'].append(auction)
+                    location_groups[location_key]['properties'].add(property_info['id'])
+                    location_groups[location_key]['property_types'].add(property_info.get('property_type', 'unknown'))
+                    
+                    # Count auction statuses
+                    if auction['status'] == 'ended':
+                        location_groups[location_key]['ended_auctions'] += 1
+                        if auction.get('winner_id'):
+                            location_groups[location_key]['won_auctions'] += 1
+                    elif auction['status'] == 'live':
+                        location_groups[location_key]['active_auctions'] += 1
+                    elif auction['status'] == 'upcoming':
+                        location_groups[location_key]['upcoming_auctions'] += 1
+            
+            # Process bids
+            for bid in bids:
+                auction = auction_lookup.get(bid.get('property_id'))
+                if auction:
+                    property_info = property_lookup.get(auction['property_id'])
+                    if property_info:
+                        location_key = property_info.get(group_by, 'Unknown')
+                        
+                        if location_key in location_groups:
+                            location_groups[location_key]['total_bids'] += 1
+                            location_groups[location_key]['total_bid_amount'] += bid.get('bid_amount', 0)
+            
+            # Convert to list and calculate averages
+            grouped_data = []
+            for location, data in location_groups.items():
+                data['properties'] = len(data['properties'])
+                data['property_types'] = list(data['property_types'])
+                data['total_auctions'] = len(data['auctions'])
+                data['avg_bid_amount'] = data['total_bid_amount'] / data['total_bids'] if data['total_bids'] > 0 else 0
+                data['avg_bids_per_auction'] = data['total_bids'] / data['total_auctions'] if data['total_auctions'] > 0 else 0
+                
+                # Remove the auction objects to keep response manageable
+                del data['auctions']
+                grouped_data.append(data)
+            
+            # Sort by total bids (descending)
+            grouped_data.sort(key=lambda x: x['total_bids'], reverse=True)
+            
+            return {
+                'group_by_location': grouped_data,
+                'grouping_type': group_by,
+                'total_locations': len(grouped_data),
+                'summary': {
+                    'total_auctions': sum(g['total_auctions'] for g in grouped_data),
+                    'total_bids': sum(g['total_bids'] for g in grouped_data),
+                    'total_properties': sum(g['properties'] for g in grouped_data),
+                    'total_bid_amount': sum(g['total_bid_amount'] for g in grouped_data)
+                }
+            }
+            
+        except Exception as e:
+            logger.error(f"Error in group_by_location_data: {e}")
+            return {'error': str(e)}
+
     async def get_general_analysis_data(self, users, properties, auctions, bids):
         """Get general market overview data"""
         # Calculate cancelled auctions with no bidders
