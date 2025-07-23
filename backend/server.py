@@ -3920,8 +3920,80 @@ async def update_production_data():
                 "details": str(e)
             })
         
-        # STEP 3: Fix bid field names (bidder_id → investor_id)
-        logger.info("Step 3: Fixing bid field names...")
+        # STEP 3: Insert new properties from JSON file
+        logger.info("Step 3: Inserting new properties...")
+        try:
+            json_file_path = Path("/app/updated_properties_data.json")
+            if json_file_path.exists():
+                with open(json_file_path, 'r') as file:
+                    properties_data = json.load(file)
+                
+                # Get current max property ID
+                existing_properties = await db.properties.find().to_list(None)
+                max_prop_id = max([int(prop['id'].split('_')[1]) for prop in existing_properties if 'prop_' in prop['id']], default=0)
+                
+                # Track existing properties by title to avoid duplicates
+                existing_titles = {prop.get('title', '').strip().lower() for prop in existing_properties}
+                
+                # Insert new properties starting from index 115 (as per original requirement)
+                inserted_count = 0
+                for i, json_prop in enumerate(properties_data[115:], 1):
+                    json_title = json_prop.get("title", "").strip()
+                    
+                    # Skip if property already exists
+                    if json_title.lower() in existing_titles:
+                        continue
+                    
+                    new_prop_id = max_prop_id + i
+                    new_property = {
+                        "id": f"prop_{new_prop_id}",
+                        "title": json_title,
+                        "description": json_prop.get("description", ""),
+                        "location": json_prop.get("location", ""),
+                        "city": json_prop.get("city", ""),
+                        "state": json_prop.get("state", ""),
+                        "zipcode": json_prop.get("zipcode", ""),
+                        "county": json_prop.get("county", ""),
+                        "property_type": json_prop.get("property_type") if json_prop.get("property_type") else "residential",
+                        "reserve_price": json_prop.get("reserve_price") if json_prop.get("reserve_price") is not None else 0.0,
+                        "estimated_value": json_prop.get("estimated_value") if json_prop.get("estimated_value") is not None else 0.0,
+                        "bedrooms": json_prop.get("bedrooms"),
+                        "bathrooms": json_prop.get("bathrooms"),
+                        "square_feet": json_prop.get("square_feet"),
+                        "lot_size": json_prop.get("lot_size"),
+                        "year_built": json_prop.get("year_built"),
+                        "images": json_prop.get("images", []),
+                        "created_at": datetime.utcnow()
+                    }
+                    
+                    await db.properties.insert_one(new_property)
+                    inserted_count += 1
+                    existing_titles.add(json_title.lower())  # Track newly inserted
+                
+                results["steps"].append({
+                    "step": 3,
+                    "name": "Insert New Properties",
+                    "status": "success",
+                    "details": f"Inserted {inserted_count} new properties from JSON data"
+                })
+            else:
+                results["steps"].append({
+                    "step": 3,
+                    "name": "Insert New Properties",
+                    "status": "skipped",
+                    "details": "JSON data file not found, skipping new property insertion"
+                })
+                
+        except Exception as e:
+            results["steps"].append({
+                "step": 3,
+                "name": "Insert New Properties",
+                "status": "error",
+                "details": str(e)
+            })
+        
+        # STEP 4: Fix bid field names (bidder_id → investor_id)
+        logger.info("Step 4: Fixing bid field names...")
         try:
             bad_bids = await db.bids.find({"bidder_id": {"$exists": True}}).to_list(None)
             fixed_bids = 0
@@ -3937,7 +4009,7 @@ async def update_production_data():
                 fixed_bids += 1
             
             results["steps"].append({
-                "step": 3,
+                "step": 4,
                 "name": "Fix Bid Fields",
                 "status": "success",
                 "details": f"Fixed {fixed_bids} bid records with incorrect field names"
@@ -3945,7 +4017,7 @@ async def update_production_data():
             
         except Exception as e:
             results["steps"].append({
-                "step": 3,
+                "step": 4,
                 "name": "Fix Bid Fields",
                 "status": "error",
                 "details": str(e)
