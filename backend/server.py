@@ -2201,7 +2201,7 @@ class AnalyticsService:
         summary_points = [
             f"Leading investor: {investors[0]['name']} with ${investors[0]['total_amount']:,.0f} total investment",
             f"Success rates range from {min(inv['success_rate'] for inv in investors):.1f}% to {max(inv['success_rate'] for inv in investors):.1f}%",
-            f"Top 5 investors have won {sum(inv['won_auctions'] for inv in investors)} properties combined",
+            f"Top 5 investors have won {sum(inv['winning_bids'] for inv in investors)} properties combined",
             "High-performing investors demonstrate consistent bidding strategies and strong market knowledge"
         ]
         
