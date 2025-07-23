@@ -1330,6 +1330,125 @@ class AnalyticsService:
             logger.error(f"Error creating state-level analysis: {e}")
             return await self.create_no_data_response("state bid analysis")
 
+    async def create_group_by_location_enhanced_response(self, data: dict) -> ChatResponse:
+        """Create enhanced response for group by location queries"""
+        try:
+            grouped_data = data.get('group_by_location', [])
+            grouping_type = data.get('grouping_type', 'location')
+            summary = data.get('summary', {})
+            
+            if not grouped_data:
+                return await self.create_no_data_response("location grouping")
+            
+            # Create response text
+            response_text = f"## 📍 Data Grouped by {grouping_type.title()}\n\n"
+            response_text += f"**Comprehensive breakdown across {len(grouped_data)} {grouping_type}s**\n\n"
+            
+            response_text += f"### 🏆 Top Performing {grouping_type.title()}s:\n\n"
+            
+            for i, location_data in enumerate(grouped_data[:10], 1):
+                location = location_data['location']
+                total_bids = location_data['total_bids']
+                total_auctions = location_data['total_auctions']
+                avg_bid = location_data['avg_bid_amount']
+                properties = location_data['properties']
+                
+                response_text += f"**{i}. {location}**\n"
+                response_text += f"   - **{total_bids}** total bids across **{total_auctions}** auctions\n"
+                response_text += f"   - **{properties}** properties, Average bid: **${avg_bid:,.0f}**\n"
+                response_text += f"   - Ended: {location_data['ended_auctions']}, Won: {location_data['won_auctions']}, Active: {location_data['active_auctions']}\n\n"
+            
+            # Create charts
+            charts = []
+            
+            # Chart 1: Total bids by location
+            bid_chart_data = [
+                {
+                    "location": loc['location'],
+                    "total_bids": loc['total_bids'],
+                    "auctions": loc['total_auctions'],
+                    "avg_bid": loc['avg_bid_amount']
+                }
+                for loc in grouped_data[:12]
+            ]
+            
+            charts.append({
+                "data": bid_chart_data,
+                "type": "bar",
+                "title": f"Bidding Activity by {grouping_type.title()}",
+                "description": f"Total bids and auction counts across different {grouping_type}s"
+            })
+            
+            # Chart 2: Bid volume distribution
+            volume_chart_data = [
+                {
+                    "location": loc['location'],
+                    "volume": loc['total_bid_amount']
+                }
+                for loc in grouped_data[:8]
+            ]
+            
+            charts.append({
+                "data": volume_chart_data,
+                "type": "donut",
+                "title": f"Bid Volume Distribution by {grouping_type.title()}",
+                "description": f"Market share of total bidding volume by {grouping_type}"
+            })
+            
+            # Create comprehensive table
+            table_headers = [
+                grouping_type.title(),
+                "Total Bids",
+                "Auctions", 
+                "Properties",
+                "Avg Bid",
+                "Total Volume",
+                "Won",
+                "Active",
+                "Upcoming"
+            ]
+            
+            table_rows = []
+            for loc in grouped_data[:15]:
+                table_rows.append([
+                    loc['location'],
+                    str(loc['total_bids']),
+                    str(loc['total_auctions']),
+                    str(loc['properties']),
+                    f"${loc['avg_bid_amount']:,.0f}",
+                    f"${loc['total_bid_amount']:,.0f}",
+                    str(loc['won_auctions']),
+                    str(loc['active_auctions']),
+                    str(loc['upcoming_auctions'])
+                ])
+            
+            tables = [{
+                "headers": table_headers,
+                "rows": table_rows,
+                "title": f"Comprehensive {grouping_type.title()} Analysis",
+                "description": f"Complete breakdown of auction and bidding activity by {grouping_type}"
+            }]
+            
+            # Create summary points
+            top_location = grouped_data[0] if grouped_data else {}
+            summary_points = [
+                f"{top_location.get('location', 'N/A')} leads with {top_location.get('total_bids', 0)} total bids",
+                f"Data covers {len(grouped_data)} different {grouping_type}s with {summary.get('total_auctions', 0)} auctions",
+                f"Total bidding volume: ${summary.get('total_bid_amount', 0):,.0f} across {summary.get('total_bids', 0)} bids",
+                f"Top 5 {grouping_type}s account for {sum(loc['total_bids'] for loc in grouped_data[:5])} bids ({sum(loc['total_bids'] for loc in grouped_data[:5])/summary.get('total_bids', 1)*100:.1f}%)"
+            ]
+            
+            return ChatResponse(
+                response=response_text,
+                charts=charts,
+                tables=tables,
+                summary_points=summary_points
+            )
+            
+        except Exception as e:
+            logger.error(f"Error creating group by location response: {e}")
+            return await self.create_no_data_response("location grouping")
+
     async def create_cancelled_auctions_enhanced_response(self, data: dict) -> ChatResponse:
         """Create enhanced response for cancelled auctions query"""
         cancellation_analysis = data.get('cancellation_analysis', {})
