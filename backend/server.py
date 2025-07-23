@@ -5058,19 +5058,15 @@ async def get_sample_questions():
         "Which regions had the highest number of bids last month?",
         "Show upcoming auctions by city in California.",
         "List top-performing cities by average winning bid in the last quarter.",
-        "How many properties were auctioned in New York this year?",
         
         # Investor Activity
         "Who are the top 5 investors by bid amount?",
-        "List all investors who won more than 2 properties last month.",
-        "Which investor placed the most bids in remote auctions?",
         "Which investors are most active in residential vs commercial auctions?",
         
         # Bidding Trends & Behavior
         "Which auctions had the fewest bids?",
         
         # Auction & Property Stats
-        "Show properties with most bids in July.",
         "List top 10 upcoming auctions by property value.",
         "Compare bidding activity across property types (residential, land, commercial).",
         "How many auctions were canceled due to no bidders?",
