@@ -4033,7 +4033,7 @@ async def update_production_data():
             existing_bids = await db.bids.find().to_list(None)
             
             # Find Maricopa County properties and auctions
-            maricopa_prop_ids = [p['id'] for p in properties if p.get('county', '').lower() == 'maricopa']
+            maricopa_prop_ids = [p['id'] for p in properties if p.get('county') and p.get('county').lower() == 'maricopa']
             target_auctions = [a for a in auctions if a.get('property_id') in maricopa_prop_ids and a.get('status') in ['live', 'ended']]
             
             if target_auctions and users:
