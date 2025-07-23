@@ -76,36 +76,6 @@ const ChartRenderer = ({ data, type, title, description }) => {
     return <div className="text-center py-8 text-gray-500">No data points available</div>;
   }
 
-  const downloadChart = async () => {
-    setIsDownloading(true);
-    try {
-      // Create a downloadable JSON file
-      const jsonData = {
-        title: title || 'Chart Data',
-        type: type,
-        data: chartData,
-        generated: new Date().toISOString()
-      };
-      
-      const blob = new Blob([JSON.stringify(jsonData, null, 2)], {
-        type: 'application/json'
-      });
-      
-      const url = URL.createObjectURL(blob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `${(title || 'chart-data').replace(/\s+/g, '-').toLowerCase()}.json`;
-      document.body.appendChild(link);
-      link.click();
-      document.body.removeChild(link);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Download failed:', error);
-    } finally {
-      setIsDownloading(false);
-    }
-  };
-
   // Loading component with progress bar
   const LoadingChart = () => (
     <div className="w-full h-80 flex flex-col items-center justify-center p-8">
